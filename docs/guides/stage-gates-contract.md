@@ -15,6 +15,22 @@ The v1 contract requires strictness wiring via:
 - `STAGE_GATES_STRICT` support in the stage-gates workflow template.
 - CodeRabbit severity policy in `templates/.coderabbit.yaml`.
 
+## Dependency Fallback Mapping
+
+The canary template-sync lane consumes owner-scoped fallback mappings from:
+
+- `templates/template-sync/dependency-fallbacks.csv`
+
+Columns:
+
+- `owner`
+- `dependency_key` (`template_repo` or `stage_gates_repo`)
+- `fallback_slug`
+- `fallback_workspace_dir`
+- `remediation_hint`
+
+This enables deterministic fallback resolution and actionable repo-level remediation hints when dependency checkout fails.
+
 ## SemVer Policy
 
 - Major: breaking gate/stage/output contract changes.

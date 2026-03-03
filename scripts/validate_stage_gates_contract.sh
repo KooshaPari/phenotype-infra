@@ -6,6 +6,7 @@ required_paths=(
   "templates/stage-gates/v1/stage-gates.yml"
   "templates/stage-gates.yml"
   "templates/.coderabbit.yaml"
+  "templates/template-sync/dependency-fallbacks.csv"
   "docs/guides/stage-gates-contract.md"
   "scripts/validate_stage_gates_contract.sh"
 )
