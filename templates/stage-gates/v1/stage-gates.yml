@@ -26,67 +26,81 @@ jobs:
 
       - name: Detect stage from branch
         id: detect
+        env:
+          BRANCH: ${{ github.head_ref }}
         run: |
-          BRANCH="${{ github.head_ref }}"
-          case "$BRANCH" in
-            spike/*)
-              echo "stage=SP" >> "$GITHUB_OUTPUT"
-              echo "gates=" >> "$GITHUB_OUTPUT"
-              ;;
-            poc/*)
-              echo "stage=POC" >> "$GITHUB_OUTPUT"
-              echo "gates=format" >> "$GITHUB_OUTPUT"
-              ;;
-            preview/*)
-              echo "stage=IP" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,secrets" >> "$GITHUB_OUTPUT"
-              ;;
-            alpha/*)
-              echo "stage=A" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,integration,sast,secrets" >> "$GITHUB_OUTPUT"
-              ;;
-            feature-preview/*)
-              echo "stage=FP" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,integration,sast,secrets,coverage-60,e2e-smoke,perf-baseline" >> "$GITHUB_OUTPUT"
-              ;;
-            beta/*|release/beta-*)
-              echo "stage=B" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,integration,sast,secrets,coverage-70,e2e-smoke,dep-audit,license,coderabbit" >> "$GITHUB_OUTPUT"
-              ;;
-            release/ep-*)
-              echo "stage=EP" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,integration,sast,secrets,coverage-75,e2e-smoke,dep-audit,license,coderabbit,gca-review,manual-security" >> "$GITHUB_OUTPUT"
-              ;;
-            release/canary-*)
-              echo "stage=CN" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,integration,sast,secrets,coverage-80,e2e-smoke,dep-audit,license,coderabbit,gca-review,manual-security,sla-validation,perf" >> "$GITHUB_OUTPUT"
-              ;;
-            release/*-rc.*)
-              echo "stage=RC" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,integration,sast,secrets,coverage-85,e2e-full,dep-audit,license,coderabbit,gca-review,manual-security,sla-validation,perf,sbom" >> "$GITHUB_OUTPUT"
-              ;;
-            hotfix/*)
-              echo "stage=HF" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,targeted-regression" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "stage=GA" >> "$GITHUB_OUTPUT"
-              echo "gates=format,lint,unit,integration,sast,secrets,coverage-85,e2e-full,dep-audit,license,coderabbit,gca-review,manual-security,sla-validation,perf,sbom,artifact-checksum" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+          python -m pip install --disable-pip-version-check pyyaml
+          python - <<'PY'
+          import fnmatch
+          import os
+          import sys
+          import yaml
+
+          cfg_path = "templates/governance/ci-required-jobs.yaml"
+          with open(cfg_path, "r", encoding="utf-8") as handle:
+              cfg = yaml.safe_load(handle) or {}
+
+          branch = os.environ.get("BRANCH", "")
+          default_stage = cfg["default_stage"]
+          selected_stage = default_stage
+
+          for rule in cfg["branch_stage_rules"]:
+              patterns = rule.get("patterns", [])
+              if any(fnmatch.fnmatch(branch, pattern) for pattern in patterns):
+                  selected_stage = rule["stage"]
+                  break
+
+          stage_cfg = cfg["stages"].get(selected_stage)
+          if not stage_cfg:
+              print(f"Unknown stage '{selected_stage}' from {cfg_path}", file=sys.stderr)
+              sys.exit(1)
+
+          required_jobs = stage_cfg.get("required_jobs", stage_cfg.get("gates", []))
+          gates = ",".join(required_jobs)
+          output_path = os.environ["GITHUB_OUTPUT"]
+          with open(output_path, "a", encoding="utf-8") as out:
+              out.write(f"stage={selected_stage}\n")
+              out.write(f"gates={gates}\n")
+
+          print(
+              f"Resolved branch '{branch}' -> stage '{selected_stage}' with gates: {gates or '<none>'}"
+          )
+          PY
 
       - name: Detect strict mode signal
         id: detect-strict
         env:
           STAGE_GATES_STRICT_VAR: ${{ vars.STAGE_GATES_STRICT }}
+          DETECTED_STAGE: ${{ steps.detect.outputs.stage }}
         run: |
-          strict="${STAGE_GATES_STRICT_VAR:-false}"
-          strict_lower="$(echo "${strict}" | tr '[:upper:]' '[:lower:]')"
-          if [[ "${strict_lower}" == "1" || "${strict_lower}" == "true" || "${strict_lower}" == "yes" ]]; then
-            echo "strict=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "strict=false" >> "$GITHUB_OUTPUT"
-          fi
+          python -m pip install --disable-pip-version-check pyyaml
+          python - <<'PY'
+          import os
+          import yaml
+
+          def truthy(value: str) -> bool:
+              return value.strip().lower() in {"1", "true", "yes", "on"}
+
+          cfg_path = "templates/governance/ci-required-jobs.yaml"
+          with open(cfg_path, "r", encoding="utf-8") as handle:
+              cfg = yaml.safe_load(handle) or {}
+
+          strict_from_env = truthy(os.environ.get("STAGE_GATES_STRICT_VAR", "false"))
+          stage = os.environ.get("DETECTED_STAGE", "")
+          forced_stages = set(cfg.get("force_strict_stages", []))
+          strict_for_stage = stage in forced_stages
+          strict = strict_from_env or strict_for_stage
+
+          source = "stage_override" if strict_for_stage else "global_flag"
+          output_path = os.environ["GITHUB_OUTPUT"]
+          with open(output_path, "a", encoding="utf-8") as out:
+              out.write(f"strict={'true' if strict else 'false'}\n")
+
+          print(
+              f"Strict mode resolved for stage '{stage}': strict={strict} "
+              f"(global={strict_from_env}, forced={strict_for_stage}, source={source})"
+          )
+          PY
 
       - name: Detect language
         id: detect-lang
@@ -425,4 +439,12 @@ jobs:
         run: |
           echo "STAGE_GATES_STRICT=true (strict mode active)"
           echo "Stage=${{ needs.detect-stage.outputs.stage }}"
-          fi
+
+  verify-merge-token:
+    needs: detect-stage
+    if: contains(needs.detect-stage.outputs.gates, 'verify-merge-token')
+    uses: ./.github/workflows/verify-merge-token.yml
+    with:
+      stage: ${{ needs.detect-stage.outputs.stage }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+    secrets: inherit
