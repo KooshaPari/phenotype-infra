@@ -12,6 +12,7 @@ permissions:
 env:
   STAGE: ""
   GATES: ""
+  STAGE_GATES_STRICT: ${{ vars.STAGE_GATES_STRICT }}
 
 jobs:
   detect-stage:
@@ -20,6 +21,7 @@ jobs:
       stage: ${{ steps.detect.outputs.stage }}
       gates: ${{ steps.detect.outputs.gates }}
       lang: ${{ steps.detect-lang.outputs.lang }}
+      strict_mode: ${{ steps.strict-mode.outputs.strict_mode }}
     steps:
       - uses: actions/checkout@v4
 
@@ -73,6 +75,17 @@ jobs:
               echo "gates=format,lint,unit,integration,sast,secrets,coverage-85,e2e-full,dep-audit,license,coderabbit,gca-review,manual-security,sla-validation,perf,sbom,artifact-checksum" >> "$GITHUB_OUTPUT"
               ;;
           esac
+
+      - name: Resolve strict mode
+        id: strict-mode
+        run: |
+          strict="${STAGE_GATES_STRICT:-false}"
+          case "$strict" in
+            true|TRUE|1|yes|YES) strict="true" ;;
+            *) strict="false" ;;
+          esac
+          echo "strict_mode=${strict}" >> "$GITHUB_OUTPUT"
+          echo "Stage gate strict mode: ${strict}"
 
       - name: Detect language
         id: detect-lang
@@ -274,7 +287,11 @@ jobs:
           if [ -f Makefile ] && grep -q 'e2e-smoke' Makefile; then
             make e2e-smoke
           else
-            echo "No e2e-smoke target found; skipping"
+            if [ "${{ needs.detect-stage.outputs.strict_mode }}" = "true" ]; then
+              echo "No e2e-smoke target found; strict mode enabled, failing."
+              exit 1
+            fi
+            echo "No e2e-smoke target found; strict mode disabled, skipping"
           fi
 
   e2e-full:
@@ -288,7 +305,11 @@ jobs:
           if [ -f Makefile ] && grep -q 'e2e-full' Makefile; then
             make e2e-full
           else
-            echo "No e2e-full target found; skipping"
+            if [ "${{ needs.detect-stage.outputs.strict_mode }}" = "true" ]; then
+              echo "No e2e-full target found; strict mode enabled, failing."
+              exit 1
+            fi
+            echo "No e2e-full target found; strict mode disabled, skipping"
           fi
 
   perf-benchmark:
@@ -302,7 +323,11 @@ jobs:
           if [ -f Makefile ] && grep -q 'bench' Makefile; then
             make bench
           else
-            echo "No bench target found; skipping"
+            if [ "${{ needs.detect-stage.outputs.strict_mode }}" = "true" ]; then
+              echo "No bench target found; strict mode enabled, failing."
+              exit 1
+            fi
+            echo "No bench target found; strict mode disabled, skipping"
           fi
 
   sla-validation:
@@ -316,7 +341,11 @@ jobs:
           if [ -f Makefile ] && grep -q 'sla-check' Makefile; then
             make sla-check
           else
-            echo "No sla-check target found; skipping"
+            if [ "${{ needs.detect-stage.outputs.strict_mode }}" = "true" ]; then
+              echo "No sla-check target found; strict mode enabled, failing."
+              exit 1
+            fi
+            echo "No sla-check target found; strict mode disabled, skipping"
           fi
 
   coderabbit:
@@ -373,7 +402,11 @@ jobs:
             make build
             find dist/ -type f -exec sha256sum {} \; > checksums.sha256 2>/dev/null || true
           else
-            echo "No build target; skipping artifact checksum"
+            if [ "${{ needs.detect-stage.outputs.strict_mode }}" = "true" ]; then
+              echo "No build target found; strict mode enabled, failing."
+              exit 1
+            fi
+            echo "No build target found; strict mode disabled, skipping artifact checksum"
           fi
       - name: Upload checksums
         if: hashFiles('checksums.sha256') != ''
@@ -393,11 +426,16 @@ jobs:
           if [ -f Makefile ] && grep -q 'regression' Makefile; then
             make regression
           else
-            echo "No regression target found; running full unit tests as fallback"
+            if [ "${{ needs.detect-stage.outputs.strict_mode }}" = "true" ]; then
+              echo "No regression target found; strict mode enabled, failing."
+              exit 1
+            fi
+            echo "No regression target found; strict mode disabled, running full unit tests fallback"
             case "${{ needs.detect-stage.outputs.lang }}" in
               rust) cargo test --lib ;;
               go) go test ./... ;;
               python) pip install -e ".[test]" && pytest -x ;;
               node) npm ci && npm test ;;
+              *) echo "Unknown language; no fallback test command available" ;;
             esac
           fi
