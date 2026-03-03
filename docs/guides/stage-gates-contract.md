@@ -31,6 +31,21 @@ Columns:
 
 This enables deterministic fallback resolution and actionable repo-level remediation hints when dependency checkout fails.
 
+## Canary Phase-Gate Criteria
+
+Use deterministic pass/fail criteria for canary rollout decisions:
+
+- `hold` fail conditions: analyzed coverage `< 100%` or any `repo_unreachable` run outcome.
+- `phase-1` pass conditions: analyzed coverage `= 100%` and `canary_ready=true` for at least `50%` of canary repos.
+- `phase-2` pass conditions: analyzed coverage `= 100%` and `canary_ready=true` for at least `80%` of canary repos.
+- `broad` pass conditions: analyzed coverage `= 100%` and `canary_ready=true` for `100%` of canary repos for `2` consecutive runs.
+
+Recommended next candidate repos after `phase-1` pass:
+
+- `parpour`
+- `phenodocs`
+- `tokenledger`
+
 ## SemVer Policy
 
 - Major: breaking gate/stage/output contract changes.
