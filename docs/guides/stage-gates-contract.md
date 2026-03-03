@@ -31,6 +31,22 @@ Columns:
 
 This enables deterministic fallback resolution and actionable repo-level remediation hints when dependency checkout fails.
 
+## Canary Output Artifacts
+
+Canary runs must emit machine-readable outputs:
+
+- Readiness matrix CSV: `stage-gates-canary-readiness-matrix-<run_id>-<attempt>.csv`
+- Rollout decision CSV: `stage-gates-canary-decision-<run_id>-<attempt>.csv`
+- Rollout decision JSON: `stage-gates-canary-decision-<run_id>-<attempt>.json`
+- Ranked next-repo rollout CSV: `stage-gates-next-repo-rollout-<run_id>-<attempt>.csv`
+- Ranked next-repo rollout JSON: `stage-gates-next-repo-rollout-<run_id>-<attempt>.json`
+
+Remediation output should include:
+
+- `remediation_category` (deterministic enum)
+- `remediation_hint` (human-readable short hint)
+- `next_command` (concrete command to execute next for that category)
+
 ## Canary Phase-Gate Criteria
 
 Use deterministic pass/fail criteria for canary rollout decisions:
