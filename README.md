@@ -29,6 +29,12 @@ cat docs/runbooks/day1-oci-first-light.md
 cat docs/runbooks/day1-home-runner-setup.md
 ```
 
+## Operational status (2026-04-24)
+
+- **Windows desktop heavy runner** — operational. Service `actions.runner.KooshaPari-phenotype-tooling.desktop-kooshapari-desk` registered and idle on the home Mac. Install procedure (with the gotchas that surfaced live: em-dash → ASCII, alphanumeric password, 48-char Description cap, unquoted `-OrgUrl`) is captured in `docs/runbooks/windows-desktop-runner.md`. Parsec coexistence verified: runner service stays in `Manual` start, only triggered on dispatch.
+- Credential for the local `runneruser` account is stored in Vaultwarden under `windows-runner/desktop-kooshapari-desk/runneruser`.
+- See `docs/runbooks/windows-desktop-runner.md` for verification, tear-down, and replacement steps.
+
 ## Top ADRs
 
 | ADR | Title |
