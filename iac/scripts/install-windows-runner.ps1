@@ -146,13 +146,18 @@ if ($null -ne $existing) {
 } else {
   # Generate a 32-char password from a broad character pool.
   Add-Type -AssemblyName System.Web
-  $generatedPassword = [System.Web.Security.Membership]::GeneratePassword(32, 6)
+  # Alphanumeric-only to avoid cmd.exe shell metachar issues when passed to config.cmd
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  $bytes = New-Object byte[] 32
+  $rng.GetBytes($bytes)
+  $generatedPassword = -join (0..31 | ForEach-Object { $chars[$bytes[$_] % $chars.Length] })
   $secure = ConvertTo-SecureString $generatedPassword -AsPlainText -Force
 
   New-LocalUser -Name $RunnerUser `
                 -Password $secure `
                 -FullName 'GitHub Actions Runner Service Account' `
-                -Description 'Dedicated svc account for actions/runner (Phenotype infra)' `
+                -Description 'GH Actions runner (Phenotype infra)' `
                 -PasswordNeverExpires `
                 -UserMayNotChangePassword | Out-Null
   Add-LocalGroupMember -Group 'Users' -Member $RunnerUser -ErrorAction SilentlyContinue
