@@ -19,7 +19,7 @@ terraform {
     }
     cloudflare = {
       source  = "cloudflare/cloudflare"
-      version = "~> 4.30"
+      version = "~> 5.18"
     }
     tailscale = {
       source  = "tailscale/tailscale"
