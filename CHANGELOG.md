@@ -1,19 +1,24 @@
 # Changelog
 
-All notable changes to `phenotype-infra` are documented here.
-Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
+- Bootstrap \`docs-lint.yml\` (Vale + actionlint) GitHub Actions workflow.
+- Repository hygiene stubs: \`SECURITY.md\`, \`CONTRIBUTING.md\`, \`CODEOWNERS\`.
 
-- Bootstrap `docs-lint.yml` (Vale + actionlint) GitHub Actions workflow.
-- Repository hygiene stubs: `SECURITY.md`, `CONTRIBUTING.md`, `CODEOWNERS`.
+### Changed
 
-### Notes
+### Deprecated
 
-- `dependabot.yml` (github-actions weekly + terraform weekly across
-  `iac/terraform/{,oci,gcp,aws,cloudflare}`) was already in place at repo
-  creation and is unchanged.
-- Existing workflows (`ansible-lint.yml`, `docs-check.yml`, `terraform-plan.yml`)
-  predate this bootstrap pass and continue to run alongside `docs-lint.yml`.
+### Removed
+
+### Fixed
+
+### Security
+
+[Unreleased]: https://github.com/KooshaPari/phenotype-infra/compare/HEAD...HEAD
