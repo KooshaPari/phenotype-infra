@@ -299,12 +299,20 @@ fn scaffold_full(
         let bytes = std::fs::read(entry.path())?;
         let text = String::from_utf8(bytes.clone()).ok();
         if let Some(s) = text {
+            // Order matters: longest/most-specific tokens first.
+            // The `agileplus` (lowercase) replacement at the end catches Tier-3
+            // hardcodes like `VERCEL_PROJECT = "agileplus"`, the
+            // `agileplus-landing-build` GitHub User-Agent, and breadcrumb labels.
+            // Earlier specific replacements (`agileplus-landing`,
+            // `agileplus.kooshapari.com`) must run first so they aren't broken
+            // by the broad lowercase pass.
             let replaced = s
                 .replace("agileplus-landing", &format!("{slug}-landing"))
                 .replace("agileplus.kooshapari.com", &format!("{slug}.kooshapari.com"))
                 .replace("KooshaPari/AgilePlus", repo)
                 .replace("AgilePlus — Spec-driven development engine", &format!("{title} — {tagline}"))
-                .replace("AgilePlus", title);
+                .replace("AgilePlus", title)
+                .replace("agileplus", slug);
             std::fs::write(&dst, replaced)?;
         } else {
             std::fs::write(&dst, &bytes)?;
