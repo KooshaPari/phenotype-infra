@@ -63,11 +63,7 @@ pub async fn list_availability_domains(cfg: &Config, region: &str) -> Result<Vec
 }
 
 /// Attempt to launch an A1.Flex instance in the given region/AD.
-pub async fn try_launch(
-    cfg: &Config,
-    region: &str,
-    ad_name: &str,
-) -> Result<LaunchOutcome> {
+pub async fn try_launch(cfg: &Config, region: &str, ad_name: &str) -> Result<LaunchOutcome> {
     let compartment = cfg
         .compartment_ocid
         .as_deref()

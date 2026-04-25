@@ -26,7 +26,11 @@ mod tailscale;
 #[command(name = "oci-post-acquire", version, about)]
 struct Cli {
     /// Path to oci-instance.json written by oci-lottery on success.
-    #[arg(long, env = "OCI_INSTANCE_FILE", default_value = "~/.cloudprovider/oci-instance.json")]
+    #[arg(
+        long,
+        env = "OCI_INSTANCE_FILE",
+        default_value = "~/.cloudprovider/oci-instance.json"
+    )]
     instance_file: String,
 
     /// DNS name to register (A record).
@@ -34,7 +38,11 @@ struct Cli {
     dns_name: String,
 
     /// Cloudflare zone ID for kooshapari.com.
-    #[arg(long, env = "CF_ZONE_ID", default_value = "6c9edab581e9c7b8fdb6a83adc6878ea")]
+    #[arg(
+        long,
+        env = "CF_ZONE_ID",
+        default_value = "6c9edab581e9c7b8fdb6a83adc6878ea"
+    )]
     cf_zone_id: String,
 
     /// Cloudflare API token file.
@@ -42,7 +50,11 @@ struct Cli {
     cf_token_file: String,
 
     /// Path to phenotype-infra repo (for mesh state commit).
-    #[arg(long, env = "PHENOTYPE_INFRA_REPO", default_value = "~/CodeProjects/Phenotype/repos/phenotype-infra")]
+    #[arg(
+        long,
+        env = "PHENOTYPE_INFRA_REPO",
+        default_value = "~/CodeProjects/Phenotype/repos/phenotype-infra"
+    )]
     repo: String,
 
     /// Path to ansible playbook.
@@ -50,7 +62,11 @@ struct Cli {
     playbook: String,
 
     /// Hook drop-in directory.
-    #[arg(long, env = "OCI_HOOKS_DIR", default_value = "~/.config/phenotype/oci-acquire-hooks.d")]
+    #[arg(
+        long,
+        env = "OCI_HOOKS_DIR",
+        default_value = "~/.config/phenotype/oci-acquire-hooks.d"
+    )]
     hooks_dir: String,
 
     /// Skip steps that mutate (DNS, mesh commit, notify, downstream hooks). For dry-run.
@@ -62,8 +78,8 @@ struct Cli {
 pub struct InstanceFile {
     pub instance_ocid: String,
     pub region: String,
-    pub ad: String,
-    pub public_ip: String,
+    pub ad: u8,
+    pub public_ip: Option<String>,
     pub acquired_at: String,
 }
 
@@ -83,8 +99,10 @@ fn dirs_home() -> Option<PathBuf> {
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")))
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
         .init();
 
     let cli = Cli::parse();
@@ -92,12 +110,18 @@ async fn main() -> Result<()> {
     info!(?started, "oci-post-acquire chain starting");
 
     // Step 1: read instance file.
-    let inst = read_instance(&cli.instance_file).await
+    let inst = read_instance(&cli.instance_file)
+        .await
         .context("step 1: read oci-instance.json")?;
-    info!(public_ip = %inst.public_ip, region = %inst.region, "instance file loaded");
+    let public_ip = inst
+        .public_ip
+        .as_deref()
+        .context("step 1: public_ip not set in instance file")?;
+    info!(public_ip, region = %inst.region, "instance file loaded");
 
     // Step 2: wait for SSH.
-    wait_for_ssh(&inst.public_ip, 22, 90).await
+    wait_for_ssh(public_ip, 22, 90)
+        .await
         .context("step 2: wait for SSH")?;
 
     // Step 3: tailscale enroll.
@@ -106,14 +130,21 @@ async fn main() -> Result<()> {
     }
 
     // Step 4: ansible baseline.
-    if let Err(e) = run_ansible(&cli.repo, &cli.playbook, &inst.public_ip).await {
+    if let Err(e) = run_ansible(&cli.repo, &cli.playbook, public_ip).await {
         error!(error = ?e, "step 4 (ansible) failed — node may be partially provisioned");
         return Err(e.context("step 4: ansible baseline"));
     }
 
     // Step 5: DNS.
     if !cli.dry_run {
-        if let Err(e) = cf::upsert_a_record(&cli.cf_zone_id, &cli.cf_token_file, &cli.dns_name, &inst.public_ip).await {
+        if let Err(e) = cf::upsert_a_record(
+            &cli.cf_zone_id,
+            &cli.cf_token_file,
+            &cli.dns_name,
+            public_ip,
+        )
+        .await
+        {
             warn!(error = ?e, "step 5 (DNS) failed — record may need manual upsert");
         }
     } else {
@@ -142,13 +173,17 @@ async fn main() -> Result<()> {
     }
 
     let elapsed = Utc::now().signed_duration_since(started);
-    info!(elapsed_s = elapsed.num_seconds(), "oci-post-acquire chain complete");
+    info!(
+        elapsed_s = elapsed.num_seconds(),
+        "oci-post-acquire chain complete"
+    );
     Ok(())
 }
 
 async fn read_instance(path: &str) -> Result<InstanceFile> {
     let p = expand(path);
-    let bytes = tokio::fs::read(&p).await
+    let bytes = tokio::fs::read(&p)
+        .await
         .with_context(|| format!("read {}", p.display()))?;
     let inst: InstanceFile = serde_json::from_slice(&bytes)?;
     Ok(inst)
@@ -167,7 +202,9 @@ async fn wait_for_ssh(host: &str, port: u16, max_secs: u64) -> Result<()> {
             }
             _ => {
                 if std::time::Instant::now() >= deadline {
-                    return Err(anyhow!("SSH unreachable on {addr} after {max_secs}s ({attempt} attempts)"));
+                    return Err(anyhow!(
+                        "SSH unreachable on {addr} after {max_secs}s ({attempt} attempts)"
+                    ));
                 }
                 tokio::time::sleep(Duration::from_secs(2)).await;
             }
@@ -178,10 +215,16 @@ async fn wait_for_ssh(host: &str, port: u16, max_secs: u64) -> Result<()> {
 async fn run_ansible(repo: &str, playbook: &str, host: &str) -> Result<()> {
     let repo_path = expand(repo);
     let inventory = format!("{host},");
-    info!(host, "running ansible-playbook (repo={})", repo_path.display());
+    info!(
+        host,
+        "running ansible-playbook (repo={})",
+        repo_path.display()
+    );
     let status = Command::new("ansible-playbook")
-        .arg("-i").arg(&inventory)
-        .arg("-u").arg("ubuntu")
+        .arg("-i")
+        .arg(&inventory)
+        .arg("-u")
+        .arg("ubuntu")
         .arg(playbook)
         .current_dir(&repo_path)
         .status()
@@ -196,8 +239,11 @@ async fn run_ansible(repo: &str, playbook: &str, host: &str) -> Result<()> {
 async fn notify(inst: &InstanceFile) -> Result<()> {
     // 7a: iMessage via agent-imessage-mcp (failsoft — best-effort CLI).
     let body = format!(
-        "OCI Always-Free acquired: {} in {} ({}). Public IP {}. Mesh provisioning complete.",
-        inst.instance_ocid, inst.region, inst.ad, inst.public_ip
+        "OCI Always-Free acquired: {} in {} (AD-{}). Public IP {}. Mesh provisioning complete.",
+        inst.instance_ocid,
+        inst.region,
+        inst.ad,
+        inst.public_ip.as_deref().unwrap_or("pending")
     );
     if let Err(e) = imessage_send(&body).await {
         warn!(error = ?e, "imessage failed — continuing");
@@ -211,10 +257,17 @@ async fn notify(inst: &InstanceFile) -> Result<()> {
         tokio::fs::create_dir_all(parent).await.ok();
     }
     let mut f = tokio::fs::OpenOptions::new()
-        .create(true).append(true).open(&path).await?;
+        .create(true)
+        .append(true)
+        .open(&path)
+        .await?;
     let line = format!(
         "# OCI Acquired {date}\n\n- ocid: {}\n- region: {}\n- ad: {}\n- ip: {}\n- acquired_at: {}\n",
-        inst.instance_ocid, inst.region, inst.ad, inst.public_ip, inst.acquired_at
+        inst.instance_ocid,
+        inst.region,
+        inst.ad,
+        inst.public_ip.as_deref().unwrap_or("pending"),
+        inst.acquired_at
     );
     f.write_all(line.as_bytes()).await?;
     Ok(())
@@ -224,10 +277,14 @@ async fn imessage_send(body: &str) -> Result<()> {
     // Best-effort: invoke agent-imessage-mcp CLI if present.
     let status = Command::new("agent-imessage")
         .arg("notify")
-        .arg("--to").arg("kooshapari@gmail.com")
-        .arg("--title").arg("OCI Acquired")
-        .arg("--body").arg(body)
-        .status().await;
+        .arg("--to")
+        .arg("kooshapari@gmail.com")
+        .arg("--title")
+        .arg("OCI Acquired")
+        .arg("--body")
+        .arg(body)
+        .status()
+        .await;
     match status {
         Ok(s) if s.success() => Ok(()),
         Ok(s) => Err(anyhow!("agent-imessage exited {s}")),

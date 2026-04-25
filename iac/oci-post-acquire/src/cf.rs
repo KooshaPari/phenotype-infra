@@ -8,7 +8,8 @@ use crate::expand;
 
 #[derive(Debug, Serialize)]
 struct ARecord<'a> {
-    #[serde(rename = "type")] kind: &'a str,
+    #[serde(rename = "type")]
+    kind: &'a str,
     name: &'a str,
     content: &'a str,
     ttl: u32,
@@ -33,7 +34,8 @@ struct ApiResp {
 }
 
 pub async fn upsert_a_record(zone_id: &str, token_file: &str, name: &str, ip: &str) -> Result<()> {
-    let token = tokio::fs::read_to_string(expand(token_file)).await
+    let token = tokio::fs::read_to_string(expand(token_file))
+        .await
         .with_context(|| format!("read CF token from {token_file}"))?;
     let token = token.trim();
 
@@ -42,20 +44,48 @@ pub async fn upsert_a_record(zone_id: &str, token_file: &str, name: &str, ip: &s
     let list_url = format!(
         "https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records?type=A&name={name}"
     );
-    let existing: ListResp = client.get(&list_url)
-        .bearer_auth(token).send().await?.json().await?;
+    let existing: ListResp = client
+        .get(&list_url)
+        .bearer_auth(token)
+        .send()
+        .await?
+        .json()
+        .await?;
     if !existing.success {
         return Err(anyhow!("cf list dns_records failed"));
     }
 
-    let body = ARecord { kind: "A", name, content: ip, ttl: 60, proxied: false };
+    let body = ARecord {
+        kind: "A",
+        name,
+        content: ip,
+        ttl: 60,
+        proxied: false,
+    };
 
     let resp: ApiResp = if let Some(rec) = existing.result.first() {
-        let url = format!("https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{}", rec.id);
-        client.put(&url).bearer_auth(token).json(&body).send().await?.json().await?
+        let url = format!(
+            "https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{}",
+            rec.id
+        );
+        client
+            .put(&url)
+            .bearer_auth(token)
+            .json(&body)
+            .send()
+            .await?
+            .json()
+            .await?
     } else {
         let url = format!("https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records");
-        client.post(&url).bearer_auth(token).json(&body).send().await?.json().await?
+        client
+            .post(&url)
+            .bearer_auth(token)
+            .json(&body)
+            .send()
+            .await?
+            .json()
+            .await?
     };
     if !resp.success {
         return Err(anyhow!("cf upsert failed: {}", resp.errors));

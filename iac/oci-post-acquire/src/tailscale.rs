@@ -57,10 +57,12 @@ pub async fn enroll(inst: &InstanceFile) -> Result<()> {
 
     let url = format!("https://api.tailscale.com/api/v2/tailnet/{tailnet}/keys");
     let client = reqwest::Client::new();
-    let resp = client.post(&url)
+    let resp = client
+        .post(&url)
         .basic_auth(&api_key, Some(""))
         .json(&body)
-        .send().await?;
+        .send()
+        .await?;
     if !resp.status().is_success() {
         let s = resp.status();
         let text = resp.text().await.unwrap_or_default();
@@ -76,16 +78,20 @@ pub async fn enroll(inst: &InstanceFile) -> Result<()> {
         parsed.key,
         inst.region.replace('_', "-")
     );
+    let public_ip = inst.public_ip.as_deref().context("public_ip not set")?;
     let status = Command::new("ssh")
-        .arg("-o").arg("StrictHostKeyChecking=accept-new")
-        .arg("-o").arg("ConnectTimeout=10")
-        .arg(format!("ubuntu@{}", inst.public_ip))
+        .arg("-o")
+        .arg("StrictHostKeyChecking=accept-new")
+        .arg("-o")
+        .arg("ConnectTimeout=10")
+        .arg(format!("ubuntu@{}", public_ip))
         .arg(&remote_cmd)
-        .status().await
+        .status()
+        .await
         .context("spawn ssh for tailscale install")?;
     if !status.success() {
         return Err(anyhow!("ssh tailscale install exited {status}"));
     }
-    info!(host = %inst.public_ip, "tailscale up complete");
+    info!(host = %public_ip, "tailscale up complete");
     Ok(())
 }

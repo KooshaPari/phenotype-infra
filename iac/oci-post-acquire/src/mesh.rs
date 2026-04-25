@@ -9,7 +9,8 @@ use tracing::info;
 pub async fn commit_state(repo: &str, inst: &InstanceFile) -> Result<()> {
     let repo_path = expand(repo);
     let doc = repo_path.join("docs/governance/compute-mesh-state.md");
-    let original = tokio::fs::read_to_string(&doc).await
+    let original = tokio::fs::read_to_string(&doc)
+        .await
         .with_context(|| format!("read {}", doc.display()))?;
 
     let timestamp = Utc::now().format("%Y-%m-%d %H:%M UTC");
@@ -17,7 +18,11 @@ pub async fn commit_state(repo: &str, inst: &InstanceFile) -> Result<()> {
         "\n\n<!-- oci-post-acquire: AUTO-INSERTED {timestamp} -->\n\
          ## OCI Status: ✅ ACQUIRED\n\n\
          - Region: `{}`\n- AD: `{}`\n- Public IP: `{}`\n- Instance OCID: `{}`\n- Acquired: `{}`\n",
-        inst.region, inst.ad, inst.public_ip, inst.instance_ocid, inst.acquired_at,
+        inst.region,
+        inst.ad,
+        inst.public_ip.as_deref().unwrap_or("pending"),
+        inst.instance_ocid,
+        inst.acquired_at,
     );
 
     // Idempotent: replace any prior auto-insert block.
@@ -34,7 +39,11 @@ pub async fn commit_state(repo: &str, inst: &InstanceFile) -> Result<()> {
         let cwd = repo_path.clone();
         let owned: Vec<String> = args.iter().map(|s| s.to_string()).collect();
         async move {
-            let status = Command::new("git").args(&owned).current_dir(&cwd).status().await?;
+            let status = Command::new("git")
+                .args(&owned)
+                .current_dir(&cwd)
+                .status()
+                .await?;
             if !status.success() {
                 return Err(anyhow!("git {:?} exited {status}", owned));
             }
@@ -42,7 +51,12 @@ pub async fn commit_state(repo: &str, inst: &InstanceFile) -> Result<()> {
         }
     };
     run(&["add", "docs/governance/compute-mesh-state.md"]).await?;
-    run(&["commit", "-m", &format!("chore(mesh): OCI acquired {timestamp} ({})", inst.region)]).await?;
+    run(&[
+        "commit",
+        "-m",
+        &format!("chore(mesh): OCI acquired {timestamp} ({})", inst.region),
+    ])
+    .await?;
     info!("mesh-state commit landed");
     Ok(())
 }
