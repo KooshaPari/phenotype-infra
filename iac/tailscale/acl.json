@@ -54,12 +54,12 @@
   "tests": [
     {
       "src":    "koosha@gmail.com",
-      "accept": ["tag:phenotype-mesh:22", "tag:oci:443"]
+      "accept": ["tag:phenotype-mesh:22"],
+      "deny":   ["tag:oci:443"]
     },
     {
       "src":    "tag:vercel-build",
-      "accept": ["tag:phenotype-mesh:443"],
-      "deny":   ["tag:home-desktop:22"]
+      "deny":   ["tag:phenotype-mesh:443", "tag:home-desktop:22"]
     }
   ]
 }

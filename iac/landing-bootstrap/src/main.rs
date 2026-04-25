@@ -377,7 +377,7 @@ fn vercel_link_deploy_attach(out: &Path, slug: &str, domain: &str, dry: &bool) -
     let project = format!("{slug}-landing");
     run(out, "vercel", &["link", "--yes", "--project", &project], dry)?;
     run(out, "vercel", &["deploy", "--prod", "--yes"], dry)?;
-    let _ = Command::new("vercel").args(["domains", "add", domain]).current_dir(out).status();
+    run(out, "vercel", &["domains", "add", domain], dry)?;
     eprintln!("  ✓ vercel: {project} live at https://{domain}");
     Ok(())
 }

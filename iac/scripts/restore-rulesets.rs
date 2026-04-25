@@ -1,4 +1,4 @@
-#!/usr/bin/env -S cargo +stable -Zscript
+#!/usr/bin/env -S cargo +nightly -Zscript
 ---
 [package]
 name = "restore-rulesets"
@@ -156,9 +156,21 @@ fn main() -> Result<()> {
             }))
             .collect();
 
-        let body = serde_json::json!({
+        let mut body = serde_json::json!({
             "rules": new_rules,
         });
+        if let Some(name) = &current.name {
+            body["name"] = serde_json::Value::String(name.clone());
+        }
+        if let Some(enforcement) = &current.enforcement {
+            body["enforcement"] = serde_json::Value::String(enforcement.clone());
+        }
+        if let Some(conditions) = &current.conditions {
+            body["conditions"] = conditions.clone();
+        }
+        if let Some(bypass_actors) = &current.bypass_actors {
+            body["bypass_actors"] = bypass_actors.clone();
+        }
         update_ruleset(&cli.owner, &entry.repo, entry.ruleset_id, &body)?;
         total_added += missing.len();
     }
