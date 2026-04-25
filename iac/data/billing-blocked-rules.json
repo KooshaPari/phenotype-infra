@@ -78,6 +78,16 @@
       "reason": "github-actions-billing-exhausted",
       "restored_at": null,
       "restored_by": null
+    },
+    {
+      "repo": "phenotype-dep-guard",
+      "ruleset_id": null,
+      "dropped_rules": [],
+      "dropped_at": "2026-04-25",
+      "reason": "merge-blocked-no-visible-ruleset",
+      "notes": "PR #3 (dependabot/github_actions/actions/checkout-6) admin merge denied with `MergePullRequest` permission error. No branch protection on main, no repo or org rulesets visible to API. Snyk status check ERRORs but does not appear in required checks. Token scopes: delete_repo, gist, read:org, repo, workflow. Suspect org-level managed policy or Snyk app installation gating. Manual UI merge or Snyk re-run needed.",
+      "restored_at": null,
+      "restored_by": null
     }
   ]
 }
