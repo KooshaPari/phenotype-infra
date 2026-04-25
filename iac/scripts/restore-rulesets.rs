@@ -1,4 +1,4 @@
-#!/usr/bin/env -S cargo +stable -Zscript
+#!/usr/bin/env -S cargo +nightly -Zscript
 ---
 [package]
 name = "restore-rulesets"

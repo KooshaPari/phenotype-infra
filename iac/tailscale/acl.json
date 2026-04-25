@@ -26,6 +26,12 @@
       "action": "accept",
       "src":    ["koosha@gmail.com"],
       "dst":    ["tag:phenotype-mesh:*"]
+    },
+    // Vercel build nodes can reach mesh nodes on HTTPS for deployment tasks.
+    {
+      "action": "accept",
+      "src":    ["tag:vercel-build"],
+      "dst":    ["tag:phenotype-mesh:443"]
     }
     // No public-port rules. No `autogroup:internet` rules. Egress to public
     // internet from nodes is governed at the cloud-provider firewall layer,
@@ -48,7 +54,12 @@
   // Auto-approvers: nodes tagged with their cloud-provider tag are pre-approved
   // for the mesh tag without manual admin review. Required for the post-acquire
   // hook (which enrolls fresh OCI VMs unattended).
-  "tagOwners_note": "tagOwners are listed above; this object enables key-bearer self-tagging.",
+  "autoApprovers": {
+    "routes": {
+      "100.64.0.0/10": ["koosha@gmail.com"]
+    },
+    "exitNode": ["koosha@gmail.com"]
+  },
 
   // Deny-all is implicit in Tailscale ACL: anything not matched above is denied.
   "tests": [
