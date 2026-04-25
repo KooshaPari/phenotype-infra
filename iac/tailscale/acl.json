@@ -26,6 +26,12 @@
       "action": "accept",
       "src":    ["koosha@gmail.com"],
       "dst":    ["tag:phenotype-mesh:*"]
+    },
+    // Vercel build runners need mesh access for private-registry pulls.
+    {
+      "action": "accept",
+      "src":    ["tag:vercel-build"],
+      "dst":    ["tag:phenotype-mesh:*"]
     }
     // No public-port rules. No `autogroup:internet` rules. Egress to public
     // internet from nodes is governed at the cloud-provider firewall layer,
@@ -54,7 +60,7 @@
   "tests": [
     {
       "src":    "koosha@gmail.com",
-      "accept": ["tag:phenotype-mesh:22", "tag:oci:443"]
+      "accept": ["tag:phenotype-mesh:22", "tag:phenotype-mesh:443"]
     },
     {
       "src":    "tag:vercel-build",
