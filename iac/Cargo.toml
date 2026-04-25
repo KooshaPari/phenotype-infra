@@ -3,6 +3,14 @@ resolver = "2"
 members = [
     "oci-lottery",
     "oci-post-acquire",
+    "tailscale/tailscale-keygen",
+]
+# `landing-bootstrap` declares its own `[workspace]` table (intentionally
+# detached — see its Cargo.toml) and uses a different dependency style
+# (`ureq` instead of `reqwest`). It is built and released independently; do
+# not pull it into this workspace.
+exclude = [
+    "landing-bootstrap",
 ]
 
 # Shared dependency versions for the iac/* Rust crates.
