@@ -1,0 +1,88 @@
+name: iac-rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "iac/Cargo.toml"
+      - "iac/Cargo.lock"
+      - "iac/oci-lottery/**"
+      - "iac/oci-post-acquire/**"
+      - "iac/tailscale/tailscale-keygen/**"
+      - "iac/landing-bootstrap/**"
+      - ".github/workflows/iac-rust.yml"
+  pull_request:
+    paths:
+      - "iac/Cargo.toml"
+      - "iac/Cargo.lock"
+      - "iac/oci-lottery/**"
+      - "iac/oci-post-acquire/**"
+      - "iac/tailscale/tailscale-keygen/**"
+      - "iac/landing-bootstrap/**"
+      - ".github/workflows/iac-rust.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: iac-rust-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workspace:
+    # Linux runner only — KooshaPari Actions billing constraint forbids macOS/Windows.
+    name: cargo check (iac workspace)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo registry + target
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: iac -> target
+
+      - name: cargo fmt --check
+        run: cargo fmt --manifest-path iac/Cargo.toml --all -- --check
+
+      - name: cargo check
+        run: cargo check --manifest-path iac/Cargo.toml --workspace --locked
+
+      - name: cargo clippy
+        run: cargo clippy --manifest-path iac/Cargo.toml --workspace --locked -- -D warnings
+
+      - name: cargo test
+        run: cargo test --manifest-path iac/Cargo.toml --workspace --locked
+
+  landing-bootstrap:
+    # Standalone crate with detached [workspace]; build separately.
+    name: cargo check (landing-bootstrap)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache cargo registry + target
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: iac/landing-bootstrap -> target
+
+      - name: cargo fmt --check
+        run: cargo fmt --manifest-path iac/landing-bootstrap/Cargo.toml --all -- --check
+
+      - name: cargo check
+        run: cargo check --manifest-path iac/landing-bootstrap/Cargo.toml --locked
+
+      - name: cargo clippy
+        run: cargo clippy --manifest-path iac/landing-bootstrap/Cargo.toml --locked -- -D warnings
+
+      - name: cargo test
+        run: cargo test --manifest-path iac/landing-bootstrap/Cargo.toml --locked
