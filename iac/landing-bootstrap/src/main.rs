@@ -193,15 +193,15 @@ fn main() -> Result<()> {
             eprintln!("  ✓ Tier-3 microfrontends scaffolded: /docs, /qa, /otel, /preview/<pr#>");
             eprintln!("    spec: docs/governance/path-microfrontends-tier3.md");
         }
-    }
 
-    // Step 3b: Governance files (dependabot, CI workflow, LICENSE).
-    // Emitted after the scaffold copy so they overlay on top of any
-    // template-provided versions and stay canonical across all landing
-    // repos. Skip with `--skip-governance` if a downstream caller needs
-    // bespoke governance.
-    if !args.skip_governance {
-        scaffold_governance(&out_dir, &args.license, &args.dry_run)?;
+        // Step 3b: Governance files (dependabot, CI workflow, LICENSE).
+        // Emitted after the scaffold copy so they overlay on top of any
+        // template-provided versions and stay canonical across all landing
+        // repos. Skip with `--skip-governance` if a downstream caller needs
+        // bespoke governance.
+        if !args.skip_governance {
+            scaffold_governance(&out_dir, &args.license, &args.dry_run)?;
+        }
     }
 
     // Step 4: GitHub.
