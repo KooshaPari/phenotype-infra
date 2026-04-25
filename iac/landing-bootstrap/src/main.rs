@@ -90,7 +90,34 @@ struct Args {
     /// See `docs/governance/path-microfrontends-tier3.md`.
     #[arg(long)]
     minimal: bool,
+
+    /// SPDX license identifier for the scaffolded LICENSE file. Default: MIT.
+    /// Currently supported: "MIT". Pass "NONE" to skip LICENSE emission.
+    #[arg(long, default_value = "MIT")]
+    license: String,
+
+    /// Skip emitting governance files (.github/dependabot.yml,
+    /// .github/workflows/ci.yml, LICENSE) into the scaffold output.
+    #[arg(long)]
+    skip_governance: bool,
+
+    /// Skip applying default repo topics post-create
+    /// (`org-page`, `astro`, `landing-page`).
+    #[arg(long)]
+    skip_topics: bool,
 }
+
+/// Default repo topics applied to every Tier-2 landing repo. Mirrors the
+/// `org-pages-default-pattern.md` governance doc — every landing repo is
+/// discoverable via the `org-page` topic for portfolio aggregation.
+const DEFAULT_REPO_TOPICS: &[&str] = &["org-page", "astro", "landing-page"];
+
+/// Embedded governance templates. See `templates/governance/` for sources.
+/// String-replace placeholder pattern (no handlebars dep) — only `{{YEAR}}`
+/// is currently substituted (in the LICENSE).
+const TPL_DEPENDABOT: &str = include_str!("../templates/governance/dependabot.yml");
+const TPL_CI: &str = include_str!("../templates/governance/ci.yml");
+const TPL_LICENSE_MIT: &str = include_str!("../templates/governance/LICENSE.MIT");
 
 /// Subdirectories under `src/pages/` that constitute Tier-3 microfrontends.
 /// Skipped when `--minimal` is passed.
@@ -168,10 +195,22 @@ fn main() -> Result<()> {
         }
     }
 
+    // Step 3b: Governance files (dependabot, CI workflow, LICENSE).
+    // Emitted after the scaffold copy so they overlay on top of any
+    // template-provided versions and stay canonical across all landing
+    // repos. Skip with `--skip-governance` if a downstream caller needs
+    // bespoke governance.
+    if !args.skip_governance {
+        scaffold_governance(&out_dir, &args.license, &args.dry_run)?;
+    }
+
     // Step 4: GitHub.
     if !args.skip_github {
         let gh_repo = format!("KooshaPari/{slug}-landing");
         git_init_commit_push(&out_dir, &gh_repo, &domain, &args.dry_run)?;
+        if !args.skip_topics {
+            apply_repo_topics(&gh_repo, DEFAULT_REPO_TOPICS, &args.dry_run)?;
+        }
     }
 
     // Step 5/6: Vercel.
@@ -388,6 +427,93 @@ fn vercel_link_deploy_attach(out: &Path, slug: &str, domain: &str, dry: &bool) -
     let _ = Command::new("vercel").args(["domains", "add", domain]).current_dir(out).status();
     eprintln!("  ✓ vercel: {project} live at https://{domain}");
     Ok(())
+}
+
+/// Emit canonical governance files into the scaffold output:
+///   - `.github/dependabot.yml` (npm + github-actions, weekly Monday)
+///   - `.github/workflows/ci.yml` (bun install + astro build)
+///   - `LICENSE` (MIT by default; `--license NONE` skips)
+///
+/// Files are *always* overwritten so governance stays canonical across all
+/// Tier-2 landing repos. This is the automation that prevents the drift
+/// fixed in the 6-PR sweep on 2026-04-25.
+fn scaffold_governance(out: &Path, license: &str, dry: &bool) -> Result<()> {
+    if *dry {
+        eprintln!("  [dry] scaffold governance (dependabot, ci.yml, LICENSE={license})");
+        return Ok(());
+    }
+    let gh_dir = out.join(".github");
+    let wf_dir = gh_dir.join("workflows");
+    std::fs::create_dir_all(&wf_dir)
+        .with_context(|| format!("create_dir_all {}", wf_dir.display()))?;
+
+    std::fs::write(gh_dir.join("dependabot.yml"), TPL_DEPENDABOT)
+        .context("write .github/dependabot.yml")?;
+    std::fs::write(wf_dir.join("ci.yml"), TPL_CI)
+        .context("write .github/workflows/ci.yml")?;
+
+    match license.to_ascii_uppercase().as_str() {
+        "NONE" => {
+            eprintln!("  ↺ LICENSE skipped (--license NONE)");
+        }
+        "MIT" => {
+            let year = current_year();
+            let body = TPL_LICENSE_MIT.replace("{{YEAR}}", &year);
+            std::fs::write(out.join("LICENSE"), body).context("write LICENSE")?;
+        }
+        other => bail!("unsupported --license {other} (supported: MIT, NONE)"),
+    }
+    eprintln!("  ✓ governance: dependabot.yml, ci.yml, LICENSE ({license})");
+    Ok(())
+}
+
+/// Apply default GitHub topics (`org-page`, `astro`, `landing-page`) so the
+/// repo shows up in `projects.kooshapari.com` portfolio aggregation
+/// (`topic:org-page` query). Idempotent: `--add-topic` is a no-op if the
+/// topic already exists.
+fn apply_repo_topics(gh_repo: &str, topics: &[&str], dry: &bool) -> Result<()> {
+    if *dry {
+        eprintln!("  [dry] gh repo edit {gh_repo} --add-topic {}", topics.join(","));
+        return Ok(());
+    }
+    let mut cmd = Command::new("gh");
+    cmd.args(["repo", "edit", gh_repo]);
+    for t in topics {
+        cmd.args(["--add-topic", t]);
+    }
+    let out = cmd.output().context("gh repo edit --add-topic")?;
+    if out.status.success() {
+        eprintln!("  ✓ topics applied to {gh_repo}: {}", topics.join(", "));
+    } else {
+        // Don't fail the bootstrap on a topic-edit hiccup — log and continue.
+        eprintln!(
+            "  ⚠ gh repo edit topics non-zero (continuing): {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        );
+    }
+    Ok(())
+}
+
+/// UNIX-epoch-based 4-digit year. Avoids pulling in `chrono`/`time` for a
+/// single LICENSE substitution. Days/4year cycle math is sufficient — we
+/// never need sub-day precision for a copyright year.
+fn current_year() -> String {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    let days = secs / 86_400;
+    // Days since 1970-01-01 → year. Standard civil-from-days algorithm
+    // (Howard Hinnant), trimmed to year-only output.
+    let z = days + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = (z - era * 146_097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let year = if mp < 10 { y } else { y + 1 };
+    year.to_string()
 }
 
 // Tiny inline shellexpand replacement to avoid the dep — only `~/` expansion.

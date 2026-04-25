@@ -5,8 +5,22 @@ Tier 2 org-pages bootstrap automation. Given a slug + repo, scaffolds a
 
 1. CF DNS CNAME via API
 2. Astro template scaffold (or 301 stub if `.dev` exists)
-3. GitHub repo create + push
-4. Vercel link + deploy + custom domain attach
+3. Governance overlay: `.github/dependabot.yml`, `.github/workflows/ci.yml`, `LICENSE`
+4. GitHub repo create + push
+5. Repo topics applied: `org-page`, `astro`, `landing-page`
+6. Vercel link + deploy + custom domain attach
+
+## Governance defaults
+
+The scaffold always emits these files (templates under
+`templates/governance/`, embedded via `include_str!`):
+
+- `.github/dependabot.yml` — npm + github-actions, weekly Monday
+- `.github/workflows/ci.yml` — bun install + astro build on push/PR to main
+- `LICENSE` — MIT (override with `--license <SPDX>` or `--license NONE`)
+
+Disable governance emission with `--skip-governance`. Disable topic
+application with `--skip-topics`.
 
 ## Usage
 
