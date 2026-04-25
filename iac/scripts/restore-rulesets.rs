@@ -59,7 +59,7 @@ struct DataFile {
 #[derive(Debug, Deserialize, Serialize)]
 struct Entry {
     repo: String,
-    ruleset_id: u64,
+    ruleset_id: Option<u64>,
     dropped_rules: Vec<String>,
     #[serde(default)]
     restored_at: Option<String>,
@@ -99,19 +99,23 @@ fn main() -> Result<()> {
                 continue;
             }
         }
+        let Some(ruleset_id) = entry.ruleset_id else {
+            println!("skip {} (no ruleset_id)", entry.repo);
+            continue;
+        };
         if entry.restored_at.is_some() {
             println!(
                 "skip {}/{} (already restored {})",
                 entry.repo,
-                entry.ruleset_id,
+                ruleset_id,
                 entry.restored_at.as_deref().unwrap_or("?")
             );
             total_skipped += entry.dropped_rules.len();
             continue;
         }
 
-        let current = fetch_ruleset(&cli.owner, &entry.repo, entry.ruleset_id)
-            .with_context(|| format!("fetching {}/{}", entry.repo, entry.ruleset_id))?;
+        let current = fetch_ruleset(&cli.owner, &entry.repo, ruleset_id)
+            .with_context(|| format!("fetching {}/{}", entry.repo, ruleset_id))?;
         let present: std::collections::HashSet<&str> =
             current.rules.iter().map(|r| r.kind.as_str()).collect();
 
@@ -125,7 +129,7 @@ fn main() -> Result<()> {
             println!(
                 "ok   {}/{} — all {} rules already present",
                 entry.repo,
-                entry.ruleset_id,
+                ruleset_id,
                 entry.dropped_rules.len()
             );
             continue;
@@ -134,7 +138,7 @@ fn main() -> Result<()> {
         println!(
             "add  {}/{} — {} missing rule(s): {:?}",
             entry.repo,
-            entry.ruleset_id,
+            ruleset_id,
             missing.len(),
             missing
         );
@@ -159,7 +163,7 @@ fn main() -> Result<()> {
         let body = serde_json::json!({
             "rules": new_rules,
         });
-        update_ruleset(&cli.owner, &entry.repo, entry.ruleset_id, &body)?;
+        update_ruleset(&cli.owner, &entry.repo, ruleset_id, &body)?;
         total_added += missing.len();
     }
 
