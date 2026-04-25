@@ -28,28 +28,70 @@ pub async fn fire_all(inst: &AcquiredInstance, infra_repo: Option<&PathBuf>) {
 }
 
 async fn run_post_acquire_hook(inst: &AcquiredInstance) -> Result<()> {
+    // Resolution order (sibling crate `oci-post-acquire` is now the
+    // first-class integration; the `.sh` wrapper is kept as a legacy
+    // fallback for hosts that haven't installed the Rust binary yet):
+    //   1. `oci-post-acquire` binary on PATH
+    //   2. `~/.local/bin/oci-post-acquire`  (cargo install --root ~/.local)
+    //   3. `~/.local/bin/oci-post-acquire.sh` (legacy minimal wrapper)
+    //
+    // The Rust binary reads `~/.cloudprovider/oci-instance.json` (which
+    // `oci-lottery` writes immediately before firing hooks), so it needs
+    // no extra args. We still pass the env vars for the legacy wrapper.
     let home = std::env::var("HOME").unwrap_or_default();
-    let path = PathBuf::from(home).join(".local/bin/oci-post-acquire.sh");
-    if !tokio::fs::try_exists(&path).await.unwrap_or(false) {
-        info!(?path, "no post-acquire hook present, skipping");
-        return Ok(());
-    }
     let payload = serde_json::to_string(inst)?;
-    let status = Command::new("bash")
-        .arg(&path)
-        .env("OCI_LOTTERY_RESULT_JSON", payload)
-        .env("OCI_INSTANCE_OCID", &inst.instance_ocid)
-        .env("OCI_REGION", &inst.region)
-        .env(
-            "OCI_PUBLIC_IP",
-            inst.public_ip.as_deref().unwrap_or(""),
+    let envs: Vec<(&str, String)> = vec![
+        ("OCI_LOTTERY_RESULT_JSON", payload),
+        ("OCI_INSTANCE_OCID", inst.instance_ocid.clone()),
+        ("OCI_REGION", inst.region.clone()),
+        ("OCI_PUBLIC_IP", inst.public_ip.clone().unwrap_or_default()),
+    ];
+
+    let path_bin = PathBuf::from(&home).join(".local/bin/oci-post-acquire");
+    let path_sh = PathBuf::from(&home).join(".local/bin/oci-post-acquire.sh");
+
+    let (program, args): (String, Vec<String>) = if which_on_path("oci-post-acquire").await {
+        ("oci-post-acquire".to_string(), vec![])
+    } else if tokio::fs::try_exists(&path_bin).await.unwrap_or(false) {
+        (path_bin.to_string_lossy().into_owned(), vec![])
+    } else if tokio::fs::try_exists(&path_sh).await.unwrap_or(false) {
+        (
+            "bash".to_string(),
+            vec![path_sh.to_string_lossy().into_owned()],
         )
-        .status()
-        .await?;
+    } else {
+        info!(
+            ?path_bin,
+            ?path_sh,
+            "no post-acquire hook present (tried oci-post-acquire binary and .sh wrapper), skipping"
+        );
+        return Ok(());
+    };
+
+    info!(%program, ?args, "invoking post-acquire hook");
+    let mut cmd = Command::new(&program);
+    cmd.args(&args);
+    for (k, v) in &envs {
+        cmd.env(k, v);
+    }
+    let status = cmd.status().await?;
     if !status.success() {
-        error!(?status, "post-acquire hook exited non-zero");
+        error!(?status, %program, "post-acquire hook exited non-zero");
     }
     Ok(())
+}
+
+async fn which_on_path(bin: &str) -> bool {
+    // Use `sh -c command -v` rather than scanning $PATH ourselves; the
+    // shell respects functions, aliases, and per-shell PATH munging that
+    // a manual walk would miss. This is a 1-line shellout, not a script.
+    Command::new("sh")
+        .arg("-c")
+        .arg(format!("command -v {bin} >/dev/null 2>&1"))
+        .status()
+        .await
+        .map(|s| s.success())
+        .unwrap_or(false)
 }
 
 async fn post_webhook(inst: &AcquiredInstance) -> Result<()> {
