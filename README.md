@@ -62,16 +62,24 @@ See also: the parent compute-mesh playbook lives at `../docs/governance/compute_
 ## Repository layout
 
 ```
-docs/adr/           Architectural decisions (immutable once accepted)
-docs/specs/         Topology, routing, credential inventory, rollback specs
-docs/runbooks/      Step-by-step operational procedures
-docs/governance/    Security, cost, incident-response policies
-iac/terraform/      Per-provider Terraform modules (stubs)
-iac/ansible/        Configuration management playbooks
-iac/scripts/        Bootstrap helpers (bash ≤5-line or Rust)
-configs/            Per-service .example config files
-.github/workflows/  CI (terraform plan, ansible-lint, docs check)
+docs/adr/             Architectural decisions (immutable once accepted)
+docs/specs/           Topology, routing, credential inventory, rollback specs
+docs/runbooks/        Step-by-step operational procedures
+docs/governance/      Security, cost, incident-response policies
+iac/                  Operational crates index — see iac/README.md
+iac/oci-lottery/      A1.Flex capacity-lottery daemon (Rust)
+iac/oci-post-acquire/ Post-acquire hook orchestrator
+iac/tailscale/        Tailscale ACL + ephemeral keygen (Rust)
+iac/landing-bootstrap/ Per-node landing-page generator (Rust)
+iac/terraform/        Per-provider Terraform modules (stubs)
+iac/ansible/          Configuration management playbooks
+iac/scripts/          Bootstrap helpers (bash ≤5-line or Rust)
+configs/              Per-service .example config files
+.github/workflows/    CI (terraform plan, ansible-lint, docs check)
 ```
+
+For the operational-crates entry index (oci-lottery, oci-post-acquire,
+tailscale-keygen, landing-bootstrap), see [`iac/README.md`](iac/README.md).
 
 ## License
 
