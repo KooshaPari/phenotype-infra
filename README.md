@@ -1,5 +1,11 @@
 # phenotype-infra
 
+[![Build](https://img.shields.io/github/actions/workflow/status/KooshaPari/phenotype-infra/quality-gate.yml?branch=main&label=build)](https://github.com/KooshaPari/phenotype-infra/actions)
+[![Release](https://img.shields.io/github/v/release/KooshaPari/phenotype-infra?include_prereleases&sort=semver)](https://github.com/KooshaPari/phenotype-infra/releases)
+[![License](https://img.shields.io/github/license/KooshaPari/phenotype-infra)](LICENSE)
+[![Phenotype](https://img.shields.io/badge/Phenotype-org-blueviolet)](https://github.com/KooshaPari)
+
+
 Canonical home for Phenotype-org infrastructure-as-code, architectural decision records (ADRs), specifications, and operational runbooks. Supports the **7-node hybrid compute mesh** spanning Oracle Cloud, GCP, AWS, Cloudflare, and a Tailscale-attached home desktop.
 
 ## Overview
