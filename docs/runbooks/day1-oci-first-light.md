@@ -14,6 +14,23 @@ Bring up `oci-primary` and `oci-secondary` from zero to running Forgejo + Vaultw
 
 ## Step 1 — Provision VMs
 
+> ⚠️ **A1.Flex capacity warning.** OCI Always-Free Ampere routinely returns
+> `Out of host capacity` for hours or days at a time. Do **not** sit on a
+> blocking `terraform apply` and refresh by hand. Instead, run the
+> [`iac/oci-lottery`](../../iac/oci-lottery/README.md) Rust daemon, which
+> polls `oci compute instance launch` across configured regions on a
+> 2-minute jittered interval until Oracle hands out capacity, then fires a
+> post-acquire hook chain (see
+> [`iac/oci-post-acquire/oci-post-acquire.sh`](../../iac/oci-post-acquire/oci-post-acquire.sh)
+> and [`iac/oci-post-acquire/hooks.d.example/`](../../iac/oci-post-acquire/hooks.d.example))
+> to commit state, relay an iMessage, and hand off to the Tailscale +
+> Ansible steps below.
+>
+> Sequence in practice: run `oci-lottery` first to obtain instances,
+> **then** import them into Terraform state (or let Terraform recognize
+> them via matching `display_name`) before running `terraform apply` for
+> the surrounding VCN / security-list / DNS resources.
+
 ```bash
 cd iac/terraform/oci
 bw get notes oci/terraform-env | source /dev/stdin  # exports TF_VAR_* creds
