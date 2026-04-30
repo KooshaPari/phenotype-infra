@@ -27,3 +27,5 @@ Defers to `~/.claude/CLAUDE.md` for global rules. Repo-specific overrides below.
 - `AGENTS.md` — agent operational rules
 - `docs/governance/security-policy.md` — token + SSH rotation
 - `docs/governance/incident-response.md` — outage playbooks
+- `docs/governance/journey-traceability-standard.md` — required journey
+  evidence pattern for docs that describe real flows
