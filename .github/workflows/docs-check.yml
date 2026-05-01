@@ -14,7 +14,7 @@ jobs:
   markdown-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           globs: |
@@ -24,7 +24,7 @@ jobs:
   adr-frontmatter:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
       - name: Validate ADR headers
         run: |
           for f in docs/adr/*.md; do

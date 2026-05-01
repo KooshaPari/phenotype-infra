@@ -23,7 +23,7 @@ jobs:
           - iac/terraform/aws
           - iac/terraform/cloudflare
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
