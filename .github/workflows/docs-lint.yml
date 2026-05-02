@@ -11,7 +11,7 @@ jobs:
     name: Vale (markdown prose)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Run Vale
         uses: errata-ai/vale-action@reviewdog
@@ -27,7 +27,7 @@ jobs:
     name: actionlint (GitHub Actions)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Install actionlint
         run: |
