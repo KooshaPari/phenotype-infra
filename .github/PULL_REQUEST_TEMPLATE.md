@@ -1,20 +1,22 @@
 ## Summary
 
-<!-- What does this PR do, in 1-3 sentences -->
+<!-- Brief description of changes -->
 
-## Changes
+## Type of change
 
-<!-- Bullet list of key changes -->
-- 
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation
+- [ ] Chore / refactor
+- [ ] Breaking change
 
-## Testing
+## Test plan
 
-<!-- How was this verified? -->
-- [ ] Local lint passes
-- [ ] Local tests pass
-- [ ] Manual smoke test (if applicable)
+- [ ] `cargo fmt --check`
+- [ ] `cargo clippy -- -D warnings`
+- [ ] `cargo test`
+- [ ] `cargo deny check advisories`
 
 ## Related
 
-<!-- Issues/PRs/specs this addresses -->
-Closes #
+<!-- Closes #issue, refs #other -->
