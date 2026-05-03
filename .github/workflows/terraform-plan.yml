@@ -23,10 +23,10 @@ jobs:
           - iac/terraform/aws
           - iac/terraform/cloudflare
     steps:
-      - uses: actions/checkout@{"message":"Not Found","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"404"}
+      - uses: actions/checkout@v6
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@{"message":"Not Found","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"404"}
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.7.5"
           terraform_wrapper: false
