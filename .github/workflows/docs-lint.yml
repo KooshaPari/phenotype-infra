@@ -11,10 +11,10 @@ jobs:
     name: Vale (markdown prose)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@{"message":"Not Found","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"404"}
 
       - name: Run Vale
-        uses: errata-ai/vale-action@reviewdog
+        uses: errata-ai/vale-action@{"message":"Not Found","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"404"}
         with:
           files: '["."]'
           filter_mode: nofilter
@@ -27,7 +27,7 @@ jobs:
     name: actionlint (GitHub Actions)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@{"message":"Not Found","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"404"}
 
       - name: Install actionlint
         run: |

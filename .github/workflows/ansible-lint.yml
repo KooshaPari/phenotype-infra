@@ -13,7 +13,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: ansible/ansible-lint@5fac056c45595896c973fbde871f01f6cb14d74c  # was: @main
+      - uses: actions/checkout@{"message":"Not Found","documentation_url":"https://docs.github.com/rest/commits/commits#get-a-commit","status":"404"}
+      - uses: ansible/ansible-lint@5fac056c45595896c973fbde871f01f6cb14d74c  # was: @{"message":"Not Found","documentation_url":"https://docs.github.com/rest/repos/repos#get-a-repository","status":"404"}
         with:
           working_directory: iac/ansible
