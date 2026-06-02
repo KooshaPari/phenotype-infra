@@ -181,8 +181,7 @@ async fn update_compute_mesh_state(repo: &PathBuf, inst: &AcquiredInstance) -> R
 async fn imessage_relay(inst: &AcquiredInstance) -> Result<()> {
     // Optional: only fires if agent-imessage MCP socket is reachable.
     // We do a "best effort" CLI invocation; absence is not an error.
-    let bin = std::env::var("AGENT_IMESSAGE_CLI")
-        .unwrap_or_else(|_| "agent-imessage".to_string());
+    let bin = std::env::var("AGENT_IMESSAGE_CLI").unwrap_or_else(|_| "agent-imessage".to_string());
     if which::which(&bin).is_err() {
         info!(bin = %bin, "imessage CLI not on PATH, skipping");
         return Ok(());

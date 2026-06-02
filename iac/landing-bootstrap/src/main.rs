@@ -121,7 +121,12 @@ const TPL_LICENSE_MIT: &str = include_str!("../templates/governance/LICENSE.MIT"
 
 /// Subdirectories under `src/pages/` that constitute Tier-3 microfrontends.
 /// Skipped when `--minimal` is passed.
-const TIER3_PAGE_DIRS: &[&str] = &["src/pages/docs", "src/pages/qa", "src/pages/otel", "src/pages/preview"];
+const TIER3_PAGE_DIRS: &[&str] = &[
+    "src/pages/docs",
+    "src/pages/qa",
+    "src/pages/otel",
+    "src/pages/preview",
+];
 
 #[derive(Debug, Deserialize)]
 struct GhRepoMeta {
@@ -188,7 +193,10 @@ fn main() -> Result<()> {
             args.minimal,
         )?;
         if args.minimal {
-            eprintln!("  ↺ --minimal: skipped Tier-3 microfrontends ({})", TIER3_PAGE_DIRS.join(", "));
+            eprintln!(
+                "  ↺ --minimal: skipped Tier-3 microfrontends ({})",
+                TIER3_PAGE_DIRS.join(", ")
+            );
         } else {
             eprintln!("  ✓ Tier-3 microfrontends scaffolded: /docs, /qa, /otel, /preview/<pr#>");
             eprintln!("    spec: docs/governance/path-microfrontends-tier3.md");
@@ -248,7 +256,10 @@ fn gh_repo_meta(repo: &str) -> Result<GhRepoMeta> {
         .output()
         .context("gh repo view")?;
     if !out.status.success() {
-        bail!("gh repo view {repo}: {}", String::from_utf8_lossy(&out.stderr));
+        bail!(
+            "gh repo view {repo}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
     }
     Ok(serde_json::from_slice(&out.stdout)?)
 }
@@ -300,7 +311,10 @@ fn scaffold_full(
     minimal: bool,
 ) -> Result<()> {
     if *dry {
-        eprintln!("  [dry] scaffold {slug}-landing from {} (minimal={minimal})", template.display());
+        eprintln!(
+            "  [dry] scaffold {slug}-landing from {} (minimal={minimal})",
+            template.display()
+        );
         return Ok(());
     }
     if out.exists() {
@@ -309,7 +323,10 @@ fn scaffold_full(
     }
     std::fs::create_dir_all(out)?;
 
-    for entry in walkdir::WalkDir::new(template).into_iter().filter_map(|e| e.ok()) {
+    for entry in walkdir::WalkDir::new(template)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
         let rel = match entry.path().strip_prefix(template) {
             Ok(r) => r,
             Err(_) => continue,
@@ -317,8 +334,16 @@ fn scaffold_full(
         if rel.as_os_str().is_empty() {
             continue;
         }
-        let comps: Vec<_> = rel.components().map(|c| c.as_os_str().to_string_lossy().into_owned()).collect();
-        if comps.iter().any(|c| matches!(c.as_str(), "node_modules" | "dist" | ".astro" | ".vercel" | ".git" | "bun.lockb")) {
+        let comps: Vec<_> = rel
+            .components()
+            .map(|c| c.as_os_str().to_string_lossy().into_owned())
+            .collect();
+        if comps.iter().any(|c| {
+            matches!(
+                c.as_str(),
+                "node_modules" | "dist" | ".astro" | ".vercel" | ".git" | "bun.lockb"
+            )
+        }) {
             continue;
         }
         // --minimal: skip Tier-3 page subtrees so the scaffold ships only the
@@ -326,7 +351,10 @@ fn scaffold_full(
         // `phenotype-infra/docs/governance/path-microfrontends-tier3.md`.
         if minimal {
             let rel_str = rel.to_string_lossy().replace('\\', "/");
-            if TIER3_PAGE_DIRS.iter().any(|d| rel_str == *d || rel_str.starts_with(&format!("{d}/"))) {
+            if TIER3_PAGE_DIRS
+                .iter()
+                .any(|d| rel_str == *d || rel_str.starts_with(&format!("{d}/")))
+            {
                 continue;
             }
         }
@@ -347,9 +375,15 @@ fn scaffold_full(
             // by the broad lowercase pass.
             let replaced = s
                 .replace("agileplus-landing", &format!("{slug}-landing"))
-                .replace("agileplus.kooshapari.com", &format!("{slug}.kooshapari.com"))
+                .replace(
+                    "agileplus.kooshapari.com",
+                    &format!("{slug}.kooshapari.com"),
+                )
                 .replace("KooshaPari/AgilePlus", repo)
-                .replace("AgilePlus — Spec-driven development engine", &format!("{title} — {tagline}"))
+                .replace(
+                    "AgilePlus — Spec-driven development engine",
+                    &format!("{title} — {tagline}"),
+                )
                 .replace("AgilePlus", title)
                 .replace("agileplus", slug);
             std::fs::write(&dst, replaced)?;
@@ -374,12 +408,20 @@ fn scaffold_redirect(out: &Path, slug: &str, canonical: &str, dry: &bool) -> Res
         ],
         "trailingSlash": false
     });
-    std::fs::write(out.join("vercel.json"), serde_json::to_string_pretty(&vercel_json)?)?;
+    std::fs::write(
+        out.join("vercel.json"),
+        serde_json::to_string_pretty(&vercel_json)?,
+    )?;
     std::fs::write(
         out.join("README.md"),
-        format!("# {slug}-landing\n\n301 redirect from {slug}.kooshapari.com → {canonical} (canonical .dev domain).\n"),
+        format!(
+            "# {slug}-landing\n\n301 redirect from {slug}.kooshapari.com → {canonical} (canonical .dev domain).\n"
+        ),
     )?;
-    std::fs::write(out.join(".gitignore"), "node_modules/\n.vercel/\n.DS_Store\n")?;
+    std::fs::write(
+        out.join(".gitignore"),
+        "node_modules/\n.vercel/\n.DS_Store\n",
+    )?;
     Ok(())
 }
 
@@ -388,10 +430,17 @@ fn run(dir: &Path, prog: &str, args: &[&str], dry: &bool) -> Result<String> {
         eprintln!("  [dry] $ {prog} {}", args.join(" "));
         return Ok(String::new());
     }
-    let out = Command::new(prog).args(args).current_dir(dir).output()
+    let out = Command::new(prog)
+        .args(args)
+        .current_dir(dir)
+        .output()
         .with_context(|| format!("run {prog} {:?}", args))?;
     if !out.status.success() {
-        bail!("{prog} {:?} failed: {}", args, String::from_utf8_lossy(&out.stderr));
+        bail!(
+            "{prog} {:?} failed: {}",
+            args,
+            String::from_utf8_lossy(&out.stderr)
+        );
     }
     Ok(String::from_utf8_lossy(&out.stdout).into_owned())
 }
@@ -402,29 +451,64 @@ fn git_init_commit_push(out: &Path, gh_repo: &str, domain: &str, dry: &bool) -> 
     }
     run(out, "git", &["add", "-A"], dry)?;
     let _ = Command::new("git")
-        .args(["-c", "commit.gpgsign=false", "commit", "-m", &format!("feat: scaffold {domain} landing page\n\nTier 2 of org-pages tree.")])
+        .args([
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-m",
+            &format!("feat: scaffold {domain} landing page\n\nTier 2 of org-pages tree."),
+        ])
         .current_dir(out)
         .status();
 
-    let exists = Command::new("gh").args(["repo", "view", gh_repo]).output()?.status.success();
+    let exists = Command::new("gh")
+        .args(["repo", "view", gh_repo])
+        .output()?
+        .status
+        .success();
     if !exists {
         run(
             out,
             "gh",
-            &["repo", "create", gh_repo, "--public", "--description", &format!("Landing page for {domain}"), "--homepage", &format!("https://{domain}")],
+            &[
+                "repo",
+                "create",
+                gh_repo,
+                "--public",
+                "--description",
+                &format!("Landing page for {domain}"),
+                "--homepage",
+                &format!("https://{domain}"),
+            ],
             dry,
         )?;
     }
-    let _ = Command::new("git").args(["remote", "add", "origin", &format!("https://github.com/{gh_repo}.git")]).current_dir(out).status();
+    let _ = Command::new("git")
+        .args([
+            "remote",
+            "add",
+            "origin",
+            &format!("https://github.com/{gh_repo}.git"),
+        ])
+        .current_dir(out)
+        .status();
     run(out, "git", &["push", "-u", "origin", "main"], dry)?;
     Ok(())
 }
 
 fn vercel_link_deploy_attach(out: &Path, slug: &str, domain: &str, dry: &bool) -> Result<()> {
     let project = format!("{slug}-landing");
-    run(out, "vercel", &["link", "--yes", "--project", &project], dry)?;
+    run(
+        out,
+        "vercel",
+        &["link", "--yes", "--project", &project],
+        dry,
+    )?;
     run(out, "vercel", &["deploy", "--prod", "--yes"], dry)?;
-    let _ = Command::new("vercel").args(["domains", "add", domain]).current_dir(out).status();
+    let _ = Command::new("vercel")
+        .args(["domains", "add", domain])
+        .current_dir(out)
+        .status();
     eprintln!("  ✓ vercel: {project} live at https://{domain}");
     Ok(())
 }
@@ -449,8 +533,7 @@ fn scaffold_governance(out: &Path, license: &str, dry: &bool) -> Result<()> {
 
     std::fs::write(gh_dir.join("dependabot.yml"), TPL_DEPENDABOT)
         .context("write .github/dependabot.yml")?;
-    std::fs::write(wf_dir.join("ci.yml"), TPL_CI)
-        .context("write .github/workflows/ci.yml")?;
+    std::fs::write(wf_dir.join("ci.yml"), TPL_CI).context("write .github/workflows/ci.yml")?;
 
     match license.to_ascii_uppercase().as_str() {
         "NONE" => {
@@ -473,7 +556,10 @@ fn scaffold_governance(out: &Path, license: &str, dry: &bool) -> Result<()> {
 /// topic already exists.
 fn apply_repo_topics(gh_repo: &str, topics: &[&str], dry: &bool) -> Result<()> {
     if *dry {
-        eprintln!("  [dry] gh repo edit {gh_repo} --add-topic {}", topics.join(","));
+        eprintln!(
+            "  [dry] gh repo edit {gh_repo} --add-topic {}",
+            topics.join(",")
+        );
         return Ok(());
     }
     let mut cmd = Command::new("gh");

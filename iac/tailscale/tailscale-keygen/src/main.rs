@@ -107,8 +107,8 @@ async fn main() -> Result<()> {
         capabilities: Capabilities {
             devices: Devices {
                 create: CreateCaps {
-                    reusable: false,    // single-use
-                    ephemeral: true,    // node deregistered when offline
+                    reusable: false,     // single-use
+                    ephemeral: true,     // node deregistered when offline
                     preauthorized: true, // skip admin review (gated by tags)
                     tags: cli.tags.clone(),
                 },
