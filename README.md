@@ -1,3 +1,6 @@
+> **Work state:** SCAFFOLD · **Progress:** `█████░░░░░ 50%`
+> Free-tier compute-mesh IaC; terraform validates but is never-applied (human-apply-only) scaffold. · updated 2026-06-02
+
 # phenotype-infra
 
 [![Build](https://img.shields.io/github/actions/workflow/status/KooshaPari/phenotype-infra/quality-gate.yml?branch=main&label=build)](https://github.com/KooshaPari/phenotype-infra/actions)
