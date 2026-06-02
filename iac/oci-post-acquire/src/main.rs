@@ -84,10 +84,10 @@ pub struct InstanceFile {
 }
 
 fn expand(p: &str) -> PathBuf {
-    if let Some(rest) = p.strip_prefix("~/") {
-        if let Some(home) = dirs_home() {
-            return home.join(rest);
-        }
+    if let Some(rest) = p.strip_prefix("~/")
+        && let Some(home) = dirs_home()
+    {
+        return home.join(rest);
     }
     PathBuf::from(p)
 }
@@ -148,24 +148,24 @@ async fn main() -> Result<()> {
     }
 
     // Step 6: mesh state commit.
-    if !cli.dry_run {
-        if let Err(e) = mesh::commit_state(&cli.repo, &inst).await {
-            warn!(error = ?e, "step 6 (mesh-state commit) failed — manual git commit needed");
-        }
+    if !cli.dry_run
+        && let Err(e) = mesh::commit_state(&cli.repo, &inst).await
+    {
+        warn!(error = ?e, "step 6 (mesh-state commit) failed — manual git commit needed");
     }
 
     // Step 7: notify.
-    if !cli.dry_run {
-        if let Err(e) = notify(&inst).await {
-            warn!(error = ?e, "step 7 (notify) failed — failsoft");
-        }
+    if !cli.dry_run
+        && let Err(e) = notify(&inst).await
+    {
+        warn!(error = ?e, "step 7 (notify) failed — failsoft");
     }
 
     // Step 8: downstream hooks.
-    if !cli.dry_run {
-        if let Err(e) = hooks::run_dropins(&cli.hooks_dir, &inst).await {
-            warn!(error = ?e, "step 8 (downstream hooks) reported errors");
-        }
+    if !cli.dry_run
+        && let Err(e) = hooks::run_dropins(&cli.hooks_dir, &inst).await
+    {
+        warn!(error = ?e, "step 8 (downstream hooks) reported errors");
     }
 
     let elapsed = Utc::now().signed_duration_since(started);

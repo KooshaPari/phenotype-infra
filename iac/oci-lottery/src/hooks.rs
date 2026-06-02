@@ -17,10 +17,10 @@ pub async fn fire_all(inst: &AcquiredInstance, infra_repo: Option<&PathBuf>) {
     if let Err(e) = post_webhook(inst).await {
         warn!(error = %e, "webhook delivery failed");
     }
-    if let Some(repo) = infra_repo {
-        if let Err(e) = update_compute_mesh_state(repo, inst).await {
-            warn!(error = %e, "compute-mesh-state.md update failed");
-        }
+    if let Some(repo) = infra_repo
+        && let Err(e) = update_compute_mesh_state(repo, inst).await
+    {
+        warn!(error = %e, "compute-mesh-state.md update failed");
     }
     if let Err(e) = imessage_relay(inst).await {
         warn!(error = %e, "imessage relay failed (non-fatal)");

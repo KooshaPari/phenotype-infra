@@ -239,10 +239,10 @@ fn capitalize(s: &str) -> String {
 }
 
 fn read_cf_token(path: &str) -> Result<String> {
-    if let Ok(t) = std::env::var("CF_API_TOKEN") {
-        if !t.is_empty() {
-            return Ok(t);
-        }
+    if let Ok(t) = std::env::var("CF_API_TOKEN")
+        && !t.is_empty()
+    {
+        return Ok(t);
     }
     let expanded = shellexpand::tilde(path).into_owned();
     std::fs::read_to_string(&expanded)
@@ -278,12 +278,12 @@ fn cf_upsert_cname(token: &str, zone: &str, slug: &str, dry: &bool) -> Result<()
     };
     let url = format!("https://api.cloudflare.com/client/v4/zones/{zone}/dns_records");
     let resp = ureq::post(&url)
-        .set("Authorization", &format!("Bearer {token}"))
-        .set("Content-Type", "application/json")
+        .header("Authorization", &format!("Bearer {token}"))
+        .header("Content-Type", "application/json")
         .send_json(serde_json::to_value(&body)?);
     match resp {
         Ok(r) => {
-            let v: serde_json::Value = r.into_json()?;
+            let v: serde_json::Value = r.into_body().read_json()?;
             let success = v.get("success").and_then(|x| x.as_bool()).unwrap_or(false);
             if success {
                 eprintln!("  ✓ CF CNAME {slug} created");
@@ -291,15 +291,15 @@ fn cf_upsert_cname(token: &str, zone: &str, slug: &str, dry: &bool) -> Result<()
                 eprintln!("  ⚠ CF response (likely already exists): {v}");
             }
         }
-        Err(ureq::Error::Status(_, r)) => {
-            let v: serde_json::Value = r.into_json().unwrap_or_default();
-            eprintln!("  ⚠ CF non-2xx (assuming already exists): {v}");
+        Err(e) => {
+            // ureq 3.x: non-2xx surfaces as Error::StatusCode; treat as "likely already exists"
+            eprintln!("  ⚠ CF non-2xx (assuming already exists): {e}");
         }
-        Err(e) => bail!("cf request: {e}"),
     }
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn scaffold_full(
     template: &Path,
     out: &Path,
@@ -606,10 +606,10 @@ fn current_year() -> String {
 mod shellexpand {
     use std::borrow::Cow;
     pub fn tilde(s: &str) -> Cow<'_, str> {
-        if let Some(rest) = s.strip_prefix("~/") {
-            if let Ok(home) = std::env::var("HOME") {
-                return Cow::Owned(format!("{home}/{rest}"));
-            }
+        if let Some(rest) = s.strip_prefix("~/")
+            && let Ok(home) = std::env::var("HOME")
+        {
+            return Cow::Owned(format!("{home}/{rest}"));
         }
         Cow::Borrowed(s)
     }

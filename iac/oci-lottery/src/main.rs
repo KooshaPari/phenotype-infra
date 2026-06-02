@@ -15,9 +15,10 @@ mod state;
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Parser;
-use rand::Rng;
+use rand::prelude::*;
 use std::path::PathBuf;
 use std::time::Duration;
+#[cfg(unix)]
 use tokio::signal::unix::{SignalKind, signal};
 use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
@@ -100,8 +101,10 @@ async fn main() -> Result<()> {
         "oci-lottery starting"
     );
 
-    // SIGTERM/SIGINT handlers.
+    // SIGTERM/SIGINT handlers (Unix only; on other platforms the loop runs until capacity).
+    #[cfg(unix)]
     let mut sigterm = signal(SignalKind::terminate()).context("install SIGTERM handler")?;
+    #[cfg(unix)]
     let mut sigint = signal(SignalKind::interrupt()).context("install SIGINT handler")?;
 
     loop {
@@ -190,11 +193,14 @@ async fn main() -> Result<()> {
                 // Backoff jitter between attempts.
                 let sleep_secs = jitter(cfg.backoff_min_secs, cfg.backoff_max_secs);
                 info!(secs = sleep_secs, "backoff");
+                #[cfg(unix)]
                 tokio::select! {
                     _ = tokio::time::sleep(Duration::from_secs(sleep_secs)) => {},
                     _ = sigterm.recv() => { info!("SIGTERM received"); return Ok(()); }
                     _ = sigint.recv()  => { info!("SIGINT received");  return Ok(()); }
                 }
+                #[cfg(not(unix))]
+                tokio::time::sleep(Duration::from_secs(sleep_secs)).await;
             }
         }
     }
@@ -205,5 +211,5 @@ fn jitter(min: u64, max: u64) -> u64 {
     if lo == hi {
         return lo;
     }
-    rand::thread_rng().gen_range(lo..=hi)
+    rand::rng().random_range(lo..=hi)
 }
