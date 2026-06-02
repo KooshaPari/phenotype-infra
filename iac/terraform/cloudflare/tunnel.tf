@@ -1,8 +1,11 @@
 # tunnel.tf — Cloudflare Tunnel from edge to oci-primary.
 
 variable "cloudflare_account_id" { type = string /* <CLOUDFLARE_ACCOUNT_ID> */ }
-variable "cloudflare_zone_id"    { type = string /* <CLOUDFLARE_ZONE_ID> */ }
-variable "cloudflare_api_token"  { type = string, sensitive = true }
+variable "cloudflare_zone_id" { type = string /* <CLOUDFLARE_ZONE_ID> */ }
+variable "cloudflare_api_token" {
+  type      = string
+  sensitive = true
+}
 
 provider "cloudflare" {
   api_token = var.cloudflare_api_token
