@@ -1,13 +1,19 @@
 # ampere-primary.tf — oci-primary VM (Forgejo + Vaultwarden + Woodpecker server).
 # Stub: resource blocks commented out until first-apply review.
 
-variable "oci_tenancy_ocid"     { type = string /* <OCI_TENANCY_OCID> */ }
-variable "oci_user_ocid"        { type = string /* <OCI_USER_OCID> */ }
-variable "oci_fingerprint"      { type = string, sensitive = true }
+variable "oci_tenancy_ocid" { type = string /* <OCI_TENANCY_OCID> */ }
+variable "oci_user_ocid" { type = string /* <OCI_USER_OCID> */ }
+variable "oci_fingerprint" {
+  type      = string
+  sensitive = true
+}
 variable "oci_private_key_path" { type = string }
-variable "oci_region"           { type = string; default = "us-phoenix-1" }
+variable "oci_region" {
+  type    = string
+  default = "us-phoenix-1"
+}
 variable "oci_compartment_ocid" { type = string }
-variable "oci_ssh_public_key"   { type = string }
+variable "oci_ssh_public_key" { type = string }
 
 provider "oci" {
   tenancy_ocid     = var.oci_tenancy_ocid

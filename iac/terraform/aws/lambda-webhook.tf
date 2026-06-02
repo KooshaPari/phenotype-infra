@@ -1,6 +1,9 @@
 # lambda-webhook.tf — aws-lambda webhook fanout: GitHub → Forgejo mirror-sync.
 
-variable "aws_region"     { type = string; default = "us-east-1" }
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
 variable "aws_account_id" { type = string /* <AWS_ACCOUNT_ID> */ }
 
 provider "aws" {

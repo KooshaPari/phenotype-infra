@@ -1,9 +1,15 @@
 # e2-micro.tf — gcp-e2 tertiary runner + uptime sentinel.
 
-variable "gcp_project_id"     { type = string /* <GCP_PROJECT_ID> */ }
-variable "gcp_region"         { type = string; default = "us-west1" }
-variable "gcp_zone"           { type = string; default = "us-west1-b" }
-variable "gcp_sa_key_path"    { type = string }
+variable "gcp_project_id" { type = string /* <GCP_PROJECT_ID> */ }
+variable "gcp_region" {
+  type    = string
+  default = "us-west1"
+}
+variable "gcp_zone" {
+  type    = string
+  default = "us-west1-b"
+}
+variable "gcp_sa_key_path" { type = string }
 variable "gcp_ssh_public_key" { type = string }
 
 provider "google" {
