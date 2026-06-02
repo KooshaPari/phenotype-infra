@@ -27,7 +27,10 @@ use crate::oci::{instance_public_ip, list_availability_domains, try_launch};
 use crate::state::{AcquiredInstance, LotteryState, write_acquired};
 
 #[derive(Debug, Parser)]
-#[command(name = "oci-lottery", about = "OCI Always-Free A1.Flex capacity lottery daemon")]
+#[command(
+    name = "oci-lottery",
+    about = "OCI Always-Free A1.Flex capacity lottery daemon"
+)]
 struct Args {
     /// Path to JSON config (regions, OCIDs, shape).
     #[arg(long, env = "OCI_LOTTERY_CONFIG")]
@@ -59,7 +62,9 @@ fn home() -> PathBuf {
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
         .init();
 
     let args = Args::parse();
