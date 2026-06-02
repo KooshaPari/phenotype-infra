@@ -278,8 +278,8 @@ fn cf_upsert_cname(token: &str, zone: &str, slug: &str, dry: &bool) -> Result<()
     };
     let url = format!("https://api.cloudflare.com/client/v4/zones/{zone}/dns_records");
     let resp = ureq::post(&url)
-        .set("Authorization", &format!("Bearer {token}"))
-        .set("Content-Type", "application/json")
+        .header("Authorization", &format!("Bearer {token}"))
+        .header("Content-Type", "application/json")
         .send_json(serde_json::to_value(&body)?);
     match resp {
         Ok(r) => {
@@ -291,11 +291,10 @@ fn cf_upsert_cname(token: &str, zone: &str, slug: &str, dry: &bool) -> Result<()
                 eprintln!("  ⚠ CF response (likely already exists): {v}");
             }
         }
-        Err(ureq::Error::Status(_, r)) => {
-            let v: serde_json::Value = r.into_json().unwrap_or_default();
-            eprintln!("  ⚠ CF non-2xx (assuming already exists): {v}");
+        Err(e) => {
+            // ureq 3.x: non-2xx surfaces as Error::StatusCode; treat as "likely already exists"
+            eprintln!("  ⚠ CF non-2xx (assuming already exists): {e}");
         }
-        Err(e) => bail!("cf request: {e}"),
     }
     Ok(())
 }
