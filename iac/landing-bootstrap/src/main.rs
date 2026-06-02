@@ -239,10 +239,10 @@ fn capitalize(s: &str) -> String {
 }
 
 fn read_cf_token(path: &str) -> Result<String> {
-    if let Ok(t) = std::env::var("CF_API_TOKEN") {
-        if !t.is_empty() {
-            return Ok(t);
-        }
+    if let Ok(t) = std::env::var("CF_API_TOKEN")
+        && !t.is_empty()
+    {
+        return Ok(t);
     }
     let expanded = shellexpand::tilde(path).into_owned();
     std::fs::read_to_string(&expanded)
@@ -299,6 +299,7 @@ fn cf_upsert_cname(token: &str, zone: &str, slug: &str, dry: &bool) -> Result<()
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn scaffold_full(
     template: &Path,
     out: &Path,
@@ -605,10 +606,10 @@ fn current_year() -> String {
 mod shellexpand {
     use std::borrow::Cow;
     pub fn tilde(s: &str) -> Cow<'_, str> {
-        if let Some(rest) = s.strip_prefix("~/") {
-            if let Ok(home) = std::env::var("HOME") {
-                return Cow::Owned(format!("{home}/{rest}"));
-            }
+        if let Some(rest) = s.strip_prefix("~/")
+            && let Ok(home) = std::env::var("HOME")
+        {
+            return Cow::Owned(format!("{home}/{rest}"));
         }
         Cow::Borrowed(s)
     }
