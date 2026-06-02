@@ -283,7 +283,7 @@ fn cf_upsert_cname(token: &str, zone: &str, slug: &str, dry: &bool) -> Result<()
         .send_json(serde_json::to_value(&body)?);
     match resp {
         Ok(r) => {
-            let v: serde_json::Value = r.into_json()?;
+            let v: serde_json::Value = r.into_body().read_json()?;
             let success = v.get("success").and_then(|x| x.as_bool()).unwrap_or(false);
             if success {
                 eprintln!("  ✓ CF CNAME {slug} created");
