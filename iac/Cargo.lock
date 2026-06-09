@@ -739,12 +739,12 @@ dependencies = [
  "anyhow",
  "chrono",
  "clap",
+ "phenotype-logging",
  "rand 0.10.1",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -755,13 +755,13 @@ dependencies = [
  "chrono",
  "clap",
  "glob",
+ "phenotype-logging",
  "reqwest",
  "serde",
  "serde_json",
  "thiserror",
  "tokio",
  "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -781,6 +781,14 @@ name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
+
+[[package]]
+name = "phenotype-logging"
+version = "0.1.0"
+dependencies = [
+ "tracing",
+ "tracing-subscriber",
+]
 
 [[package]]
 name = "pin-project-lite"
@@ -1232,6 +1240,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "phenotype-logging",
  "reqwest",
  "serde",
  "serde_json",
