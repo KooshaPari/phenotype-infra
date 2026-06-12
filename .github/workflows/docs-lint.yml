@@ -14,7 +14,7 @@ jobs:
     name: Vale (markdown prose)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Run Vale
         uses: errata-ai/vale-action@0135b9fe2b3107365569cc3142b9a1c85221ea2f
@@ -30,7 +30,7 @@ jobs:
     name: actionlint (GitHub Actions)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
       - name: Install actionlint
         run: |
