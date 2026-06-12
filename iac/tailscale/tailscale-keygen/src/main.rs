@@ -77,10 +77,18 @@ struct CreateKeyResponse {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // NOTE: this binary must keep logs off stdout — stdout is the transport
+    // for the Tailscale API key (consumed via `$(tailscale-keygen)` in shell or
+    // by the oci-post-acquire hook). We still wire to `phenotype-logging` for
+    // the default-filter contract (so `RUST_LOG` semantics match the rest of
+    // the mesh), but the local `with_writer(std::io::stderr)` override is
+    // load-bearing and must stay here.
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+                .unwrap_or_else(|_| {
+                    tracing_subscriber::EnvFilter::new(phenotype_logging::DEFAULT_FILTER)
+                }),
         )
         .with_writer(std::io::stderr) // never to stdout — stdout is the key
         .init();

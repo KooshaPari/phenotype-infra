@@ -21,7 +21,6 @@ use std::time::Duration;
 #[cfg(unix)]
 use tokio::signal::unix::{SignalKind, signal};
 use tracing::{error, info, warn};
-use tracing_subscriber::EnvFilter;
 
 use crate::config::Config;
 use crate::oci::{instance_public_ip, list_availability_domains, try_launch};
@@ -62,11 +61,7 @@ fn home() -> PathBuf {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .init();
+    phenotype_logging::init_tracing();
 
     let args = Args::parse();
 
