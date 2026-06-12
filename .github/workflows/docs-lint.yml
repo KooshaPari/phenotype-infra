@@ -6,15 +6,18 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   vale:
     name: Vale (markdown prose)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Run Vale
-        uses: errata-ai/vale-action@reviewdog
+        uses: errata-ai/vale-action@0135b9fe2b3107365569cc3142b9a1c85221ea2f
         with:
           files: '["."]'
           filter_mode: nofilter
@@ -25,9 +28,9 @@ jobs:
 
   actionlint:
     name: actionlint (GitHub Actions)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Install actionlint
         run: |
