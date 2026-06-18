@@ -5,6 +5,9 @@ concurrency:
 
 
 on:
+
+
+timeout-minutes: 30
   pull_request:
     paths:
       - "iac/ansible/**"
