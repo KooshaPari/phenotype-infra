@@ -99,6 +99,9 @@ fn dirs_home() -> Option<PathBuf> {
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     phenotype_logging::init_tracing();
+    // T22 (ADR-036): also wire pheno-tracing substrate so spans can be
+    // submitted through the fleet-wide TracePort.
+    let _pheno_port = phenotype_infra_observability::init_tracing("oci-post-acquire");
 
     let cli = Cli::parse();
     let started = Utc::now();
