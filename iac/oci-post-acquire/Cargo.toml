@@ -27,3 +27,4 @@ tracing = { workspace = true }
 chrono = { workspace = true }
 glob = { workspace = true }
 phenotype-logging = { path = "../../../phenoShared-wtrees/version-align-latest-tag/crates/phenotype-logging" }
+phenotype-infra-observability = { path = "../observability" }

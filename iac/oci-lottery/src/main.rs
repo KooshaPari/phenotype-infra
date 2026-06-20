@@ -62,6 +62,9 @@ fn home() -> PathBuf {
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> Result<()> {
     phenotype_logging::init_tracing();
+    // T22 (ADR-036): also wire pheno-tracing substrate so spans can be
+    // submitted through the fleet-wide TracePort.
+    let _pheno_port = phenotype_infra_observability::init_tracing("oci-lottery");
 
     let args = Args::parse();
 
