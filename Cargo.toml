@@ -16,8 +16,9 @@ resolver = "2"
 
 members = [
     "crates/nanovms-core",    # Go source — absorbed as C static lib
-    # "crates/nvms-ffi",       # Rust FFI bindings
-    # "crates/pheno-compose",  # Rust high-level driver
+    "crates/nvms-ffi",       # Rust FFI bindings
+    "crates/pheno-compose",  # Rust high-level driver
+    "crates/pheno-config",   # Shared configuration
 ]
 
 [workspace.package]
