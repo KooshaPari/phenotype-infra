@@ -1,19 +1,17 @@
 //! T22 observability init for `phenotype-infra` iac/* daemons.
 //!
-//! Wires `pheno-tracing` (the canonical pheno-* tracing substrate, ADR-036)
-//! plus `tracing-subscriber` (fmt + EnvFilter). The current substrate ships
-//! a port-driven `TracePort` with local adapters (`StdoutAdapter`,
-//! `InMemoryAdapter`); full OTLP export will be added when the substrate
-//! adds an `OtlpAdapter` (tracked separately).
+//! Thin wrapper over [`phenotype_logging`] that gives each daemon a single,
+//! consistent `init_tracing("service-name")` call. The full OTLP exporter
+//! will be layered in here once `pheno-tracing` v0.5.0 is published
+//! (see `phenotype-logging-stub/README.md` for the migration plan).
 //!
 //! # Usage
 //!
 //! ```rust,no_run
 //! use phenotype_infra_observability::init_tracing;
 //!
-//! #[tokio::main]
-//! async fn main() -> anyhow::Result<()> {
-//!     let _port = init_tracing("oci-lottery");
+//! fn main() -> anyhow::Result<()> {
+//!     let _guard = init_tracing("oci-lottery");
 //!     // ... rest of app ...
 //!     Ok(())
 //! }
@@ -21,20 +19,33 @@
 //!
 //! Filter via `RUST_LOG=info,oci_lottery=debug`.
 
-use pheno_tracing::adapters::StdoutAdapter;
-use pheno_tracing::port::TracePort;
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+#![warn(clippy::all)]
+
 use std::sync::Arc;
+
+use tracing::Level;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
-/// Initialise tracing + return a `TracePort` for the calling daemon.
+use phenotype_logging::is_initialized;
+
+/// Default log level if `RUST_LOG` is unset.
+const DEFAULT_LEVEL: Level = Level::INFO;
+
+/// Initialise tracing + return a `tracing` `Subscriber` guard for the calling
+/// daemon.
 ///
-/// Idempotent — safe to call from each binary's `main`. Reads
-/// `RUST_LOG` from env (default `info`). Includes `service.name` on
-/// every `info!` line so fleet-side aggregators can join per-service
-/// traces.
-pub fn init_tracing(service_name: &'static str) -> Arc<dyn TracePort> {
+/// Idempotent — safe to call from each binary's `main`. Reads `RUST_LOG`
+/// from env (default `info`). Includes `service.name` on every `info!`
+/// line so fleet-side aggregators can join per-service traces.
+///
+/// The returned `Arc<dyn Subscriber + Send + Sync>` is a no-op handle kept
+/// for API symmetry with the future `pheno-tracing` integration; callers
+/// may safely drop it.
+pub fn init_tracing(service_name: &'static str) -> Arc<dyn std::any::Any + Send + Sync> {
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+        .unwrap_or_else(|_| EnvFilter::new(DEFAULT_LEVEL.as_str()));
 
     let subscriber = tracing_subscriber::registry()
         .with(filter)
@@ -42,17 +53,25 @@ pub fn init_tracing(service_name: &'static str) -> Arc<dyn TracePort> {
 
     let _ = subscriber.try_init();
 
-    let port: Arc<dyn TracePort> = Arc::new(StdoutAdapter);
-    tracing::info!(service.name = service_name, "tracing initialised (pheno-tracing 0.1, T22)");
-    port
+    if !is_initialized() {
+        // The stub's own `init_tracing` is the canonical idempotency flag;
+        // install it once for the duration of the process.
+        phenotype_logging::init_tracing(service_name, DEFAULT_LEVEL);
+    }
+
+    tracing::info!(service.name = service_name, "tracing initialised (phenotype-infra-observability 0.2.0)");
+    Arc::new(())
+}
+
+/// Emit a heartbeat trace event. Daemons can call this every N seconds to
+/// prove liveness to the fleet aggregator.
+pub fn heartbeat(service_name: &'static str) {
+    tracing::info!(service.name = service_name, "heartbeat");
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pheno_tracing::adapters::InMemoryAdapter;
-    use pheno_tracing::port::{SpanId, SpanKind, TraceId, TraceOperation};
-    use std::collections::HashMap;
 
     #[test]
     fn init_tracing_does_not_panic() {
@@ -61,22 +80,9 @@ mod tests {
         let _ = init_tracing("oci-post-acquire-test");
     }
 
-    #[tokio::test]
-    async fn traceport_inmemory_roundtrip() {
-        let adapter = InMemoryAdapter::new();
-        let op = TraceOperation {
-            trace_id: TraceId("t-t22-1".into()),
-            span_id: SpanId("s-t22-1".into()),
-            parent_span_id: None,
-            kind: SpanKind::Internal,
-            name: "test-span".into(),
-            attributes: HashMap::from([(
-                "service.name".into(),
-                "phenotype-infra-observability".into(),
-            )]),
-        };
-        let result = adapter.submit(op).await;
-        assert_eq!(result.trace_id.0, "t-t22-1");
-        assert!(adapter.spans.lock().unwrap().len() == 1);
+    #[test]
+    fn heartbeat_does_not_panic() {
+        init_tracing("observability-test");
+        heartbeat("observability-test");
     }
 }

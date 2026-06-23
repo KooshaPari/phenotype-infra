@@ -26,5 +26,5 @@ reqwest = { workspace = true }
 tracing = { workspace = true }
 chrono = { workspace = true }
 glob = { workspace = true }
-phenotype-logging = { path = "../../../phenoShared-wtrees/version-align-latest-tag/crates/phenotype-logging" }
+phenotype-logging = { workspace = true }
 phenotype-infra-observability = { path = "../observability" }

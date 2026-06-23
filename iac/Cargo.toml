@@ -5,6 +5,7 @@ members = [
     "oci-post-acquire",
     "tailscale/tailscale-keygen",
     "observability",
+    "phenotype-logging-stub",
 ]
 # `landing-bootstrap` declares its own `[workspace]` table (intentionally
 # detached — see its Cargo.toml) and uses a different dependency style
@@ -30,7 +31,13 @@ serde_json = "1.0"
 tokio = { version = "1.52", features = ["rt-multi-thread", "macros", "process", "signal", "time", "fs", "net", "io-util"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
-pheno-tracing = { git = "https://github.com/KooshaPari/pheno-tracing", branch = "main" }
+# `phenotype-logging` is the in-workspace stub re-exporting `tracing` +
+# `tracing-subscriber` for the iac/* daemons. The canonical T22 pheno-tracing
+# crate (ADR-036) requires a sibling `pheno-otel` crate that isn't published
+# yet, so we defer the migration to pheno-tracing until v0.5.0 of pheno-tracing
+# ships with the missing dependency or inlines the OTLP exporter. See
+# `phenotype-logging-stub/README.md` for the migration plan.
+phenotype-logging = { path = "phenotype-logging-stub" }
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 glob = "0.3"
