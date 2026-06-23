@@ -55,6 +55,9 @@ cargo test --workspace
 
 # All checks
 cargo check --workspace
+
+# BytePort (Svelte frontend)
+cd tools/byteport && npm install && npm run dev
 ```
 
 ## License
