@@ -245,6 +245,7 @@ impl HttpSseTransport {
         let session_id = self.session_id.clone().unwrap();
         
         tokio::spawn(async move {
+            use futures_util::StreamExt;
             let mut event_stream = client.get(events_url)
                 .header("Accept", "text/event-stream")
                 .header("Cache-Control", "no-cache")
@@ -253,9 +254,7 @@ impl HttpSseTransport {
                 .await
                 .unwrap()
                 .bytes_stream();
-            
-            use futures_util::StreamExt;
-            
+
             while let Some(chunk) = event_stream.next().await {
                 if let Ok(bytes) = chunk {
                     if let Ok(text) = String::from_utf8(bytes.to_vec()) {

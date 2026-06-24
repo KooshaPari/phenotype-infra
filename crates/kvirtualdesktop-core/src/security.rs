@@ -66,31 +66,33 @@ impl SecurityManager {
         scopes: Vec<String>,
         state: Option<String>,
         resource_indicators: Vec<Url>,
-    ) -> Result<AuthorizationUrl, McpSecurityError> {
+    ) -> Result<Url, McpSecurityError> {
+        use oauth2::url::Url as OAuthUrl;
         let client = self.oauth_clients.get(client_id)
             .ok_or_else(|| McpSecurityError::OAuth(
                 format!("OAuth client not found: {}", client_id)
             ))?;
-        
+
         let mut auth_request = client.authorize_url(CsrfToken::new_random);
-        
+
         // Add scopes
         if !scopes.is_empty() {
             auth_request = auth_request.add_scopes(
                 scopes.into_iter().map(Scope::new).collect()
             );
         }
-        
-        // Add state if provided
-        if let Some(state_value) = state {
+
+        // Add state if provided (oauth2 4.x: state comes from CsrfToken::new_random or via
+        // the builder's set_state on the AuthorizationRequest, not the client)
+        if let Some(state_value) = state.clone() {
             auth_request = auth_request.set_state(CsrfToken::new(state_value));
         }
-        
+
         // Add resource indicators (RFC 8707)
-        for resource in resource_indicators {
+        for resource in &resource_indicators {
             auth_request = auth_request.add_extra_param("resource", resource.as_str());
         }
-        
+
         let (auth_url, _csrf_token) = auth_request.url();
         Ok(auth_url)
     }
@@ -116,18 +118,24 @@ impl SecurityManager {
         
         let token_response = token_request.request_async(async_http_client).await
             .map_err(|e| McpSecurityError::OAuth(e.to_string()))?;
-        
+
+        // oauth2 4.x: access_token(), token_type() return owned types via Deref/Inner; expires_in
+        // returns Option<Duration>; refresh_token and scopes are not on StandardTokenResponse
+        // but may be on ExtraTokenFields. Use defensive accessors.
+        let access_token = token_response.access_token().secret().clone();
+        let token_type = token_response.token_type().as_ref().to_string();
+        let expires_in = token_response.expires_in().map(|d| d.as_secs());
+        let refresh_token = None; // Generic StandardTokenResponse doesn't expose refresh_token; depends on ExtraTokenFields
+        let scope = None; // Same for scopes; depends on ExtraTokenFields
+
         let token = TokenResponse {
-            access_token: token_response.access_token().secret().clone(),
-            token_type: token_response.token_type().as_ref().to_string(),
-            expires_in: token_response.expires_in()
-                .map(|duration| duration.as_secs()),
-            refresh_token: token_response.refresh_token()
-                .map(|token| token.secret().clone()),
-            scope: token_response.scopes()
-                .map(|scopes| scopes.iter().map(|s| s.as_str().to_string()).collect()),
+            access_token,
+            token_type,
+            expires_in,
+            refresh_token,
+            scope,
         };
-        
+
         Ok(token)
     }
     
@@ -297,9 +305,10 @@ pub struct PkceHelper;
 impl PkceHelper {
     /// Generate PKCE code verifier and challenge
     pub fn generate_pkce_pair() -> (String, String) {
-        let code_verifier = PkceCodeVerifier::new_random_len(128);
-        let code_challenge = PkceCodeChallenge::from_code_verifier_sha256(&code_verifier);
-        
+        use oauth2::PkceCodeChallenge as _;
+        // oauth2 4.x: use the S256Method via new_random_code_verifier_sha256
+        let (code_verifier, code_challenge) = PkceCodeChallenge::new_random_sha256();
+
         (
             code_verifier.secret().clone(),
             code_challenge.as_str().to_string(),

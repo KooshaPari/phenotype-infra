@@ -27,6 +27,7 @@ members = [
     "crates/credential-manager",     # Credential mgr from KVirtualStage
     "crates/kvirtualdesktop-core",  # KVirtualStage MCP protocol types
     "crates/kvirtualdesktop-mcp-server", # KVirtualStage MCP server
+    "crates/kvirtual",              # KVirtualStage desktop automation CLI (kvd)
     "crates/thegent-utils",         # thegent-workspace binary utilities
     "tests",                        # Cross-crate integration tests
 ]

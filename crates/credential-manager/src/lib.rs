@@ -1,129 +1,93 @@
-use std::collections::HashMap;
-use thiserror::Error;
+//! Credential Manager for KVirtualStage / phenotype-infra.
+//!
+//! This crate provides secure credential storage, OAuth2 flows,
+//! cryptographic operations, and credential injection for virtual
+//! desktop environments.
+//!
+//! Absorbed from: KVirtualStage (credential_manager/)
+//! Original source: C:\Users\koosh\_tmp_kvirtualstage\credential_manager
+//! Absorbed on: 2026-06-24
 
-/// Credential manager types absorbed from KVirtualStage.
-/// Separates credential handling from the virtual-stage engine
-/// for independent audit and reuse.
+pub mod config;
+pub mod crypto;
+pub mod error;
+pub mod vault;
 
-#[derive(Error, Debug)]
-pub enum CredentialError {
-    #[error("not found: {0}")]
-    NotFound(String),
-    #[error("expired: {0}")]
-    Expired(String),
-    #[error("storage error: {0}")]
-    Storage(String),
-    #[error("decode error: {0}")]
-    Decode(#[from] base64::DecodeError),
-    #[error("serialization error: {0}")]
-    Serde(#[from] serde_json::Error),
-}
+#[cfg(feature = "oauth2")]
+pub mod oauth;
 
-pub type Result<T> = std::result::Result<T, CredentialError>;
+// Re-exports
+pub use config::CredentialConfig;
+pub use crypto::CryptoEngine;
+pub use error::{CredentialError, Result};
+#[cfg(feature = "oauth2")]
+pub use oauth::{OAuthManager, StoredToken, TokenResponse};
+pub use vault::{AuditEntry, CredentialEntry, CredentialMetadata, CredentialType, CredentialVault};
 
-/// A stored credential with optional expiry.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct Credential {
-    pub id: String,
-    pub key: String,
-    pub value: String,          // base64-encoded
-    pub expires_at: Option<i64>, // unix timestamp
-    pub metadata: HashMap<String, String>,
-}
+use std::path::Path;
 
-/// In-memory credential store (absorbed from KVirtualStage).
+/// High-level credential manager that coordinates vault, crypto, OAuth, and injection
 pub struct CredentialManager {
-    store: HashMap<String, Credential>,
+    pub config: CredentialConfig,
+    pub vault: CredentialVault,
+    pub crypto: CryptoEngine,
+    #[cfg(feature = "oauth2")]
+    pub oauth: OAuthManager,
 }
 
 impl CredentialManager {
-    pub fn new() -> Self {
+    /// Create a new credential manager with the given configuration
+    pub fn new(config: CredentialConfig) -> Self {
+        let crypto_inner = CryptoEngine::new(config.security.encryption.clone());
+        let vault = CredentialVault::new(config.storage.clone(), crypto_inner);
+        let crypto = CryptoEngine::new(config.security.encryption.clone());
+        #[cfg(feature = "oauth2")]
+        let oauth = OAuthManager::new(config.oauth.clone());
+
         Self {
-            store: HashMap::new(),
+            config,
+            vault,
+            crypto,
+            #[cfg(feature = "oauth2")]
+            oauth,
         }
     }
 
-    pub fn store(&mut self, cred: Credential) -> Result<()> {
-        // Validate base64
-        let _ = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, &cred.value)?;
-        self.store.insert(cred.id.clone(), cred);
-        Ok(())
+    /// Initialize the credential manager (load vault, setup crypto)
+    pub fn initialize(&mut self, master_password: &str) -> Result<()> {
+        let salt = CryptoEngine::generate_salt(self.config.security.key_derivation.salt_length);
+        self.crypto.initialize_from_password(master_password, &salt)?;
+        self.vault.initialize()
     }
 
-    pub fn get(&self, id: &str) -> Result<Credential> {
-        self.store
-            .get(id)
-            .cloned()
-            .ok_or_else(|| CredentialError::NotFound(id.to_string()))
+    /// Load configuration from a file and create a credential manager
+    pub fn from_config<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let config = CredentialConfig::from_file(path)?;
+        Ok(Self::new(config))
     }
 
-    pub fn delete(&mut self, id: &str) -> Result<()> {
-        self.store
-            .remove(id)
-            .ok_or_else(|| CredentialError::NotFound(id.to_string()))?;
-        Ok(())
+    /// Store a credential securely
+    pub fn store_credential(&mut self, entry: CredentialEntry) -> Result<()> {
+        self.vault.store(entry)
     }
 
-    pub fn list(&self) -> Vec<&Credential> {
-        self.store.values().collect()
+    /// Retrieve a credential
+    pub fn get_credential(&self, id: &str) -> Result<CredentialEntry> {
+        self.vault.retrieve(id)
     }
 
-    pub fn cleanup_expired(&mut self) -> usize {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs() as i64;
-        let before = self.store.len();
-        self.store.retain(|_, c| {
-            c.expires_at.map_or(true, |exp| exp > now)
-        });
-        before - self.store.len()
-    }
-}
-
-impl Default for CredentialManager {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_store_and_retrieve() {
-        let mut mgr = CredentialManager::new();
-        let cred = Credential {
-            id: "test-1".into(),
-            key: "api_key".into(),
-            value: base64::Engine::encode(
-                &base64::engine::general_purpose::STANDARD,
-                b"secret-value",
-            ),
-            expires_at: None,
-            metadata: HashMap::new(),
-        };
-        mgr.store(cred.clone()).unwrap();
-        assert_eq!(mgr.get("test-1").unwrap().key, "api_key");
+    /// Delete a credential
+    pub fn delete_credential(&mut self, id: &str) -> Result<()> {
+        self.vault.delete(id)
     }
 
-    #[test]
-    fn test_cleanup_expired() {
-        let mut mgr = CredentialManager::new();
-        let past = 1000; // 1970-01-01
-        let cred = Credential {
-            id: "expired".into(),
-            key: "old_key".into(),
-            value: base64::Engine::encode(
-                &base64::engine::general_purpose::STANDARD,
-                b"old",
-            ),
-            expires_at: Some(past),
-            metadata: HashMap::new(),
-        };
-        mgr.store(cred).unwrap();
-        assert_eq!(mgr.cleanup_expired(), 1);
-        assert!(mgr.get("expired").is_err());
+    /// List all credential IDs
+    pub fn list_credentials(&self) -> Vec<String> {
+        self.vault.list()
+    }
+
+    /// Search credentials
+    pub fn search_credentials(&self, query: &str) -> Vec<&CredentialEntry> {
+        self.vault.search(query)
     }
 }

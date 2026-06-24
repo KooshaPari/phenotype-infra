@@ -1,0 +1,126 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Build directories
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Configuration files with secrets
+configs/local.yaml
+configs/production.yaml
+.env
+.env.local
+
+# Runtime data
+recordings/
+data/
+uploads/
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Docker volumes
+docker-data/
+
+# Temporary files
+tmp/
+temp/
+
+# SSL certificates
+ssl/
+*.pem
+*.key
+*.crt
+
+# Database files
+*.db
+*.sqlite
+
+# Cache directories
+.cache/
+
+# Air configuration (for hot reload in development)
+.air.toml
+
+# Documentation build
+docs/_build/
+
+# Backup files
+*.bak
+*.backup
+
+# Lock files (keep go.sum but ignore others)
+package-lock.json
+yarn.lock
+
+# Local development files
+local/
+dev/
+
+# Performance profiling
+*.prof
+
+# Memory dumps
+*.mprof
+*.pprof
+
+# Kubernetes files with secrets
+k8s/secrets/
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Generated files
+*_generated.go
+*.pb.go
+
+# Node modules (if any frontend components)
+node_modules/
+
+# Python files (if any Python scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ruby files (if any Ruby scripts)
+*.gem
+*.rbc
