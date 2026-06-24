@@ -18,6 +18,9 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
+    // Declare custom cfg so rustc's `unexpected_cfgs` lint (stable since 1.80) stays silent.
+    println!("cargo:rustc-check-cfg=cfg(nvms_core_lib)");
+
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
 
