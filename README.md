@@ -1,5 +1,5 @@
 <!-- AI-DD-META:START -->
-<!-- This repository is planned, maintained, and managed by AI Agents only. -->
+| **pheno-config** | `pheno-config` | Rust | Shared configuration (TOML/env) |
 <!-- Slop issues are expected and intentionally present as part of an HITL-less -->
 <!-- /minimized AI-DD metaproject of learning, refining, and building brute-force -->
 <!-- training for both agents and the human operator. -->
@@ -30,7 +30,8 @@ phenotype-infra/
 ├── crates/
 │   ├── nanovms-core/       # Go source → libnvms_core.a (via CGo)
 │   ├── nvms-ffi/           # Rust FFI bindings
-│   └── pheno-compose/      # High-level Rust driver
+│   ├── pheno-compose/      # High-level Rust driver
+│   └── pheno-config/       # Shared configuration
 ├── tools/
 │   └── byteport/           # Svelte infra tooling
 ├── docs/

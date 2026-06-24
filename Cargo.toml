@@ -15,11 +15,13 @@ resolver = "2"
 # =============================================================================
 
 members = [
-    "crates/nanovms-core",    # Go source — absorbed as C static lib
-    "crates/nvms-ffi",       # Rust FFI bindings
-    "crates/pheno-compose",  # Rust high-level driver
-    "crates/pheno-config",   # Shared configuration
-    "tests",                 # Cross-crate integration tests
+    "crates/nanovms-core",      # Go source — absorbed as C static lib
+    "crates/nvms-ffi",         # Rust FFI bindings
+    "crates/pheno-compose",    # Rust high-level driver
+    "crates/pheno-config",     # Shared configuration
+    "crates/kodevibego-ffi",   # KodeVibeGo Go→Rust FFI bindings (Phase-1-Absorption)
+    "crates/credential-manager", # Credential mgr from KVirtualStage (Phase-1-Absorption)
+    "tests",                   # Cross-crate integration tests
 ]
 
 [workspace.package]

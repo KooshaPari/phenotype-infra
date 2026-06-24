@@ -12,4 +12,3 @@ publish = false
 name = "nanovms_core"
 crate-type = ["staticlib", "rlib"]
 
-[build-dependencies]

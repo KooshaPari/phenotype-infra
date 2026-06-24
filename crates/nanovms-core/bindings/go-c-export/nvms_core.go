@@ -21,6 +21,7 @@ package main
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Instance handle
 typedef struct NvmsInstance NvmsInstance;
@@ -88,6 +89,7 @@ import "C"
 import (
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -156,13 +158,13 @@ func nvms_gpu_info() C.NvmsGpuDevice {
 
 	switch gpuBackend {
 	case C.NVMS_GPU_APPLE_METAL:
-		copy(C.GoString(&device.name[0]), "Apple Silicon GPU")
+		nvmsSetCCharArray(&device.name[0], "Apple Silicon GPU")
 		device.supports_unified_memory = true
 	case C.NVMS_GPU_NVIDIA_CUDA:
-		copy(C.GoString(&device.name[0]), "NVIDIA GPU")
+		nvmsSetCCharArray(&device.name[0], "NVIDIA GPU")
 		device.supports_unified_memory = true
 	case C.NVMS_GPU_AMD_ROCM:
-		copy(C.GoString(&device.name[0]), "AMD GPU")
+		nvmsSetCCharArray(&device.name[0], "AMD GPU")
 		device.supports_unified_memory = false
 	}
 
@@ -244,10 +246,11 @@ func nvms_neon_available() bool {
 var (
 	instanceCounter uint64
 	instancesMu     sync.RWMutex
+	instances       = make(map[uint64]*C.NvmsInstance)
 )
 
 //export nvms_instance_create
-func nvms_instance_create(tier C.int, name *C.char) *C.NvmsInstance {
+func nvms_instance_create(tier C.NvmsTier, name *C.char) *C.NvmsInstance {
 	instanceID := atomicAddUint64(&instanceCounter, 1)
 	goName := C.GoString(name)
 
@@ -264,6 +267,11 @@ func nvms_instance_create(tier C.int, name *C.char) *C.NvmsInstance {
 		cinst.memory_type = C.NVMS_MEMORY_CPU
 	}
 
+	// Track in global map for list/destroy operations
+	instancesMu.Lock()
+	instances[instanceID] = cinst
+	instancesMu.Unlock()
+
 	return cinst
 }
 
@@ -272,11 +280,48 @@ func nvms_instance_destroy(inst *C.NvmsInstance) C.int {
 	if inst == nil {
 		return -1
 	}
+
+	instancesMu.Lock()
+	delete(instances, uint64(inst.id))
+	instancesMu.Unlock()
+
 	if inst.name != nil {
 		C.free(unsafe.Pointer(inst.name))
 	}
 	C.free(unsafe.Pointer(inst))
 	return 0
+}
+
+//export nvms_instance_list
+func nvms_instance_list(count *C.int) **C.NvmsInstance {
+	instancesMu.RLock()
+	defer instancesMu.RUnlock()
+
+	total := len(instances)
+	if total == 0 {
+		*count = 0
+		return nil
+	}
+
+	// Allocate array of instance pointers
+	ptrSize := C.size_t(total) * C.size_t(unsafe.Sizeof((*C.NvmsInstance)(nil)))
+	arr := (**C.NvmsInstance)(C.malloc(ptrSize))
+
+	i := 0
+	for _, inst := range instances {
+		// Place pointer at index i in the array
+		src := uintptr(unsafe.Pointer(arr)) + uintptr(i)*unsafe.Sizeof(arr)
+		*(**C.NvmsInstance)(unsafe.Pointer(src)) = inst
+		i++
+	}
+
+	*count = C.int(total)
+	return arr
+}
+
+//export nvms_instance_list_free
+func nvms_instance_list_free(arr **C.NvmsInstance) {
+	C.free(unsafe.Pointer(arr))
 }
 
 //export nvms_instance_start
@@ -313,8 +358,16 @@ func nvms_perf_stats() C.NvmsPerfStats {
 }
 
 func atomicAddUint64(v *uint64, delta uint64) uint64 {
-	*v += delta
-	return *v
+	return atomic.AddUint64(v, delta)
+}
+
+// nvmsSetCCharArray copies a Go string into a C char array via strcpy.
+//
+//go:nocheckptr
+func nvmsSetCCharArray(dest *C.char, src string) {
+	cStr := C.CString(src)
+	defer C.free(unsafe.Pointer(cStr))
+	C.strcpy(dest, cStr)
 }
 
 func main() {}

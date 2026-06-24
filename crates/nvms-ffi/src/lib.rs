@@ -72,7 +72,7 @@ pub mod sys {
         pub gpu_utilization: f64,
     }
 
-    unsafe extern "C" {
+    extern "C" {
         pub fn nvms_version() -> *const c_char;
         pub fn nvms_platform_info() -> *const c_char;
         pub fn nvms_init() -> c_int;
@@ -94,6 +94,8 @@ pub mod sys {
         pub fn nvms_instance_start(inst: *mut NvmsInstance) -> c_int;
         pub fn nvms_instance_stop(inst: *mut NvmsInstance) -> c_int;
         pub fn nvms_instance_status(inst: *mut NvmsInstance) -> NvmsStatus;
+        pub fn nvms_instance_list(count: *mut c_int) -> *mut *mut NvmsInstance;
+        pub fn nvms_instance_list_free(arr: *mut *mut NvmsInstance);
         pub fn nvms_perf_stats() -> NvmsPerfStats;
     }
 }
@@ -196,6 +198,16 @@ impl From<sys::NvmsMemoryType> for MemoryType {
     }
 }
 
+impl From<MemoryType> for sys::NvmsMemoryType {
+    fn from(value: MemoryType) -> Self {
+        match value {
+            MemoryType::Cpu => sys::NvmsMemoryType::Cpu,
+            MemoryType::Gpu => sys::NvmsMemoryType::Gpu,
+            MemoryType::Unified => sys::NvmsMemoryType::Unified,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GpuDevice {
     pub name: String,
@@ -282,6 +294,42 @@ impl Instance {
     pub fn name(&self) -> String {
         unsafe { cstr_to_string((*self.ptr).name) }
     }
+}
+
+/// A raw pointer wrapper that implements `Send` for use in static Mutex.
+/// SAFETY: The pointer is only accessed under mutex lock, and all access
+/// goes through the FFI layer which is thread-safe by design.
+#[derive(Clone, Copy)]
+struct SendInstancePtr(*mut sys::NvmsInstance);
+unsafe impl Send for SendInstancePtr {}
+
+/// List all currently active instances.
+///
+/// Returns a vector of (id, name, tier, status) tuples representing every
+/// instance tracked by the NVMS core. When the real Go library is linked
+/// this consults the Go runtime's in-memory map; when the Rust shim is
+/// active it returns a locally maintained snapshot.
+pub fn list_instances() -> Vec<(u64, String, Tier, Status)> {
+    let mut count: i32 = 0;
+    let arr = unsafe { sys::nvms_instance_list(&mut count) };
+    if arr.is_null() {
+        return Vec::new();
+    }
+    let mut result = Vec::with_capacity(count as usize);
+    for i in 0..count as isize {
+        let ptr = unsafe { *arr.offset(i) };
+        if !ptr.is_null() {
+            let inst = unsafe { &*ptr };
+            result.push((
+                inst.id,
+                cstr_to_string(inst.name),
+                inst.tier.into(),
+                inst.status.into(),
+            ));
+        }
+    }
+    unsafe { sys::nvms_instance_list_free(arr) };
+    result
 }
 
 impl Drop for Instance {
@@ -422,12 +470,12 @@ mod shim {
         }
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_version() -> *const c_char {
         c"1.0.0-rust-bindings".as_ptr()
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_platform_info() -> *const c_char {
         if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") {
             c"darwin/arm64".as_ptr()
@@ -438,17 +486,17 @@ mod shim {
         }
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_init() -> i32 {
         0
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_init_gpu(_backend: sys::NvmsGpuBackend) -> i32 {
         0
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_gpu_info() -> sys::NvmsGpuDevice {
         let mut device = sys::NvmsGpuDevice {
             name: [0; 256],
@@ -461,27 +509,27 @@ mod shim {
         device
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_supports_gpu() -> bool {
         current_backend() != sys::NvmsGpuBackend::None
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_supports_unified_memory() -> bool {
         cfg!(target_os = "macos") && cfg!(target_arch = "aarch64")
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_apple_silicon_init() -> i32 {
         if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") { 0 } else { -1 }
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_apple_ane_available() -> bool {
         cfg!(target_os = "macos") && cfg!(target_arch = "aarch64")
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_apple_unified_memory_alloc(size: u64) -> *mut c_void {
         let mut buf = Vec::<u8>::with_capacity(size as usize);
         let ptr = buf.as_mut_ptr();
@@ -489,29 +537,29 @@ mod shim {
         ptr.cast()
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_cuda_init() -> i32 { 0 }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_cuda_device_count() -> i32 { 0 }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_cuda_alloc_unified(size: u64) -> *mut c_void {
         nvms_apple_unified_memory_alloc(size)
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_rocm_init() -> i32 { 0 }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_rocm_device_count() -> i32 { 0 }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_neon_available() -> bool {
         cfg!(target_arch = "aarch64")
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_instance_create(
         tier: sys::NvmsTier,
         name: *const c_char,
@@ -535,13 +583,24 @@ mod shim {
             },
             gpu_memory_bytes: 0,
         };
-        Box::into_raw(Box::new(instance))
+        // Track in global list for list_instances() to work in shim mode
+        let ptr = Box::into_raw(Box::new(instance));
+        {
+            let mut instances = SHIM_INSTANCES.lock().unwrap();
+            instances.push(SendInstancePtr(ptr));
+        }
+        ptr
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_instance_destroy(inst: *mut sys::NvmsInstance) -> i32 {
         if inst.is_null() {
             return -1;
+        }
+        // Remove from global list
+        {
+            let mut instances = SHIM_INSTANCES.lock().unwrap();
+            instances.retain(|p| p.0 != inst);
         }
         unsafe {
             let instance = Box::from_raw(inst);
@@ -552,7 +611,7 @@ mod shim {
         0
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_instance_start(inst: *mut sys::NvmsInstance) -> i32 {
         if inst.is_null() {
             return -1;
@@ -561,7 +620,7 @@ mod shim {
         0
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_instance_stop(inst: *mut sys::NvmsInstance) -> i32 {
         if inst.is_null() {
             return -1;
@@ -570,7 +629,7 @@ mod shim {
         0
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_instance_status(inst: *mut sys::NvmsInstance) -> sys::NvmsStatus {
         if inst.is_null() {
             return sys::NvmsStatus::Error;
@@ -578,12 +637,37 @@ mod shim {
         unsafe { (*inst).status }
     }
 
-    #[unsafe(no_mangle)]
+    #[no_mangle]
     pub extern "C" fn nvms_perf_stats() -> sys::NvmsPerfStats {
         sys::NvmsPerfStats {
             startup_time_ns: 1_000_000,
             memory_used_bytes: 64 * 1024 * 1024,
             gpu_utilization: 0.0,
+        }
+    }
+
+    // Tracking for the shim's own instances so list_instances() works
+    static SHIM_INSTANCES: std::sync::Mutex<Vec<SendInstancePtr>> = std::sync::Mutex::new(Vec::new());
+
+    #[no_mangle]
+    pub extern "C" fn nvms_instance_list(count: *mut i32) -> *mut *mut sys::NvmsInstance {
+        let instances = SHIM_INSTANCES.lock().unwrap();
+        let total = instances.len();
+        if total == 0 {
+            unsafe { *count = 0 };
+            return std::ptr::null_mut();
+        }
+        let arr = Box::into_raw(
+            instances.iter().map(|p| p.0).collect::<Box<[*mut sys::NvmsInstance]>>(),
+        ) as *mut *mut sys::NvmsInstance;
+        unsafe { *count = total as i32 };
+        arr
+    }
+
+    #[no_mangle]
+    pub extern "C" fn nvms_instance_list_free(arr: *mut *mut sys::NvmsInstance) {
+        if !arr.is_null() {
+            unsafe { drop(Box::from_raw(arr as *mut *mut sys::NvmsInstance)) };
         }
     }
 }
@@ -773,5 +857,22 @@ mod tests {
         for err in &errors {
             let _debug = format!("{err:?}");
         }
+    }
+
+    #[test]
+    fn list_instances_roundtrip() {
+        init().unwrap();
+        let before = list_instances().len();
+
+        // Create two instances
+        let _a = unsafe { Instance::create(Tier::Wasm, "list-test-a") }.unwrap();
+        let _b = unsafe { Instance::create(Tier::Gvisor, "list-test-b") }.unwrap();
+
+        let listed = list_instances();
+        assert_eq!(listed.len(), before + 2, "should have exactly 2 more instances than before creation");
+
+        let names: Vec<String> = listed.iter().map(|(_, n, _, _)| n.clone()).collect();
+        assert!(names.contains(&"list-test-a".to_string()));
+        assert!(names.contains(&"list-test-b".to_string()));
     }
 }

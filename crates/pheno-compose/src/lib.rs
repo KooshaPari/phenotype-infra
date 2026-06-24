@@ -86,8 +86,15 @@ impl NvmsDriver {
 
     /// List all running instances
     pub fn list_instances(&self) -> Vec<InstanceInfo> {
-        // TODO: Implement via FFI
-        Vec::new()
+        let raw = nvms_ffi::list_instances();
+        raw.into_iter()
+            .map(|(id, name, tier, status)| InstanceInfo {
+                id,
+                name,
+                tier: tier.into(),
+                status: status.into(),
+            })
+            .collect()
     }
 }
 
