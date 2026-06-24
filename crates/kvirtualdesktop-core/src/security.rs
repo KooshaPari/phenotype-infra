@@ -12,6 +12,7 @@ use url::Url;
 use uuid::Uuid;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use oauth2::*;
+use oauth2::TokenResponse;
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
 
@@ -78,14 +79,14 @@ impl SecurityManager {
         // Add scopes
         if !scopes.is_empty() {
             auth_request = auth_request.add_scopes(
-                scopes.into_iter().map(Scope::new).collect()
+                scopes.into_iter().map(Scope::new).collect::<Vec<Scope>>()
             );
         }
 
-        // Add state if provided (oauth2 4.x: state comes from CsrfToken::new_random or via
-        // the builder's set_state on the AuthorizationRequest, not the client)
+        // Add state if provided (oauth2 4.x: set_state removed; pass via add_extra_param
+        // which is the standard OAuth2.0 extension point for state)
         if let Some(state_value) = state.clone() {
-            auth_request = auth_request.set_state(CsrfToken::new(state_value));
+            auth_request = auth_request.add_extra_param("state", state_value);
         }
 
         // Add resource indicators (RFC 8707)
@@ -119,11 +120,9 @@ impl SecurityManager {
         let token_response = token_request.request_async(async_http_client).await
             .map_err(|e| McpSecurityError::OAuth(e.to_string()))?;
 
-        // oauth2 4.x: access_token(), token_type() return owned types via Deref/Inner; expires_in
-        // returns Option<Duration>; refresh_token and scopes are not on StandardTokenResponse
-        // but may be on ExtraTokenFields. Use defensive accessors.
+        // oauth2 4.x: access_token/token_type/expires_in are now Deref-able field accessors
         let access_token = token_response.access_token().secret().clone();
-        let token_type = token_response.token_type().as_ref().to_string();
+        let token_type = format!("{:?}", token_response.token_type());
         let expires_in = token_response.expires_in().map(|d| d.as_secs());
         let refresh_token = None; // Generic StandardTokenResponse doesn't expose refresh_token; depends on ExtraTokenFields
         let scope = None; // Same for scopes; depends on ExtraTokenFields
@@ -306,7 +305,7 @@ impl PkceHelper {
     /// Generate PKCE code verifier and challenge
     pub fn generate_pkce_pair() -> (String, String) {
         use oauth2::PkceCodeChallenge as _;
-        // oauth2 4.x: use the S256Method via new_random_code_verifier_sha256
+        // oauth2 4.x: new_random_sha256 returns (PkceCodeVerifier, PkceCodeChallenge)
         let (code_verifier, code_challenge) = PkceCodeChallenge::new_random_sha256();
 
         (
@@ -318,6 +317,7 @@ impl PkceHelper {
     /// Verify PKCE challenge
     pub fn verify_pkce_challenge(verifier: &str, challenge: &str) -> bool {
         let code_verifier = PkceCodeVerifier::new(verifier.to_string());
+        // oauth2 4.x: from_code_verifier_sha256 returns PkceCodeChallenge directly
         let expected_challenge = PkceCodeChallenge::from_code_verifier_sha256(&code_verifier);
         
         expected_challenge.as_str() == challenge

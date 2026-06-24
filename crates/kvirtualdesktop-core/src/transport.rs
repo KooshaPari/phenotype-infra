@@ -145,7 +145,7 @@ impl Transport for StdioTransport {
             .map_err(|e| McpTransportError::InvalidMessage(e.to_string()))?;
         
         let message: Message = serde_json::from_str(&content_str)
-            .map_err(McpTransportError::DeserializationError)?;
+            .map_err(McpTransportError::SerializationError)?;
         
         Ok(message)
     }
@@ -246,14 +246,14 @@ impl HttpSseTransport {
         
         tokio::spawn(async move {
             use futures_util::StreamExt;
-            let mut event_stream = client.get(events_url)
+            let response = client.get(events_url)
                 .header("Accept", "text/event-stream")
                 .header("Cache-Control", "no-cache")
                 .header("X-Session-ID", &session_id)
                 .send()
                 .await
-                .unwrap()
-                .bytes_stream();
+                .unwrap();
+            let mut event_stream = response.bytes_stream();
 
             while let Some(chunk) = event_stream.next().await {
                 if let Ok(bytes) = chunk {
