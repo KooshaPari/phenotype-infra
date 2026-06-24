@@ -12,6 +12,10 @@ resolver = "2"
 #
 # Tooling sub-projects live under tools/ and are NOT workspace members
 # (they use their own build systems).
+#
+# tools/kodevibego/ — Go lint/analysis engine (absorbed from KodeVibeGo).
+#   Build: cd tools/kodevibego && make build
+#   Tests: cd tools/kodevibego && go test ./..
 # =============================================================================
 
 members = [
