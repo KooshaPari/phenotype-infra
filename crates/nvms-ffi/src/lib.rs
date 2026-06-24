@@ -589,6 +589,91 @@ mod tests {
     }
 
     #[test]
+    fn init_succeeds() {
+        assert_eq!(init(), Ok(()));
+    }
+
+    #[test]
+    fn init_gpu_succeeds() {
+        assert_eq!(init_gpu(GpuBackend::None), Ok(()));
+    }
+
+    #[test]
+    fn gpu_info_returns_device() {
+        let info = gpu_info();
+        assert!(!info.name.is_empty(), "GPU name should not be empty");
+        assert!(info.compute_units > 0, "compute units should be > 0");
+        assert!(info.memory_bytes > 0, "memory bytes should be > 0");
+    }
+
+    #[test]
+    fn supports_gpu_returns_bool() {
+        // Should always return a value (no panic)
+        let _ = supports_gpu();
+    }
+
+    #[test]
+    fn supports_unified_memory_returns_bool() {
+        let _ = supports_unified_memory();
+    }
+
+    #[test]
+    fn apple_silicon_init_may_fail_on_non_apple() {
+        // Should not panic regardless of platform
+        let _ = apple_silicon_init();
+    }
+
+    #[test]
+    fn apple_ane_available_returns_bool() {
+        let _ = apple_ane_available();
+    }
+
+    #[test]
+    fn apple_unified_memory_alloc_returns_ptr() {
+        let ptr = apple_unified_memory_alloc(1024);
+        assert!(!ptr.is_null(), "allocation should return non-null pointer");
+    }
+
+    #[test]
+    fn cuda_init_succeeds() {
+        assert_eq!(cuda_init(), Ok(()));
+    }
+
+    #[test]
+    fn cuda_device_count_returns_non_negative() {
+        assert!(cuda_device_count() >= 0);
+    }
+
+    #[test]
+    fn cuda_alloc_unified_returns_ptr() {
+        let ptr = cuda_alloc_unified(1024);
+        assert!(!ptr.is_null(), "CUDA alloc should return non-null ptr");
+    }
+
+    #[test]
+    fn rocm_init_succeeds() {
+        assert_eq!(rocm_init(), Ok(()));
+    }
+
+    #[test]
+    fn rocm_device_count_returns_non_negative() {
+        assert!(rocm_device_count() >= 0);
+    }
+
+    #[test]
+    fn neon_available_returns_bool() {
+        let _ = neon_available();
+    }
+
+    #[test]
+    fn perf_stats_returns_values() {
+        let stats = perf_stats();
+        assert!(stats.startup_time_ns > 0, "startup time should be > 0");
+        assert!(stats.memory_used_bytes > 0, "memory used should be > 0");
+        assert!(stats.gpu_utilization >= 0.0, "GPU util should be >= 0");
+    }
+
+    #[test]
     fn drives_instance_lifecycle() {
         init().unwrap();
         let instance = unsafe { Instance::create(Tier::Wasm, "test") }.unwrap();
@@ -598,5 +683,85 @@ mod tests {
         assert_eq!(instance.status(), Status::Stopped);
         instance.start().unwrap();
         assert_eq!(instance.status(), Status::Running);
+    }
+
+    #[test]
+    fn instance_has_valid_id() {
+        init().unwrap();
+        let instance = unsafe { Instance::create(Tier::Wasm, "id-test") }.unwrap();
+        assert!(instance.id() > 0, "instance ID should be positive");
+    }
+
+    #[test]
+    fn instance_name_roundtrip() {
+        init().unwrap();
+        let instance = unsafe { Instance::create(Tier::Gvisor, "my-instance") }.unwrap();
+        assert_eq!(instance.name(), "my-instance");
+    }
+
+    #[test]
+    fn all_tiers_are_distinct() {
+        assert_ne!(Tier::Wasm as u8, Tier::Gvisor as u8);
+        assert_ne!(Tier::Gvisor as u8, Tier::Firecracker as u8);
+        assert_ne!(Tier::Wasm as u8, Tier::Firecracker as u8);
+    }
+
+    #[test]
+    fn all_statuses_are_distinct() {
+        let values = [
+            Status::Stopped as u8,
+            Status::Starting as u8,
+            Status::Running as u8,
+            Status::Stopping as u8,
+            Status::Error as u8,
+        ];
+        for i in 0..values.len() {
+            for j in (i + 1)..values.len() {
+                assert_ne!(values[i], values[j], "status variants should be distinct");
+            }
+        }
+    }
+
+    #[test]
+    fn gpu_backend_roundtrip() {
+        let backends = [
+            GpuBackend::None,
+            GpuBackend::AppleMetal,
+            GpuBackend::NvidiaCuda,
+            GpuBackend::AmdRocm,
+            GpuBackend::IntelOneApi,
+        ];
+        for backend in &backends {
+            let sys: sys::NvmsGpuBackend = (*backend).into();
+            let back: GpuBackend = sys.into();
+            assert_eq!(*backend, back);
+        }
+    }
+
+    #[test]
+    fn memory_type_roundtrip() {
+        let types = [MemoryType::Cpu, MemoryType::Gpu, MemoryType::Unified];
+        for mt in &types {
+            let sys: sys::NvmsMemoryType = (*mt).into();
+            let back: MemoryType = sys.into();
+            assert_eq!(*mt, back);
+        }
+    }
+
+    #[test]
+    fn nvms_error_is_debug_and_display() {
+        let errors = [
+            NvmsError::InitFailed,
+            NvmsError::CreateFailed,
+            NvmsError::StartFailed,
+            NvmsError::StopFailed,
+            NvmsError::DestroyFailed,
+            NvmsError::AppleSiliconNotSupported,
+            NvmsError::CudaInitFailed,
+            NvmsError::RocmInitFailed,
+        ];
+        for err in &errors {
+            let _debug = format!("{err:?}");
+        }
     }
 }

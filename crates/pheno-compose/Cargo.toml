@@ -11,13 +11,15 @@ categories = ["development-tools"]
 authors = ["kooshapari"]
 
 [dependencies]
-nvms-ffi = { path = "../nvms-ffi", optional = true }
+nvms-ffi = { path = "../nvms-ffi" }
 pheno-config = { path = "../pheno-config" }
+serde = { workspace = true }
+thiserror = { workspace = true }
 
 [features]
 default = ["nvms"]
-nvms = ["nvms-ffi"]  # Enable NVMS backend
-mock = []            # Use mock backend for testing
+nvms = []  # Enable NVMS backend (nvms-ffi is always a dep for error types)
+mock = []  # Use mock backend for testing
 
 [lib]
 name = "pheno_compose_driver"

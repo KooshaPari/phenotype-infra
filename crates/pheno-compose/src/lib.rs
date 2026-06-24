@@ -28,6 +28,8 @@
 //! ```
 
 mod config;
+pub mod errors;
+pub mod health;
 mod instance;
 
 pub use config::NvmsConfig;

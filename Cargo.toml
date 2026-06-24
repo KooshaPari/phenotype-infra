@@ -19,6 +19,7 @@ members = [
     "crates/nvms-ffi",       # Rust FFI bindings
     "crates/pheno-compose",  # Rust high-level driver
     "crates/pheno-config",   # Shared configuration
+    "tests",                 # Cross-crate integration tests
 ]
 
 [workspace.package]

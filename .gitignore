@@ -86,6 +86,9 @@ coverage/
 # Worklog artifacts
 worklog-*.json
 worklogs/
+# Temp files
+tmp_*
+tmp-*
 # --- adopted from phenotype-tooling/templates/gitignore-node ---
 .cache/
 .eslintcache
