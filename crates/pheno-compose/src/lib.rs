@@ -33,6 +33,7 @@ pub mod health;
 mod instance;
 
 pub use config::NvmsConfig;
+pub use errors::Error;
 pub use instance::{Instance, InstanceStatus, Tier};
 
 pub use nvms_ffi;

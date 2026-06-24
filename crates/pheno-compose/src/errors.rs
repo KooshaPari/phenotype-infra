@@ -139,7 +139,7 @@ mod tests {
             Error::StopFailed("x".into()),
             Error::DestroyFailed("x".into()),
             Error::Ffi(nvms_ffi::NvmsError::InitFailed),
-            Error::InvalidCString(std::ffi::CString::new("a").unwrap_err()),
+            Error::InvalidCString(std::ffi::CString::new("a\0b").unwrap_err()),
             Error::Config("x".into()),
             Error::AppleSiliconNotSupported,
             Error::CudaInitFailed("x".into()),

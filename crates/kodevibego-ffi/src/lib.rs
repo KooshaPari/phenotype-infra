@@ -5,40 +5,18 @@
 /// Phase 2: Compile Go core as C archive, link via cc crate.
 /// Phase 3: Pure Rust equivalent of Go analysis engine.
 
-pub mod ffi {
-    use std::ffi::{CStr, CString};
-    use std::os::raw::c_char;
+pub mod ffi;
 
-    /// Invoke a Go analysis function via C ABI.
-    /// Returns JSON-formatted analysis result.
-    pub unsafe fn analyze(source: &str) -> Result<String, String> {
-        let c_source = CString::new(source).map_err(|e| format!("CString error: {}", e))?;
-        let c_result = go_analyze(c_source.as_ptr());
-        if c_result.is_null() {
-            return Err("go_analyze returned null".into());
-        }
-        let result = CStr::from_ptr(c_result)
-            .to_str()
-            .map_err(|e| format!("UTF-8 error: {}", e))?
-            .to_owned();
-        // Free the Go-allocated string
-        go_free_string(c_result);
-        Ok(result)
-    }
+// ── Go analysis types — mirrors KodeVibeGo's internal module ────────────
 
-    extern "C" {
-        fn go_analyze(source: *const c_char) -> *mut c_char;
-        fn go_free_string(s: *mut c_char);
-    }
-}
-
-/// Go analysis types — mirrors KodeVibeGo's internal module.
+/// Analysis result from KodeVibeGo engine
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AnalysisResult {
     pub issues: Vec<Issue>,
     pub stats: AnalysisStats,
 }
 
+/// Individual issue found by analysis
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Issue {
     pub severity: String,
@@ -48,6 +26,7 @@ pub struct Issue {
     pub rule_id: Option<String>,
 }
 
+/// Analysis statistics
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AnalysisStats {
     pub files_analyzed: u32,

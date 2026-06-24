@@ -1,0 +1,12 @@
+[package]
+name = "thegent-utils"
+version = "0.1.0"
+edition = "2021"
+description = "Utility functions for binary resolution, PATH handling, and command execution — absorbed from _tmp_thegent_ws/crates/thegent-utils-source"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/KooshaPari/phenotype-infra"
+publish = false
+
+[dependencies]
+thiserror = { workspace = true }
+which = "4"

@@ -129,4 +129,10 @@ llvm-cov-*
 # Tooling draft files
 *.proposed
 .draft/
+# Forge-agent temp markers
+_*.out
+_*.txt
+_finish_marker.txt
+_cargo_pi*
+_pi_*
 # ===== End standard hygiene =====
