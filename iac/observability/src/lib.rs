@@ -10,7 +10,7 @@
 //! ```rust,no_run
 //! use phenotype_infra_observability::init_tracing;
 //!
-//! fn main() -> anyhow::Result<()> {
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let _guard = init_tracing("oci-lottery");
 //!     // ... rest of app ...
 //!     Ok(())
