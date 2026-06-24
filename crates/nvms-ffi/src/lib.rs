@@ -4,6 +4,8 @@
 use std::ffi::{c_char, c_void, CStr, CString};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use thiserror::Error;
+
 pub mod sys {
     use std::os::raw::{c_char, c_int, c_ulonglong};
 
@@ -210,15 +212,23 @@ pub struct PerfStats {
     pub gpu_utilization: f64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
 pub enum NvmsError {
+    #[error("NVMS initialization returned non-zero")]
     InitFailed,
+    #[error("NVMS instance creation returned a null pointer")]
     CreateFailed,
+    #[error("NVMS instance start returned non-zero")]
     StartFailed,
+    #[error("NVMS instance stop returned non-zero")]
     StopFailed,
+    #[error("NVMS instance destroy returned non-zero")]
     DestroyFailed,
+    #[error("Apple Silicon platform is not supported on this host")]
     AppleSiliconNotSupported,
+    #[error("CUDA backend initialization returned non-zero")]
     CudaInitFailed,
+    #[error("ROCm backend initialization returned non-zero")]
     RocmInitFailed,
 }
 
