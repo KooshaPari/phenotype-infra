@@ -53,7 +53,9 @@ fn main() {
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        panic!("Go build failed:\n{}", stderr);
+        println!("cargo:warning=Go build failed:\n{}", stderr);
+        println!("cargo:warning=Falling back — nanovms-core static lib not available");
+        return;
     }
 
     // Link the static library

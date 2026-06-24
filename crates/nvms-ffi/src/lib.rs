@@ -395,6 +395,10 @@ fn write_name(dst: &mut [c_char; 256], value: &str) {
     dst[len] = 0;
 }
 
+/// Shim module provides stub `extern "C"` implementations when the real
+/// Go static library is not linked. When `nvms_core_lib` cfg is set,
+/// these symbols come from the compiled Go C archive instead.
+#[cfg(not(nvms_core_lib))]
 mod shim {
     use super::*;
 

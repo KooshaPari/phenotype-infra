@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-//go:build ignore
+//go:build cgo
 
 // C-export layer for NVMS Core
 // Supports: Apple Silicon (Metal), NVIDIA (CUDA), AMD (ROCm), Intel (oneAPI)
