@@ -79,10 +79,9 @@ struct CreateKeyResponse {
 async fn main() -> Result<()> {
     // NOTE: this binary must keep logs off stdout — stdout is the transport
     // for the Tailscale API key (consumed via `$(tailscale-keygen)` in shell or
-    // by the oci-post-acquire hook). We still wire to `phenotype-logging` for
-    // the default-filter contract (so `RUST_LOG` semantics match the rest of
-    // the mesh), but the local `with_writer(std::io::stderr)` override is
-    // load-bearing and must stay here.
+    // by the oci-post-acquire hook). We DO NOT install the Prometheus
+    // metrics exporter either (would conflict with the transport contract).
+    // Just the tracing-subscriber fmt layer with stderr writer is correct.
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
