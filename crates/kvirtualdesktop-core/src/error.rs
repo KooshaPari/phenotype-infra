@@ -328,7 +328,7 @@ impl McpError {
             McpError::DesktopAutomation(_) => -32300,
             McpError::VirtualMachine(_) => -32400,
             McpError::Cli(_) => -32500,
-            McpError::Tts(_) => -32600,
+            McpError::Tts(_) => -32800,
             McpError::Credential(_) => -32700,
         }
     }
@@ -340,10 +340,6 @@ impl McpError {
     pub fn from_error_code(code: i32, message: String) -> Self {
         match code {
             -32000 => McpError::Protocol(message),
-            -32600 => McpError::InvalidRequest(message),
-            -32601 => McpError::MethodNotFound(message),
-            -32602 => McpError::InvalidParams(message),
-            -32603 => McpError::Internal(message),
             -32001 => McpError::AuthenticationFailed(message),
             -32002 => McpError::AuthorizationFailed(message),
             -32003 => McpError::ResourceNotFound(message),
@@ -351,6 +347,17 @@ impl McpError {
             -32005 => McpError::SessionExpired(message),
             -32006 => McpError::RateLimitExceeded(message),
             -32007 => McpError::Timeout(message),
+            -32100 => McpError::Transport(crate::transport::McpTransportError::from_message(&message)),
+            -32200 => McpError::Security(crate::security::McpSecurityError::from_message(&message)),
+            -32300 => McpError::DesktopAutomation(crate::desktop::DesktopAutomationError::from_message(&message)),
+            -32400 => McpError::VirtualMachine(crate::vm::VirtualMachineError::from_message(&message)),
+            -32500 => McpError::Cli(crate::cli::CliError::from_message(&message)),
+            -32600 => McpError::InvalidRequest(message),
+            -32601 => McpError::MethodNotFound(message),
+            -32602 => McpError::InvalidParams(message),
+            -32603 => McpError::Internal(message),
+            -32700 => McpError::Credential(crate::credential::CredentialError::from_message(&message)),
+            -32800 => McpError::Tts(crate::tts::TtsError::from_message(&message)),
             _ => McpError::Internal(message),
         }
     }
