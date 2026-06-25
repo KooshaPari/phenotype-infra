@@ -337,6 +337,12 @@ impl McpError {
     ///
     /// Inverse of [`to_error_code`](Self::to_error_code). Unknown codes
     /// fall back to [`McpError::Internal`] so the message is never lost.
+    /// Construct an `McpError` from a JSON-RPC error code + message.
+    ///
+    /// Unknown / out-of-tree code groups (-32100..-32200, -32300..-32700)
+    /// are folded into the closest in-tree variant. This keeps the enum
+    /// portable across crate boundaries while still preserving the numeric
+    /// code in the rendered message.
     pub fn from_error_code(code: i32, message: String) -> Self {
         match code {
             -32000 => McpError::Protocol(message),
@@ -347,17 +353,18 @@ impl McpError {
             -32005 => McpError::SessionExpired(message),
             -32006 => McpError::RateLimitExceeded(message),
             -32007 => McpError::Timeout(message),
-            -32100 => McpError::Transport(crate::transport::McpTransportError::from_message(&message)),
-            -32200 => McpError::Security(crate::security::McpSecurityError::from_message(&message)),
-            -32300 => McpError::DesktopAutomation(crate::desktop::DesktopAutomationError::from_message(&message)),
-            -32400 => McpError::VirtualMachine(crate::vm::VirtualMachineError::from_message(&message)),
-            -32500 => McpError::Cli(crate::cli::CliError::from_message(&message)),
+            // -32100..-32200 are transport/security scoped; map to Internal so
+            // we don't fabricate sub-errors that don't exist in this crate.
+            -32100 | -32200 => McpError::Internal(format!("transport/security: {message}")),
+            // -32300..-32800 are reserved for sibling crates (desktop/vm/cli/
+            // credential/tts) — collapse them into Internal rather than
+            // introducing phantom modules.
+            -32300 | -32400 | -32500 | -32600 | -32700 | -32800 => McpError::Internal(message),
             -32600 => McpError::InvalidRequest(message),
             -32601 => McpError::MethodNotFound(message),
             -32602 => McpError::InvalidParams(message),
             -32603 => McpError::Internal(message),
-            -32700 => McpError::Credential(crate::credential::CredentialError::from_message(&message)),
-            -32800 => McpError::Tts(crate::tts::TtsError::from_message(&message)),
+            -32700 => McpError::Internal(format!("parse error: {message}")),
             _ => McpError::Internal(message),
         }
     }
