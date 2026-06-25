@@ -739,6 +739,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "clap",
+ "phenotype-infra-observability",
  "phenotype-logging",
  "rand 0.10.1",
  "serde",
@@ -755,6 +756,7 @@ dependencies = [
  "chrono",
  "clap",
  "glob",
+ "phenotype-infra-observability",
  "phenotype-logging",
  "reqwest",
  "serde",
@@ -783,9 +785,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
-name = "phenotype-logging"
-version = "0.1.0"
+name = "phenotype-infra-observability"
+version = "0.2.0"
 dependencies = [
+ "phenotype-logging",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "phenotype-logging"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
  "tracing",
  "tracing-subscriber",
 ]
