@@ -299,6 +299,16 @@ pub enum CredentialError {
 
 impl McpError {
     /// Convert to MCP error code
+    ///
+    /// Maps each variant to its wire-stable numeric code (negative
+    /// integers are reserved by JSON-RPC; the -32000..-32099 range is the
+    /// MCP-server-defined extension band).
+    ///
+    /// ```
+    /// use kvirtualdesktop_core::error::McpError;
+    /// let e = McpError::MethodNotFound("foo".into());
+    /// assert_eq!(e.to_error_code(), -32601);
+    /// ```
     pub fn to_error_code(&self) -> i32 {
         match self {
             McpError::Protocol(_) => -32000,
@@ -322,8 +332,11 @@ impl McpError {
             McpError::Credential(_) => -32700,
         }
     }
-    
+
     /// Create MCP error from error code
+    ///
+    /// Inverse of [`to_error_code`](Self::to_error_code). Unknown codes
+    /// fall back to [`McpError::Internal`] so the message is never lost.
     pub fn from_error_code(code: i32, message: String) -> Self {
         match code {
             -32000 => McpError::Protocol(message),

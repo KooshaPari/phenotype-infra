@@ -19,33 +19,95 @@ pub type RequestId = String;
 pub type SessionId = Uuid;
 
 /// MCP Message base structure
+///
+/// The envelope for every request, notification, and response sent over an
+/// MCP transport. Fields are populated based on direction:
+///
+/// - **Request**: `id`, `method`, `params`, `session_id`, `timestamp`.
+/// - **Notification**: `method`, `params`, `session_id`, `timestamp` (no `id`).
+/// - **Response**: `id`, `result` (success) or `error` (failure),
+///   `session_id`, `timestamp`.
+///
+/// ```
+/// use kvirtualdesktop_core::Message;
+/// use chrono::Utc;
+///
+/// let req = Message {
+///     id: "req-1".into(),
+///     method: "tools/list".into(),
+///     params: None,
+///     result: None,
+///     error: None,
+///     session_id: None,
+///     timestamp: Utc::now(),
+/// };
+/// assert_eq!(req.method, "tools/list");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
+    /// Wire-format message identifier. Omit for notifications.
     pub id: MessageId,
+    /// MCP method name (e.g. `"tools/list"`, `"resources/read"`). See
+    /// [`crate::protocol::McpMethods`] for the canonical set.
     pub method: String,
+    /// JSON-encoded method parameters, if any.
     pub params: Option<serde_json::Value>,
+    /// JSON-encoded result, populated on success responses.
     pub result: Option<serde_json::Value>,
+    /// MCP error, populated on failure responses.
     pub error: Option<McpError>,
+    /// Session this message belongs to, if a session has been established.
     pub session_id: Option<SessionId>,
+    /// Wall-clock timestamp at which the sender constructed the message.
     pub timestamp: DateTime<Utc>,
 }
 
 /// MCP Error structure
+///
+/// A JSON-RPC-style error block. The numeric `code` is wire-stable;
+/// see [`McpError::to_error_code`](crate::error::McpError::to_error_code)
+/// for the canonical mapping.
+///
+/// ```
+/// use kvirtualdesktop_core::types::McpError;
+///
+/// let e = McpError {
+///     code: -32601,
+///     message: "Method not found: foo/bar".into(),
+///     data: None,
+/// };
+/// assert_eq!(e.code, -32601);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpError {
+    /// Numeric MCP error code (negative integers reserved by spec).
     pub code: i32,
+    /// Human-readable error message; safe to log but not necessarily safe
+    /// to surface to end users verbatim.
     pub message: String,
+    /// Optional structured payload (e.g. validation details).
     pub data: Option<serde_json::Value>,
 }
 
 /// MCP Tool Definition
+///
+/// Declares a callable tool: its JSON-Schema input/output, what capabilities
+/// it requires, and any security gates. Tools are advertised via
+/// `tools/list` and invoked via `tools/call`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tool {
+    /// Stable tool identifier (e.g. `"screenshot.capture"`).
     pub name: String,
+    /// One-sentence description surfaced to MCP clients.
     pub description: String,
+    /// JSON Schema describing accepted arguments.
     pub input_schema: ToolInputSchema,
+    /// Optional JSON Schema describing successful results.
     pub output_schema: Option<ToolOutputSchema>,
+    /// Capabilities the tool needs to function. The runtime must verify
+    /// the host can satisfy these before invocation.
     pub capabilities: Vec<ToolCapability>,
+    /// Security requirements enforced before the tool may be called.
     pub security_requirements: Option<SecurityRequirements>,
 }
 

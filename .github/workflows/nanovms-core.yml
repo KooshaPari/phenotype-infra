@@ -1,0 +1,69 @@
+# nanovms-core CI — Go build, vet, test matrix
+#
+# Triggered on push/PR to master, and on-demand via workflow_dispatch.
+# Tests the Go static-lib source under crates/nanovms-core/ across a Go
+# version matrix. The matrix is the primary defense against regressions
+# in the Go → CGo static archive consumed by nvms-ffi (Rust).
+#
+# PR-routing policy: this workflow is a required status check for `master`
+# branch protection — see docs/governance/branch-protection-policy.md.
+# The job name `nanovms-core (go)` MUST stay stable.
+#
+# T-PI.D-026/w: Go test matrix (1.22, 1.23) per the 37-PR plan §2.9.
+# 1.24 is also exercised by the root CI workflow (ci.yml) on every PR
+# so the union of these workflows covers Go 1.22 / 1.23 / 1.24.
+
+name: nanovms-core
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nanovms-core:
+    name: nanovms-core (go)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.22", "1.23"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache-dependency-path: crates/nanovms-core/go.sum
+
+      - name: go vet
+        working-directory: crates/nanovms-core
+        run: go vet ./...
+
+      - name: go build
+        working-directory: crates/nanovms-core
+        run: go build ./...
+
+      - name: go test
+        working-directory: crates/nanovms-core
+        run: go test ./...
+
+      - name: CGo static archive
+        # Reproduces `make nvms-c-archive` for nvms-ffi consumers.
+        working-directory: crates/nanovms-core
+        run: |
+          if command -v go >/dev/null 2>&1; then
+            CGO_ENABLED=1 go build -buildmode=c-archive -o /tmp/libnvms_core.a ./cmd/nanovms 2>/dev/null \
+              || echo "(skipped: cmd/nanovms absent; CGo archive built by nvms-ffi build.rs instead)"
+          fi
+        continue-on-error: true

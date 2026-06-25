@@ -11,33 +11,50 @@ use tokio::sync::mpsc;
 use url::Url;
 
 /// Transport trait for MCP communication
+///
+/// Implemented by every concrete transport
+/// ([`StdioTransport`], [`HttpSseTransport`], …). The trait is `async` via
+/// [`async_trait`] and exposes a symmetric `send_message` / `receive_message`
+/// pair plus lifecycle hooks (`start` / `stop`) and connection-introspection
+/// helpers (`is_connected` / `transport_info`).
 #[async_trait]
 pub trait Transport: Send + Sync {
-    /// Send a message through the transport
+    /// Send a message through the transport. Returns
+    /// [`McpTransportError::NotConnected`](crate::error::McpTransportError::NotConnected)
+    /// if [`start`](Self::start) has not been called.
     async fn send_message(&mut self, message: Message) -> Result<(), McpTransportError>;
-    
-    /// Receive a message from the transport
+
+    /// Receive a message from the transport. Returns
+    /// [`McpTransportError::NotConnected`](crate::error::McpTransportError::NotConnected)
+    /// if [`start`](Self::start) has not been called.
     async fn receive_message(&mut self) -> Result<Message, McpTransportError>;
-    
-    /// Start the transport
+
+    /// Start the transport. Idempotent for most implementations.
     async fn start(&mut self) -> Result<(), McpTransportError>;
-    
-    /// Stop the transport
+
+    /// Stop the transport and release resources. Idempotent.
     async fn stop(&mut self) -> Result<(), McpTransportError>;
-    
-    /// Check if the transport is connected
+
+    /// Check if the transport is currently connected.
     fn is_connected(&self) -> bool;
-    
-    /// Get transport information
+
+    /// Get transport information (type, endpoint, version, capabilities).
     fn transport_info(&self) -> TransportInfo;
 }
 
 /// Transport Information
+///
+/// Returned by [`Transport::transport_info`]. Carries the wire metadata
+/// needed to negotiate capabilities with a peer.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransportInfo {
+    /// Concrete transport variant in use.
     pub transport_type: TransportType,
+    /// Remote endpoint, if applicable (None for stdio).
     pub endpoint: Option<String>,
+    /// MCP wire-protocol version negotiated for this transport.
     pub protocol_version: String,
+    /// Capability flags advertised by this transport.
     pub capabilities: TransportCapabilities,
 }
 
@@ -62,6 +79,19 @@ pub struct TransportCapabilities {
 }
 
 /// Stdio Transport
+///
+/// Reads MCP frames from `tokio::io::stdin()` and writes them to
+/// `tokio::io::stdout()`. Each frame is length-prefixed per LSP / MCP
+/// framing:
+///
+/// ```text
+/// Content-Length: <N>\r\n
+/// \r\n
+/// <N bytes of JSON>
+/// ```
+///
+/// This is the default transport for editor / agent integrations where
+/// the MCP server runs as a subprocess.
 pub struct StdioTransport {
     stdin: tokio::io::Stdin,
     stdout: tokio::io::Stdout,
@@ -70,6 +100,8 @@ pub struct StdioTransport {
 }
 
 impl StdioTransport {
+    /// Construct a new stdio transport bound to the current process's
+    /// stdin/stdout. Call [`start`](Transport::start) before sending.
     pub fn new() -> Self {
         Self {
             stdin: tokio::io::stdin(),
@@ -177,6 +209,11 @@ impl Transport for StdioTransport {
 }
 
 /// HTTP+SSE Transport
+///
+/// Speaks MCP over HTTP for request/response and Server-Sent Events for
+/// server-pushed messages. Construct with a base [`Url`] and call
+/// [`connect`](Self::connect) (or [`start`](Transport::start)) before
+/// sending.
 pub struct HttpSseTransport {
     client: reqwest::Client,
     base_url: Url,
@@ -186,6 +223,9 @@ pub struct HttpSseTransport {
 }
 
 impl HttpSseTransport {
+    /// Construct a new HTTP+SSE transport. The base URL is the MCP
+    /// server root; `/connect`, `/send`, `/events`, and `/disconnect`
+    /// endpoints are derived from it.
     pub fn new(base_url: Url) -> Self {
         Self {
             client: reqwest::Client::new(),
@@ -392,13 +432,18 @@ fn parse_sse_message(text: &str) -> Option<Message> {
 }
 
 /// Transport Factory
+///
+/// Convenience constructor for the built-in transports when you want
+/// `Box<dyn Transport>` without naming the concrete type at the call site.
 pub struct TransportFactory;
 
 impl TransportFactory {
+    /// Build a boxed [`StdioTransport`].
     pub fn create_stdio_transport() -> Box<dyn Transport> {
         Box::new(StdioTransport::new())
     }
-    
+
+    /// Build a boxed [`HttpSseTransport`] pointed at `base_url`.
     pub fn create_http_sse_transport(base_url: Url) -> Box<dyn Transport> {
         Box::new(HttpSseTransport::new(base_url))
     }

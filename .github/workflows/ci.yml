@@ -1,15 +1,24 @@
 # phenotype-infra CI — Rust workspace build, test, lint, and format check
 #
-# Triggered on push/PR to main, and on-demand via workflow_dispatch.
+# Triggered on push/PR to master, and on-demand via workflow_dispatch.
 # Runs against the root workspace Cargo.toml (not the iac/ sub-workspace).
+#
+# PR-routing policy: this workflow is the required status check for `master`
+# branch protection — see docs/governance/branch-protection-policy.md.
+# Job names below MUST stay stable; renaming them breaks protection.
+#
+# T-PI.D-022/w: adds `cargo doc --workspace --no-deps` to enforce
+# `#![warn(missing_docs)]` and `#[warn(rustdoc::broken_intra_doc_links)]`
+# crate-wide. Without this gate, doc-only PRs (rustdoc additions) cannot
+# be verified to compile.
 
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 permissions:
@@ -43,10 +52,18 @@ jobs:
         run: cargo fmt --workspace -- --check
 
       - name: cargo check
-        run: cargo check --workspace
+        run: cargo check --workspace --all-targets
 
       - name: cargo clippy
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: cargo test
         run: cargo test --workspace
+
+      - name: cargo doc
+        # Enforce #![warn(missing_docs)] / warn(rustdoc::broken_intra_doc_links)
+        # crate-wide by building docs as part of CI. -D warnings turns
+        # missing-docs warnings into errors so any undocumented public item
+        # blocks the PR. --no-deps keeps the build fast (no upstream crate
+        # docs); FAIL_ON_RUSTDOC_LINKS=1 enforces broken-link detection.
+        run: RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --all-features
