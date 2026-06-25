@@ -8,6 +8,9 @@
 ![AI-Only-Maintained](https://img.shields.io/badge/Planned%20%26%20Maintained%20by-AI%20Agents%20Only-red?style=flat-square)
 <!-- AI-DD-META:END -->
 
+> **Work state:** SCAFFOLD · **Progress:** `█████░░░░░ 50%`
+> Compute/Infra consolidation monorepo (nanovms + PhenoCompose + BytePort). IaC validates, crates compile, but human-apply-only gate. · updated 2026-06-24
+
 # phenotype-infra — Compute/Infra Consolidation Monorepo
 
 > **Consolidation target** for nanovms (Go, 3-tier isolation) + PhenoCompose (Rust FFI + driver) + BytePort (Svelte tooling).
