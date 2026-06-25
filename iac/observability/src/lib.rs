@@ -8,7 +8,7 @@
 //! # Usage
 //!
 //! ```rust,no_run
-//! use phenotype_infra_observability::init_tracing;
+//! use phenotype_infra_observability::{init, OtelConfig};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let _guard = init_tracing("oci-lottery");
@@ -17,7 +17,12 @@
 //! }
 //! ```
 //!
-//! Filter via `RUST_LOG=info,oci_lottery=debug`.
+//! Filter logs via `RUST_LOG=info,oci_lottery=debug`. Metrics scrape URL is
+//! `http://localhost:9090/metrics` by default.
+
+#![deny(missing_docs)]
+#![deny(rust_2018_idioms)]
+#![warn(clippy::all)]
 
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]

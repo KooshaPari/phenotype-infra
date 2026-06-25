@@ -12,4 +12,4 @@ tracing-subscriber = { workspace = true }
 phenotype-logging = { workspace = true }
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["rt", "macros", "test-util"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "test-util"] }
