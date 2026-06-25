@@ -4,12 +4,9 @@
 //! including stdio and HTTP+SSE transports.
 
 use crate::types::*;
-use crate::protocol::*;
 use crate::error::*;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::mpsc;
 use url::Url;
 
