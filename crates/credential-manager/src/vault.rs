@@ -277,10 +277,18 @@ mod tests {
     use crate::config::EncryptionConfig;
 
     fn setup_vault() -> CredentialVault {
+        // Use per-test temp dirs so parallel/serial test runs do not collide
+        // on the shared `test_vault.json` file. Previously the file was a
+        // literal path, causing `AlreadyExists` panics on second run.
+        let tmp = std::env::temp_dir().join(format!(
+            "credential-manager-test-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::create_dir_all(&tmp);
         let config = StorageConfig {
-            vault_path: Path::new("test_vault.json").to_path_buf(),
-            session_path: Path::new("test_sessions.json").to_path_buf(),
-            backup_dir: Path::new("test_backups").to_path_buf(),
+            vault_path: tmp.join("vault.json"),
+            session_path: tmp.join("sessions.json"),
+            backup_dir: tmp.join("backups"),
             auto_backup: false,
             backup_interval_hours: 24,
             max_backups: 7,

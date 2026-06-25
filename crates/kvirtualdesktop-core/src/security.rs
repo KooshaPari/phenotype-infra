@@ -3,19 +3,18 @@
 //! This module provides security features including OAuth2, resource indicators,
 //! token validation, and credential management.
 
-use crate::types::*;
 use crate::error::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use chrono::{DateTime, Utc, Duration};
 use url::Url;
 use uuid::Uuid;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, DecodingKey, Validation};
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
 use oauth2::{self, TokenResponse as _, // trait for access_token/token_type/expires_in methods
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
-    PkceCodeVerifier, RedirectUrl, Scope, StandardTokenResponse, TokenUrl,
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken,
+    PkceCodeVerifier, RedirectUrl, Scope, TokenUrl,
 };
 use sha2::{Digest, Sha256};
 use base64::Engine;
@@ -194,7 +193,7 @@ impl SecurityManager {
     }
     
     /// Introspect token via OAuth2 introspection endpoint
-    async fn introspect_token(&self, token: &str) -> Result<TokenClaims, McpSecurityError> {
+    async fn introspect_token(&self, _token: &str) -> Result<TokenClaims, McpSecurityError> {
         // Implementation depends on the OAuth2 provider
         // This is a placeholder for token introspection
         Err(McpSecurityError::InvalidToken("Token introspection not implemented".to_string()))
@@ -246,7 +245,7 @@ impl TokenStore {
     }
     
     pub fn cleanup_expired(&mut self) {
-        let now = Utc::now();
+        let _now = Utc::now();
         self.tokens.retain(|_, token| {
             if let Some(expires_in) = token.expires_in {
                 // This is a simplified expiration check
@@ -379,14 +378,14 @@ pub struct CredentialEncryption;
 
 impl CredentialEncryption {
     /// Encrypt credential data
-    pub fn encrypt(data: &str, key: &[u8]) -> Result<Vec<u8>, McpSecurityError> {
+    pub fn encrypt(data: &str, _key: &[u8]) -> Result<Vec<u8>, McpSecurityError> {
         // This is a placeholder for actual encryption
         // In a real implementation, you'd use a proper encryption library
         Ok(data.as_bytes().to_vec())
     }
     
     /// Decrypt credential data
-    pub fn decrypt(data: &[u8], key: &[u8]) -> Result<String, McpSecurityError> {
+    pub fn decrypt(data: &[u8], _key: &[u8]) -> Result<String, McpSecurityError> {
         // This is a placeholder for actual decryption
         // In a real implementation, you'd use a proper decryption library
         String::from_utf8(data.to_vec())
