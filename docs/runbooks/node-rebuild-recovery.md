@@ -22,7 +22,7 @@ Generalized procedure to rebuild any of the 7 mesh nodes from scratch.
    - Vaultwarden: restore from encrypted backup on oci-secondary (and Phase-2 R2 off-site).
    - Woodpecker: state rebuilds from Forgejo; pipelines re-trigger on next push.
 6. **Re-register CI.** Issue a fresh runner token from Forgejo (`FJ-02`), update Vaultwarden, re-register agent.
-7. **Health check.** `iac/scripts/health-check.sh` — all green.
+7. **Health check.** `iac/archive/scripts/health-check.sh` — all green.
 8. **Post-incident.** Write an incident note in `docs/governance/incident-response.md`.
 
 ## Per-node specifics

@@ -112,7 +112,7 @@ visible under Admin → Settings → Keys with description
 ## 7. References
 
 - ACL source: `iac/tailscale/acl.json`
-- Apply tool: `iac/tailscale/apply-acl.sh`
+- Apply tool: `iac/archive/tailscale/apply-acl.sh`
 - Keygen: `iac/tailscale/tailscale-keygen/`
 - Consumer: `iac/oci-post-acquire/` (PR #14)
 - Mesh state: `docs/compute-mesh-state.md`

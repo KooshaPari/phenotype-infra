@@ -3,7 +3,7 @@
 **Node:** `desktop-kooshapari-desk` (home Mac mini under Windows partition / Boot Camp; `[self-hosted, heavy, home]`)
 **Status:** Operational as of 2026-04-24
 **Service name:** `actions.runner.KooshaPari-phenotype-tooling.desktop-kooshapari-desk`
-**Install script:** `iac/scripts/install-windows-runner.ps1`
+**Install script:** `iac/archive/scripts/install-windows-runner.ps1`
 
 This runbook captures the procedure that was actually used to bring the Windows desktop runner online, and the gotchas that surfaced during the install. Use this when re-provisioning, replacing the host, or onboarding a similar Windows-class heavy runner.
 
@@ -24,7 +24,7 @@ This runbook captures the procedure that was actually used to bring the Windows 
 ```powershell
 # From an elevated PowerShell session on the target Windows host:
 cd C:\
-iex (irm https://raw.githubusercontent.com/KooshaPari/phenotype-infra/main/iac/scripts/install-windows-runner.ps1)
+iex (irm https://raw.githubusercontent.com/KooshaPari/phenotype-infra/main/iac/archive/scripts/install-windows-runner.ps1)
 ```
 
 The script:
@@ -122,6 +122,6 @@ Then revoke the Vaultwarden entry and remove the runner from the org runners pag
 - ADR-0003: Home desktop as heavy runner
 - ADR-0007: Runner label routing taxonomy
 - ADR-0008: Parsec gaming-mode pause
-- Install script: `iac/scripts/install-windows-runner.ps1`
+- Install script: `iac/archive/scripts/install-windows-runner.ps1`
 - Fix-up commit: `51e5ee2` (em-dash, password, description, OrgUrl)
 - Day-1 setup runbook (cross-platform variant): `docs/runbooks/day1-home-runner-setup.md`

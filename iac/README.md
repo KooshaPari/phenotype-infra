@@ -20,7 +20,8 @@ Rust; Terraform and Ansible remain canonical for declarative state.
 |-----------|----------|
 | `terraform/` | Per-provider modules (OCI, GCP, AWS, Cloudflare). Apply is human-only; plan can be agent-driven. |
 | `ansible/` | Convergence playbooks (Forgejo, Vaultwarden, Woodpecker, Tailscale). |
-| `scripts/` | Bootstrap helpers — Rust binaries or ≤5-line bash glue with justification comments. |
+| `scripts/` | *(Archived)* Runner bootstrap scripts moved to `archive/scripts/`. See `archive/README.md`. |
+| `archive/` | Orphaned scripts preserved for historical reference. |
 | `data/` | Static fixtures and seed data referenced by the crates. |
 
 ## Day-1 entry point

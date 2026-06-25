@@ -31,7 +31,7 @@ If the entire Forgejo + Woodpecker mesh becomes unavailable:
 
 ## Verification schedule
 
-- Monthly: run `iac/scripts/health-check.sh` (cross-node Tailscale ping + service HTTP probe).
+- Monthly: run `iac/archive/scripts/health-check.sh` (cross-node Tailscale ping + service HTTP probe).
 - Quarterly: dry-run the global kill-switch against a single test repo.
 - Per-ADR change: validate that rollback procedure for affected node is still accurate.
 

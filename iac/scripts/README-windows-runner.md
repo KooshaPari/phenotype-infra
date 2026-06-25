@@ -1,5 +1,9 @@
 # Windows GitHub Actions Runner (`install-windows-runner.ps1`)
 
+> **Note:** This companion doc describes `install-windows-runner.ps1` which
+> has been archived to `iac/archive/scripts/` as part of the A25 orphaned-scripts
+> sweep. See `iac/archive/scripts/README.md` for the current location.
+
 Installs a **self-hosted GitHub Actions runner** on the Windows 11 desktop
 (`kooshapari-desk.tail2b570.ts.net`), registered at the
 [`KooshaPari`](https://github.com/KooshaPari) organization scope.

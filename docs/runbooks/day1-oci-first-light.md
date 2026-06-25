@@ -95,7 +95,7 @@ ansible-playbook playbooks/install-woodpecker.yml --limit oci-primary
 ## Step 7 — Health check
 
 ```bash
-cd iac/scripts
+cd iac/archive/scripts
 ./health-check.sh
 ```
 

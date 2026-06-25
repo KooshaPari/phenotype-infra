@@ -1,20 +1,26 @@
-# Phenotype infra — runner install scripts
+# iac/scripts/ — Scripts directory
 
-Helper scripts for provisioning self-hosted Forgejo runners across the
-Phenotype fleet. These are operator-run; they do not get invoked by CI.
+> **Note:** The original runner helper scripts have been archived to
+> `iac/archive/scripts/` as part of the A25 orphaned-scripts sweep.
+> They are preserved for historical reference but are not actively
+> maintained.
 
-## Files
+## Archived scripts
 
-| Script | Target | Purpose |
-|--------|--------|---------|
-| `bootstrap-oci.sh` | Oracle Cloud ARM VM | Stand up Forgejo + Woodpecker backbone. |
-| `register-home-runner.sh` | macOS / Linux | Register a home act_runner against Forgejo. |
-| `health-check.sh` | Any | Probe runner + Forgejo liveness. |
-| `install-windows-runner.ps1` | **Windows 11 AMD64 desktop** | Dedicated Forgejo runner on `kooshapari-desk.tail2b570.ts.net`. |
+| Script | Archived to | Former purpose |
+|--------|-------------|----------------|
+| `bootstrap-oci.sh` | `iac/archive/scripts/bootstrap-oci.sh` | Oracle Cloud ARM VM bootstrap |
+| `register-home-runner.sh` | `iac/archive/scripts/register-home-runner.sh` | macOS/Linux runner registration |
+| `health-check.sh` | `iac/archive/scripts/health-check.sh` | Fleet connectivity probe |
+| `install-windows-runner.ps1` | `iac/archive/scripts/install-windows-runner.ps1` | Windows 11 AMD64 runner install |
 
----
+## Active scripts in `iac/`
 
-## `install-windows-runner.ps1`
+| Script | Location | Purpose |
+|--------|----------|---------|
+| `oci-post-acquire.sh` | `iac/oci-post-acquire/oci-post-acquire.sh` | Post-acquire hook orchestrator (active, called from Rust) |
+
+## Reference — `install-windows-runner.ps1`
 
 ### What it does
 

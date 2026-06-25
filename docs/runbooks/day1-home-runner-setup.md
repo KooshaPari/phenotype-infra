@@ -49,10 +49,10 @@ WOODPECKER_BACKEND=local
 
 ## Step 4 — launchd plist
 
-Register the script `iac/scripts/register-home-runner.sh` which writes `~/Library/LaunchAgents/com.phenotype.woodpecker-agent.plist`:
+Register the script `iac/archive/scripts/register-home-runner.sh` (archived copy) which writes `~/Library/LaunchAgents/com.phenotype.woodpecker-agent.plist`:
 
 ```
-cd /Users/<you>/CodeProjects/Phenotype/repos/phenotype-infra/iac/scripts
+cd /Users/<you>/CodeProjects/Phenotype/repos/phenotype-infra/iac/archive/scripts
 ./register-home-runner.sh
 launchctl load ~/Library/LaunchAgents/com.phenotype.woodpecker-agent.plist
 launchctl list | grep phenotype

@@ -44,6 +44,6 @@ jobs:
         run: terraform validate
 
       # NOTE: `terraform plan` requires credentials; skipped in CI.
-      # Plans run locally via `iac/scripts/bootstrap-oci.sh` with bw-injected creds.
+      # Plans run locally via `iac/archive/scripts/bootstrap-oci.sh` with bw-injected creds.
       - name: Plan (skipped — no creds in CI)
         run: echo "Plan skipped in CI — see docs/runbooks/ for local plan procedure."
