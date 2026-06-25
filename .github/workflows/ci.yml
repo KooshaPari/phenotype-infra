@@ -50,6 +50,22 @@ jobs:
         working-directory: iac
         run: cargo test --workspace --locked --all-features
 
+  # ── Coverage gate (Tier-2, ADR-040) ─────────────────────────
+  coverage:
+    name: Tier-2 coverage gate (iac ≥60%)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: iac -> target
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin --locked
+      - name: Run coverage gate (iac workspace, ≥60%)
+        working-directory: iac
+        run: cargo tarpaulin --workspace --fail-under 60 --out Xml --out Json --engine llvm
+
   # ── Tier-1 gate ──────────────────────────────────────────────
   tier1:
     name: Tier-1 gate (deny + audit + secrets + license)
