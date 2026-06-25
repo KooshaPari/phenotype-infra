@@ -98,14 +98,10 @@ fn dirs_home() -> Option<PathBuf> {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
-    // T22 (ADR-036): full observability stack — tracing + metrics + optional OTel.
-    // Set OCI_POST_ACQUIRE_METRICS_BIND before launch to override the default `:9090`.
     phenotype_logging::init("oci-post-acquire");
-    let _obs = phenotype_infra_observability::init(
-        "oci-post-acquire",
-        phenotype_infra_observability::OtelConfig::disabled(),
-    )
-    .context("observability init")?;
+    // T22 (ADR-036): also wire pheno-tracing substrate so spans can be
+    // submitted through the fleet-wide TracePort.
+    let _pheno_port = phenotype_infra_observability::init_tracing("oci-post-acquire");
 
     let cli = Cli::parse();
     let started = Utc::now();

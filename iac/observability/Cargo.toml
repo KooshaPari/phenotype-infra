@@ -10,8 +10,6 @@ description = "T22 observability init for phenotype-infra iac/* daemons (ADR-036
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 phenotype-logging = { workspace = true }
-metrics = "0.24"
-metrics-exporter-prometheus = { version = "0.16", default-features = false }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "test-util"] }

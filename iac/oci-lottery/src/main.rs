@@ -61,14 +61,10 @@ fn home() -> PathBuf {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> Result<()> {
-    // T22 (ADR-036): full observability stack — tracing + metrics + optional OTel.
-    // Set OCI_LOTTERY_METRICS_BIND before launch to override the default `:9090`.
     phenotype_logging::init("oci-lottery");
-    let _obs = phenotype_infra_observability::init(
-        "oci-lottery",
-        phenotype_infra_observability::OtelConfig::disabled(),
-    )
-    .context("observability init")?;
+    // T22 (ADR-036): also wire pheno-tracing substrate so spans can be
+    // submitted through the fleet-wide TracePort.
+    let _pheno_port = phenotype_infra_observability::init_tracing("oci-lottery");
 
     let args = Args::parse();
 
