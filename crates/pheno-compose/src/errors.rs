@@ -148,7 +148,7 @@ mod tests {
             Error::Internal("x".into()),
         ];
         for v in &variants {
-            let _ = format!("{v}");   // Display
+            let _ = format!("{v}"); // Display
             let _ = format!("{v:?}"); // Debug
         }
     }

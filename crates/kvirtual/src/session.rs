@@ -35,7 +35,10 @@ impl SessionManager {
             created_at: chrono::Utc::now().to_rfc3339(),
             data: serde_json::Value::Object(serde_json::Map::new()),
         };
-        self.sessions.lock().unwrap().insert(name.to_string(), session);
+        self.sessions
+            .lock()
+            .unwrap()
+            .insert(name.to_string(), session);
     }
 
     pub fn get(&self, name: &str) -> Option<Session> {

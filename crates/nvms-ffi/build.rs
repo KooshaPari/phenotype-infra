@@ -49,13 +49,13 @@ fn main() {
         for path in &lib_paths {
             if path.exists() {
                 let dir = path.parent().unwrap();
-                println!(
-                    "cargo:rustc-link-search=native={}",
-                    dir.display()
-                );
+                println!("cargo:rustc-link-search=native={}", dir.display());
                 println!("cargo:rustc-link-lib=static=nvms_core");
                 println!("cargo:rustc-cfg=nvms_core_lib");
-                println!("cargo:warning=Linking against real NVMS Go core at {}", path.display());
+                println!(
+                    "cargo:warning=Linking against real NVMS Go core at {}",
+                    path.display()
+                );
                 break;
             }
         }
@@ -80,13 +80,13 @@ fn main() {
 
             match status {
                 Ok(output) if output.status.success() => {
-                    println!(
-                        "cargo:rustc-link-search=native={}",
-                        out_dir.display()
-                    );
+                    println!("cargo:rustc-link-search=native={}", out_dir.display());
                     println!("cargo:rustc-link-lib=static=nvms_core");
                     println!("cargo:rustc-cfg=nvms_core_lib");
-                    println!("cargo:warning=NVMS Go core built on-the-fly at {}", output_path.display());
+                    println!(
+                        "cargo:warning=NVMS Go core built on-the-fly at {}",
+                        output_path.display()
+                    );
                 }
                 Ok(output) => {
                     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -111,7 +111,8 @@ fn main() {
     }
 
     // Re-run build script if Go source changes
-    let go_source_path = manifest_dir.join("../../crates/nanovms-core/bindings/go-c-export/nvms_core.go");
+    let go_source_path =
+        manifest_dir.join("../../crates/nanovms-core/bindings/go-c-export/nvms_core.go");
     if go_source_path.exists() {
         println!("cargo:rerun-if-changed={}", go_source_path.display());
     }

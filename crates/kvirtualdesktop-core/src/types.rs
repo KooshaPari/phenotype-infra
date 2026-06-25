@@ -1,13 +1,13 @@
 //! Core MCP Protocol Types
-//! 
+//!
 //! This module defines all the core types used in the MCP protocol,
 //! including messages, tools, resources, and prompts.
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
 use url::Url;
+use uuid::Uuid;
 
 /// MCP Message ID
 pub type MessageId = String;

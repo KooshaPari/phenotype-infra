@@ -20,7 +20,10 @@ fn nvms_ffi_version_and_platform() {
 
     let platform = nvms_ffi::platform_info();
     assert!(!platform.is_empty(), "platform should not be empty");
-    assert!(platform.contains('/'), "platform should contain '/', got: {platform}");
+    assert!(
+        platform.contains('/'),
+        "platform should contain '/', got: {platform}"
+    );
 }
 
 #[test]
@@ -118,7 +121,11 @@ fn pheno_compose_driver_with_config() {
 #[test]
 fn health_check_returns_report() {
     let report = pheno_compose_driver::health::check();
-    assert!(report.healthy, "health check should pass: {}", report.message);
+    assert!(
+        report.healthy,
+        "health check should pass: {}",
+        report.message
+    );
     assert!(!report.version.is_empty());
     assert!(!report.platform.is_empty());
     assert!(!report.probes.is_empty());
@@ -156,10 +163,22 @@ fn error_type_display_formatting() {
     use pheno_compose_driver::errors::Error;
 
     let cases = [
-        (Error::InitFailed("test".into()), "NVMS initialization failed: test"),
-        (Error::CreateFailed("null".into()), "instance creation failed: null"),
-        (Error::AppleSiliconNotSupported, "Apple Silicon platform is not supported on this host"),
-        (Error::UnsupportedPlatform, "no supported platform backend found"),
+        (
+            Error::InitFailed("test".into()),
+            "NVMS initialization failed: test",
+        ),
+        (
+            Error::CreateFailed("null".into()),
+            "instance creation failed: null",
+        ),
+        (
+            Error::AppleSiliconNotSupported,
+            "Apple Silicon platform is not supported on this host",
+        ),
+        (
+            Error::UnsupportedPlatform,
+            "no supported platform backend found",
+        ),
     ];
     for (err, expected) in &cases {
         assert_eq!(err.to_string(), *expected, "unexpected display for {err:?}");
@@ -207,7 +226,10 @@ fn credential_manager_config_roundtrip() {
     let json = serde_json::to_string_pretty(&config).expect("serialize");
     let deserialized: CredentialConfig = serde_json::from_str(&json).expect("deserialize");
     assert_eq!(config.storage.vault_path, deserialized.storage.vault_path);
-    assert_eq!(config.security.encryption.algorithm, deserialized.security.encryption.algorithm);
+    assert_eq!(
+        config.security.encryption.algorithm,
+        deserialized.security.encryption.algorithm
+    );
     assert!(deserialized.validate().is_ok());
 }
 
@@ -218,7 +240,10 @@ fn credential_manager_error_types() {
     let err = CredentialError::Config("test".into());
     let msg = err.to_string();
     assert!(msg.contains("test"), "error message should contain context");
-    assert!(msg.contains("Configuration"), "error message should include type");
+    assert!(
+        msg.contains("Configuration"),
+        "error message should include type"
+    );
 }
 
 #[test]
@@ -280,16 +305,20 @@ fn kodevibego_ffi_empty_result() {
 fn kvirtualdesktop_core_version_constants() {
     use kvirtualdesktop_core::{KVIRTUALDESKTOP_VERSION, MCP_VERSION};
 
-    assert!(!MCP_VERSION.is_empty(), "MCP protocol version should not be empty");
-    assert!(!KVIRTUALDESKTOP_VERSION.is_empty(), "implementation version should not be empty");
+    assert!(
+        !MCP_VERSION.is_empty(),
+        "MCP protocol version should not be empty"
+    );
+    assert!(
+        !KVIRTUALDESKTOP_VERSION.is_empty(),
+        "implementation version should not be empty"
+    );
     assert_eq!(KVIRTUALDESKTOP_VERSION, "0.1.0");
 }
 
 #[test]
 fn kvirtualdesktop_core_basic_types() {
-    use kvirtualdesktop_core::{
-        Tool, ToolCapability, ToolInputSchema,
-    };
+    use kvirtualdesktop_core::{Tool, ToolCapability, ToolInputSchema};
 
     let tool = Tool {
         name: "click".into(),
@@ -312,8 +341,8 @@ fn kvirtualdesktop_core_basic_types() {
 
 #[test]
 fn kvirtualdesktop_core_message_type() {
-    use kvirtualdesktop_core::Message;
     use chrono::Utc;
+    use kvirtualdesktop_core::Message;
 
     let msg = Message {
         id: "msg-1".into(),
@@ -359,8 +388,14 @@ fn thegent_utils_error_display() {
 
     let err = UtilsError::NotFound("cargo".into());
     let msg = err.to_string();
-    assert!(msg.contains("Binary not found"), "error should describe binary not found: {msg}");
-    assert!(msg.contains("cargo"), "error should contain binary name: {msg}");
+    assert!(
+        msg.contains("Binary not found"),
+        "error should describe binary not found: {msg}"
+    );
+    assert!(
+        msg.contains("cargo"),
+        "error should contain binary name: {msg}"
+    );
 }
 
 #[test]
@@ -416,7 +451,13 @@ fn credential_manager_and_kvirtualdesktop_core_types() {
 
     let config = CredentialConfig::default();
     let json = serde_json::to_string_pretty(&config).expect("serialize");
-    assert!(json.contains("AES-256-GCM"), "default algorithm should be AES-256-GCM");
+    assert!(
+        json.contains("AES-256-GCM"),
+        "default algorithm should be AES-256-GCM"
+    );
     assert!(json.contains("Argon2id"), "default KDF should be Argon2id");
-    assert!(json.contains("vault.db"), "default vault path should be present");
+    assert!(
+        json.contains("vault.db"),
+        "default vault path should be present"
+    );
 }

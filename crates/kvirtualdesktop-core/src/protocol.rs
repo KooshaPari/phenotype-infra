@@ -1,12 +1,12 @@
 //! MCP Protocol Messages and Methods
-//! 
+//!
 //! This module defines the core MCP protocol messages and methods
 //! for client-server communication.
 
 use crate::types::*;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use chrono::{DateTime, Utc};
 use url::Url;
 
 /// MCP Protocol Methods
@@ -19,28 +19,28 @@ impl McpMethods {
     pub const SHUTDOWN: &'static str = "shutdown";
     pub const PING: &'static str = "ping";
     pub const PONG: &'static str = "pong";
-    
+
     // Tool Methods
     pub const TOOLS_LIST: &'static str = "tools/list";
     pub const TOOLS_CALL: &'static str = "tools/call";
     pub const TOOLS_RESULT: &'static str = "tools/result";
-    
+
     // Resource Methods
     pub const RESOURCES_LIST: &'static str = "resources/list";
     pub const RESOURCES_READ: &'static str = "resources/read";
     pub const RESOURCES_WRITE: &'static str = "resources/write";
     pub const RESOURCES_SUBSCRIBE: &'static str = "resources/subscribe";
     pub const RESOURCES_UNSUBSCRIBE: &'static str = "resources/unsubscribe";
-    
+
     // Prompt Methods
     pub const PROMPTS_LIST: &'static str = "prompts/list";
     pub const PROMPTS_GET: &'static str = "prompts/get";
-    
+
     // Session Methods
     pub const SESSION_CREATE: &'static str = "session/create";
     pub const SESSION_DESTROY: &'static str = "session/destroy";
     pub const SESSION_LIST: &'static str = "session/list";
-    
+
     // Desktop Automation Methods
     pub const DESKTOP_CAPTURE_SCREENSHOT: &'static str = "desktop/capture_screenshot";
     pub const DESKTOP_START_RECORDING: &'static str = "desktop/start_recording";
@@ -53,7 +53,7 @@ impl McpMethods {
     pub const DESKTOP_WINDOW_FOCUS: &'static str = "desktop/window_focus";
     pub const DESKTOP_WINDOW_RESIZE: &'static str = "desktop/window_resize";
     pub const DESKTOP_WINDOW_MOVE: &'static str = "desktop/window_move";
-    
+
     // VM/Container Methods
     pub const VM_LIST: &'static str = "vm/list";
     pub const VM_START: &'static str = "vm/start";
@@ -63,19 +63,19 @@ impl McpMethods {
     pub const VM_SNAPSHOT: &'static str = "vm/snapshot";
     pub const VM_RESTORE: &'static str = "vm/restore";
     pub const VM_STATUS: &'static str = "vm/status";
-    
+
     // CLI Methods
     pub const CLI_EXECUTE: &'static str = "cli/execute";
     pub const CLI_EXECUTE_ASYNC: &'static str = "cli/execute_async";
     pub const CLI_KILL: &'static str = "cli/kill";
     pub const CLI_LIST_PROCESSES: &'static str = "cli/list_processes";
-    
+
     // TTS Methods
     pub const TTS_SPEAK: &'static str = "tts/speak";
     pub const TTS_STOP: &'static str = "tts/stop";
     pub const TTS_LIST_VOICES: &'static str = "tts/list_voices";
     pub const TTS_SET_CONFIG: &'static str = "tts/set_config";
-    
+
     // Credential Methods
     pub const CREDENTIALS_LIST: &'static str = "credentials/list";
     pub const CREDENTIALS_GET: &'static str = "credentials/get";

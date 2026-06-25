@@ -56,7 +56,8 @@ impl CredentialManager {
     /// Initialize the credential manager (load vault, setup crypto)
     pub fn initialize(&mut self, master_password: &str) -> Result<()> {
         let salt = CryptoEngine::generate_salt(self.config.security.key_derivation.salt_length);
-        self.crypto.initialize_from_password(master_password, &salt)?;
+        self.crypto
+            .initialize_from_password(master_password, &salt)?;
         self.vault.initialize()
     }
 

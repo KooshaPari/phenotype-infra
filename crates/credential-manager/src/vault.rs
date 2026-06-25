@@ -1,6 +1,6 @@
-use crate::error::{CredentialError, Result};
 use crate::config::StorageConfig;
 use crate::crypto::CryptoEngine;
+use crate::error::{CredentialError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -94,9 +94,10 @@ impl CredentialVault {
             return Err(CredentialError::Vault("Vault not initialized".to_string()));
         }
         if self.credentials.contains_key(&entry.id) {
-            return Err(CredentialError::AlreadyExists(
-                format!("Credential '{}' already exists", entry.id),
-            ));
+            return Err(CredentialError::AlreadyExists(format!(
+                "Credential '{}' already exists",
+                entry.id
+            )));
         }
         self.credentials.insert(entry.id.clone(), entry);
         self.save()?;
@@ -108,7 +109,8 @@ impl CredentialVault {
         if !self.initialized {
             return Err(CredentialError::Vault("Vault not initialized".to_string()));
         }
-        self.credentials.get(id)
+        self.credentials
+            .get(id)
             .cloned()
             .ok_or_else(|| CredentialError::NotFound(format!("Credential '{}' not found", id)))
     }
@@ -118,7 +120,8 @@ impl CredentialVault {
         if !self.initialized {
             return Err(CredentialError::Vault("Vault not initialized".to_string()));
         }
-        self.credentials.remove(id)
+        self.credentials
+            .remove(id)
             .ok_or_else(|| CredentialError::NotFound(format!("Credential '{}' not found", id)))?;
         self.save()?;
         Ok(())
@@ -132,11 +135,18 @@ impl CredentialVault {
     /// Search credentials by name or tag
     pub fn search(&self, query: &str) -> Vec<&CredentialEntry> {
         let query = query.to_lowercase();
-        self.credentials.values().filter(|entry| {
-            entry.name.to_lowercase().contains(&query)
-                || entry.metadata.tags.iter().any(|t| t.to_lowercase().contains(&query))
-                || entry.metadata.description.to_lowercase().contains(&query)
-        }).collect()
+        self.credentials
+            .values()
+            .filter(|entry| {
+                entry.name.to_lowercase().contains(&query)
+                    || entry
+                        .metadata
+                        .tags
+                        .iter()
+                        .any(|t| t.to_lowercase().contains(&query))
+                    || entry.metadata.description.to_lowercase().contains(&query)
+            })
+            .collect()
     }
 
     /// Add an audit entry
@@ -152,7 +162,8 @@ impl CredentialVault {
 
     /// Get audit log entries for a credential
     pub fn get_audit_entries(&self, credential_id: &str) -> Vec<&AuditEntry> {
-        self.audit_log.iter()
+        self.audit_log
+            .iter()
             .filter(|e| e.credential_id == credential_id)
             .collect()
     }
@@ -280,10 +291,8 @@ mod tests {
         // Use per-test temp dirs so parallel/serial test runs do not collide
         // on the shared `test_vault.json` file. Previously the file was a
         // literal path, causing `AlreadyExists` panics on second run.
-        let tmp = std::env::temp_dir().join(format!(
-            "credential-manager-test-{}",
-            std::process::id()
-        ));
+        let tmp =
+            std::env::temp_dir().join(format!("credential-manager-test-{}", std::process::id()));
         let _ = std::fs::create_dir_all(&tmp);
         let config = StorageConfig {
             vault_path: tmp.join("vault.json"),
@@ -303,7 +312,9 @@ mod tests {
         };
         let mut crypto = CryptoEngine::new(crypto_config);
         let salt = CryptoEngine::generate_salt(32);
-        crypto.initialize_from_password("test-master-key", &salt).unwrap();
+        crypto
+            .initialize_from_password("test-master-key", &salt)
+            .unwrap();
         let mut vault = CredentialVault::new(config, crypto);
         vault.initialize().unwrap();
         vault

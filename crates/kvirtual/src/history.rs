@@ -6,7 +6,9 @@ pub struct History {
 
 impl History {
     pub fn new() -> Self {
-        Self { entries: Vec::new() }
+        Self {
+            entries: Vec::new(),
+        }
     }
 
     pub fn add(&mut self, entry: String) {

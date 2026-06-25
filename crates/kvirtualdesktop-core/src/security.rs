@@ -1,23 +1,32 @@
 //! Security Module for MCP Protocol
-//! 
+//!
 //! This module provides security features including OAuth2, resource indicators,
 //! token validation, and credential management.
 
 use crate::error::*;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use chrono::{DateTime, Utc, Duration};
-use url::Url;
-use uuid::Uuid;
+use base64::Engine;
+use chrono::{DateTime, Duration, Utc};
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
-use oauth2::{self, TokenResponse as _, // trait for access_token/token_type/expires_in methods
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken,
-    PkceCodeVerifier, RedirectUrl, Scope, TokenUrl,
+use oauth2::{
+    self,
+    AuthUrl,
+    AuthorizationCode,
+    ClientId,
+    ClientSecret,
+    CsrfToken,
+    PkceCodeVerifier,
+    RedirectUrl,
+    Scope,
+    TokenResponse as _, // trait for access_token/token_type/expires_in methods
+    TokenUrl,
 };
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use base64::Engine;
+use std::collections::HashMap;
+use url::Url;
+use uuid::Uuid;
 
 /// Security Manager for MCP
 pub struct SecurityManager {
@@ -36,7 +45,7 @@ impl SecurityManager {
             validation_config: ValidationConfig::default(),
         }
     }
-    
+
     /// Register OAuth2 client
     pub fn register_oauth_client(
         &mut self,
@@ -52,17 +61,17 @@ impl SecurityManager {
             AuthUrl::from_url(auth_url),
             Some(TokenUrl::from_url(token_url)),
         );
-        
+
         let client = if let Some(redirect) = redirect_url {
             client.set_redirect_uri(RedirectUrl::from_url(redirect))
         } else {
             client
         };
-        
+
         self.oauth_clients.insert(client_id, client);
         Ok(())
     }
-    
+
     /// Generate authorization URL
     pub fn generate_auth_url(
         &self,
@@ -71,19 +80,16 @@ impl SecurityManager {
         state: Option<String>,
         resource_indicators: Vec<Url>,
     ) -> Result<Url, McpSecurityError> {
-        
-        let client = self.oauth_clients.get(client_id)
-            .ok_or_else(|| McpSecurityError::OAuth(
-                format!("OAuth client not found: {}", client_id)
-            ))?;
+        let client = self.oauth_clients.get(client_id).ok_or_else(|| {
+            McpSecurityError::OAuth(format!("OAuth client not found: {}", client_id))
+        })?;
 
         let mut auth_request = client.authorize_url(CsrfToken::new_random);
 
         // Add scopes
         if !scopes.is_empty() {
-            auth_request = auth_request.add_scopes(
-                scopes.into_iter().map(Scope::new).collect::<Vec<Scope>>()
-            );
+            auth_request =
+                auth_request.add_scopes(scopes.into_iter().map(Scope::new).collect::<Vec<Scope>>());
         }
 
         // Add state if provided (oauth2 4.x: set_state removed; pass via add_extra_param
@@ -100,7 +106,7 @@ impl SecurityManager {
         let (auth_url, _csrf_token) = auth_request.url();
         Ok(auth_url)
     }
-    
+
     /// Exchange authorization code for access token
     pub async fn exchange_code_for_token(
         &self,
@@ -108,19 +114,20 @@ impl SecurityManager {
         auth_code: String,
         pkce_verifier: Option<String>,
     ) -> Result<TokenResponse, McpSecurityError> {
-        let client = self.oauth_clients.get(client_id)
-            .ok_or_else(|| McpSecurityError::OAuth(
-                format!("OAuth client not found: {}", client_id)
-            ))?;
-        
+        let client = self.oauth_clients.get(client_id).ok_or_else(|| {
+            McpSecurityError::OAuth(format!("OAuth client not found: {}", client_id))
+        })?;
+
         let mut token_request = client.exchange_code(AuthorizationCode::new(auth_code));
-        
+
         // Add PKCE verifier if provided
         if let Some(verifier) = pkce_verifier {
             token_request = token_request.set_pkce_verifier(PkceCodeVerifier::new(verifier));
         }
-        
-        let token_response = token_request.request_async(async_http_client).await
+
+        let token_response = token_request
+            .request_async(async_http_client)
+            .await
             .map_err(|e| McpSecurityError::OAuth(e.to_string()))?;
 
         // oauth2 4.x: access_token/token_type/expires_in are now Deref-able field accessors
@@ -140,7 +147,7 @@ impl SecurityManager {
 
         Ok(token)
     }
-    
+
     /// Validate access token
     pub async fn validate_token(
         &self,
@@ -155,31 +162,33 @@ impl SecurityManager {
                 let token_scopes = claims.scopes.clone().unwrap_or_default();
                 for required_scope in &required_scopes {
                     if !token_scopes.contains(required_scope) {
-                        return Err(McpSecurityError::InsufficientScope(
-                            format!("Missing scope: {}", required_scope)
-                        ));
+                        return Err(McpSecurityError::InsufficientScope(format!(
+                            "Missing scope: {}",
+                            required_scope
+                        )));
                     }
                 }
             }
-            
+
             // Validate resource indicator
             if let Some(resource) = resource_indicator {
                 if let Some(aud) = &claims.aud {
                     if !aud.contains(&resource.to_string()) {
-                        return Err(McpSecurityError::ResourceAccessDenied(
-                            format!("Token not valid for resource: {}", resource)
-                        ));
+                        return Err(McpSecurityError::ResourceAccessDenied(format!(
+                            "Token not valid for resource: {}",
+                            resource
+                        )));
                     }
                 }
             }
-            
+
             return Ok(claims);
         }
-        
+
         // Fall back to token introspection
         self.introspect_token(token).await
     }
-    
+
     /// Decode JWT token
     fn decode_jwt_token(&self, token: &str) -> Result<TokenClaims, McpSecurityError> {
         let validation = Validation::new(jsonwebtoken::Algorithm::RS256);
@@ -188,32 +197,34 @@ impl SecurityManager {
             &DecodingKey::from_rsa_pem(self.validation_config.public_key.as_bytes())?,
             &validation,
         )?;
-        
+
         Ok(token_data.claims)
     }
-    
+
     /// Introspect token via OAuth2 introspection endpoint
     async fn introspect_token(&self, _token: &str) -> Result<TokenClaims, McpSecurityError> {
         // Implementation depends on the OAuth2 provider
         // This is a placeholder for token introspection
-        Err(McpSecurityError::InvalidToken("Token introspection not implemented".to_string()))
+        Err(McpSecurityError::InvalidToken(
+            "Token introspection not implemented".to_string(),
+        ))
     }
-    
+
     /// Store token
     pub fn store_token(&mut self, token_id: String, token: TokenResponse) {
         self.token_store.store(token_id, token);
     }
-    
+
     /// Get stored token
     pub fn get_token(&self, token_id: &str) -> Option<&TokenResponse> {
         self.token_store.get(token_id)
     }
-    
+
     /// Register resource indicator
     pub fn register_resource_indicator(&mut self, name: String, url: Url) {
         self.resource_indicators.insert(name, url);
     }
-    
+
     /// Get resource indicator
     pub fn get_resource_indicator(&self, name: &str) -> Option<&Url> {
         self.resource_indicators.get(name)
@@ -231,19 +242,19 @@ impl TokenStore {
             tokens: HashMap::new(),
         }
     }
-    
+
     pub fn store(&mut self, token_id: String, token: TokenResponse) {
         self.tokens.insert(token_id, token);
     }
-    
+
     pub fn get(&self, token_id: &str) -> Option<&TokenResponse> {
         self.tokens.get(token_id)
     }
-    
+
     pub fn remove(&mut self, token_id: &str) -> Option<TokenResponse> {
         self.tokens.remove(token_id)
     }
-    
+
     pub fn cleanup_expired(&mut self) {
         let _now = Utc::now();
         self.tokens.retain(|_, token| {
@@ -324,7 +335,7 @@ impl PkceHelper {
 
         (verifier, challenge)
     }
-    
+
     /// Verify PKCE challenge
     pub fn verify_pkce_challenge(verifier: &str, challenge: &str) -> bool {
         let hash = Sha256::digest(verifier.as_bytes());
@@ -363,11 +374,11 @@ impl SessionToken {
             metadata: HashMap::new(),
         }
     }
-    
+
     pub fn is_expired(&self) -> bool {
         Utc::now() > self.expires_at
     }
-    
+
     pub fn has_scope(&self, scope: &str) -> bool {
         self.scopes.contains(&scope.to_string())
     }
@@ -383,15 +394,14 @@ impl CredentialEncryption {
         // In a real implementation, you'd use a proper encryption library
         Ok(data.as_bytes().to_vec())
     }
-    
+
     /// Decrypt credential data
     pub fn decrypt(data: &[u8], _key: &[u8]) -> Result<String, McpSecurityError> {
         // This is a placeholder for actual decryption
         // In a real implementation, you'd use a proper decryption library
-        String::from_utf8(data.to_vec())
-            .map_err(|e| McpSecurityError::Decryption(e.to_string()))
+        String::from_utf8(data.to_vec()).map_err(|e| McpSecurityError::Decryption(e.to_string()))
     }
-    
+
     /// Generate encryption key
     pub fn generate_key() -> Vec<u8> {
         // Generate a random 256-bit key

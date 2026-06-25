@@ -5,8 +5,8 @@ use kvirtual::{
     config::Config,
     session::SessionManager,
     tui::TuiRunner,
-    DesktopAction, ContainerAction, VmAction, RecordAction,
-    SessionAction, ConfigAction, CredAction,
+    ConfigAction, ContainerAction, CredAction, DesktopAction, RecordAction, SessionAction,
+    VmAction,
 };
 
 #[derive(Parser)]
@@ -95,14 +95,35 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum DesktopActionSub {
-    Click { x: i32, y: i32 },
-    Type { text: String },
-    Screenshot { path: Option<String> },
-    Find { text: String },
-    Wait { selector: String, timeout: Option<u64> },
-    Drag { from_x: i32, from_y: i32, to_x: i32, to_y: i32 },
-    Keys { keys: String },
-    StartRecording { output: String },
+    Click {
+        x: i32,
+        y: i32,
+    },
+    Type {
+        text: String,
+    },
+    Screenshot {
+        path: Option<String>,
+    },
+    Find {
+        text: String,
+    },
+    Wait {
+        selector: String,
+        timeout: Option<u64>,
+    },
+    Drag {
+        from_x: i32,
+        from_y: i32,
+        to_x: i32,
+        to_y: i32,
+    },
+    Keys {
+        keys: String,
+    },
+    StartRecording {
+        output: String,
+    },
     StopRecording,
 }
 
@@ -113,8 +134,20 @@ impl From<DesktopActionSub> for DesktopAction {
             DesktopActionSub::Type { text } => DesktopAction::Type { text },
             DesktopActionSub::Screenshot { path } => DesktopAction::Screenshot { path },
             DesktopActionSub::Find { text } => DesktopAction::Find { text },
-            DesktopActionSub::Wait { selector, timeout } => DesktopAction::Wait { selector, timeout },
-            DesktopActionSub::Drag { from_x, from_y, to_x, to_y } => DesktopAction::Drag { from_x, from_y, to_x, to_y },
+            DesktopActionSub::Wait { selector, timeout } => {
+                DesktopAction::Wait { selector, timeout }
+            }
+            DesktopActionSub::Drag {
+                from_x,
+                from_y,
+                to_x,
+                to_y,
+            } => DesktopAction::Drag {
+                from_x,
+                from_y,
+                to_x,
+                to_y,
+            },
             DesktopActionSub::Keys { keys } => DesktopAction::Keys { keys },
             DesktopActionSub::StartRecording { output } => DesktopAction::StartRecording { output },
             DesktopActionSub::StopRecording => DesktopAction::StopRecording,
@@ -163,7 +196,13 @@ impl From<VmActionSub> for VmAction {
             VmActionSub::Start { name } => VmAction::Start { name },
             VmActionSub::Stop { name } => VmAction::Stop { name },
             VmActionSub::Connect { name } => VmAction::Connect { name },
-            VmActionSub::Snapshot { name, snapshot_name } => VmAction::Snapshot { name, snapshot_name },
+            VmActionSub::Snapshot {
+                name,
+                snapshot_name,
+            } => VmAction::Snapshot {
+                name,
+                snapshot_name,
+            },
         }
     }
 }

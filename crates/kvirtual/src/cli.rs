@@ -60,10 +60,7 @@ impl CliRunner {
         Ok(())
     }
 
-    pub async fn handle_vm_action(
-        &mut self,
-        action: crate::VmAction,
-    ) -> anyhow::Result<()> {
+    pub async fn handle_vm_action(&mut self, action: crate::VmAction) -> anyhow::Result<()> {
         tracing::info!("VM action: {:?}", action);
         Ok(())
     }
@@ -92,10 +89,7 @@ impl CliRunner {
         Ok(())
     }
 
-    pub async fn handle_creds_action(
-        &mut self,
-        action: crate::CredAction,
-    ) -> anyhow::Result<()> {
+    pub async fn handle_creds_action(&mut self, action: crate::CredAction) -> anyhow::Result<()> {
         tracing::info!("Creds action: {:?}", action);
         Ok(())
     }

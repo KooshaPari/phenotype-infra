@@ -205,7 +205,6 @@ impl CredentialConfig {
                 retry_delay_ms: 1000,
             },
             session: SessionConfig {
-                jwt_secret: base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &[0u8; 32]),
                 access_token_lifetime: Duration::from_secs(3600),
                 refresh_token_lifetime: Duration::from_secs(2592000),
                 cleanup_interval: Duration::from_secs(300),
@@ -269,8 +268,12 @@ impl CredentialConfig {
                     log_path: PathBuf::from("logs/audit.log"),
                     log_format: "JSON".to_string(),
                     events: vec![
-                        "login".into(), "logout".into(), "vault_access".into(),
-                        "credential_injection".into(), "oauth_flow".into(), "mfa_challenge".into(),
+                        "login".into(),
+                        "logout".into(),
+                        "vault_access".into(),
+                        "credential_injection".into(),
+                        "oauth_flow".into(),
+                        "mfa_challenge".into(),
                     ],
                     retention_days: 365,
                     max_file_size_mb: 100,
@@ -305,16 +308,24 @@ impl CredentialConfig {
 
     pub fn validate(&self) -> Result<()> {
         if self.storage.vault_path.as_os_str().is_empty() {
-            return Err(CredentialError::Config("Vault path cannot be empty".to_string()));
+            return Err(CredentialError::Config(
+                "Vault path cannot be empty".to_string(),
+            ));
         }
         if self.storage.session_path.as_os_str().is_empty() {
-            return Err(CredentialError::Config("Session path cannot be empty".to_string()));
+            return Err(CredentialError::Config(
+                "Session path cannot be empty".to_string(),
+            ));
         }
         if self.session.jwt_secret.is_empty() {
-            return Err(CredentialError::Config("JWT secret cannot be empty".to_string()));
+            return Err(CredentialError::Config(
+                "JWT secret cannot be empty".to_string(),
+            ));
         }
         if self.session.access_token_lifetime.as_secs() == 0 {
-            return Err(CredentialError::Config("Access token lifetime must be > 0".to_string()));
+            return Err(CredentialError::Config(
+                "Access token lifetime must be > 0".to_string(),
+            ));
         }
         Ok(())
     }
@@ -325,15 +336,24 @@ impl CredentialConfig {
 
     pub fn add_oauth_provider(&mut self, provider: OAuthProvider) -> Result<()> {
         if self.oauth.providers.iter().any(|p| p.name == provider.name) {
-            return Err(CredentialError::Config(format!("OAuth provider '{}' already exists", provider.name)));
+            return Err(CredentialError::Config(format!(
+                "OAuth provider '{}' already exists",
+                provider.name
+            )));
         }
         self.oauth.providers.push(provider);
         Ok(())
     }
 
     pub fn remove_oauth_provider(&mut self, name: &str) -> Result<()> {
-        let idx = self.oauth.providers.iter().position(|p| p.name == name)
-            .ok_or_else(|| CredentialError::Config(format!("OAuth provider '{}' not found", name)))?;
+        let idx = self
+            .oauth
+            .providers
+            .iter()
+            .position(|p| p.name == name)
+            .ok_or_else(|| {
+                CredentialError::Config(format!("OAuth provider '{}' not found", name))
+            })?;
         self.oauth.providers.remove(idx);
         Ok(())
     }

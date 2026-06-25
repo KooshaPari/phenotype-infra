@@ -4,7 +4,6 @@
 /// Phase 1: FFI crate skeleton + C ABI boundary types.
 /// Phase 2: Compile Go core as C archive, link via cc crate.
 /// Phase 3: Pure Rust equivalent of Go analysis engine.
-
 pub mod ffi;
 
 // ── Go analysis types — mirrors KodeVibeGo's internal module ────────────

@@ -1,8 +1,8 @@
 //! Desktop automation primitives
 
+use crate::automation::Automator;
 use crate::error::Result;
 use async_trait::async_trait;
-use crate::automation::Automator;
 
 pub struct DesktopAutomator;
 
@@ -31,11 +31,19 @@ impl Automator for DesktopAutomator {
 
     async fn find_element(&mut self, selector: &str) -> Result<crate::automation::ElementHandle> {
         tracing::info!("Find element: {}", selector);
-        Err(crate::error::KvdError::ElementNotFound(selector.to_string()))
+        Err(crate::error::KvdError::ElementNotFound(
+            selector.to_string(),
+        ))
     }
 
-    async fn wait_for_element(&mut self, selector: &str, _timeout: Option<u64>) -> Result<crate::automation::ElementHandle> {
+    async fn wait_for_element(
+        &mut self,
+        selector: &str,
+        _timeout: Option<u64>,
+    ) -> Result<crate::automation::ElementHandle> {
         tracing::info!("Wait for element: {}", selector);
-        Err(crate::error::KvdError::ElementNotFound(selector.to_string()))
+        Err(crate::error::KvdError::ElementNotFound(
+            selector.to_string(),
+        ))
     }
 }

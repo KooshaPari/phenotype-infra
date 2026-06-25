@@ -237,8 +237,8 @@ impl Config {
 
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let content = std::fs::read_to_string(path)?;
-        let config: Self = toml::from_str(&content)
-            .map_err(|e| KvdError::Config(format!("TOML parse: {}", e)))?;
+        let config: Self =
+            toml::from_str(&content).map_err(|e| KvdError::Config(format!("TOML parse: {}", e)))?;
         Ok(config)
     }
 
@@ -264,15 +264,27 @@ impl Config {
     pub fn set_value(&mut self, key: &str, value: &str) -> Result<()> {
         match key {
             "general.log_level" => self.general.log_level = value.to_string(),
-            "general.timeout" => self.general.timeout = value.parse()
-                .map_err(|_| KvdError::Config("Invalid timeout value".into()))?,
-            "desktop.click_delay" => self.desktop.click_delay = value.parse()
-                .map_err(|_| KvdError::Config("Invalid click delay value".into()))?,
-            "desktop.type_delay" => self.desktop.type_delay = value.parse()
-                .map_err(|_| KvdError::Config("Invalid type delay value".into()))?,
+            "general.timeout" => {
+                self.general.timeout = value
+                    .parse()
+                    .map_err(|_| KvdError::Config("Invalid timeout value".into()))?
+            }
+            "desktop.click_delay" => {
+                self.desktop.click_delay = value
+                    .parse()
+                    .map_err(|_| KvdError::Config("Invalid click delay value".into()))?
+            }
+            "desktop.type_delay" => {
+                self.desktop.type_delay = value
+                    .parse()
+                    .map_err(|_| KvdError::Config("Invalid type delay value".into()))?
+            }
             "recording.video_format" => self.recording.video_format = value.to_string(),
-            "session.auto_save_interval" => self.session.auto_save_interval = value.parse()
-                .map_err(|_| KvdError::Config("Invalid auto save interval value".into()))?,
+            "session.auto_save_interval" => {
+                self.session.auto_save_interval = value
+                    .parse()
+                    .map_err(|_| KvdError::Config("Invalid auto save interval value".into()))?
+            }
             _ => return Err(KvdError::Config(format!("Unknown config key: {}", key))),
         }
         Ok(())

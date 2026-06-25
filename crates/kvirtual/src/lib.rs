@@ -6,39 +6,60 @@
 //! and an MCP protocol server.
 
 pub mod cli;
+pub mod completion;
 pub mod config;
+pub mod container;
+pub mod credentials;
+pub mod desktop;
+pub mod error;
+pub mod history;
+pub mod record;
+pub mod scripting;
 pub mod session;
 pub mod tui;
-pub mod desktop;
-pub mod container;
 pub mod vm;
-pub mod record;
-pub mod credentials;
-pub mod scripting;
-pub mod history;
-pub mod completion;
-pub mod error;
 
 // Re-exports
 pub use cli::{CliRunner, CommandContext};
 pub use config::Config;
+pub use error::{KvdError, Result};
 pub use session::SessionManager;
 pub use tui::TuiRunner;
-pub use error::{KvdError, Result};
 
 // ─── CLI Subcommand Action Types ──────────────────────────────────────────────
 // Shared between main.rs (binary) and cli.rs (library).
 
 #[derive(Debug, Clone)]
 pub enum DesktopAction {
-    Click { x: i32, y: i32 },
-    Type { text: String },
-    Screenshot { path: Option<String> },
-    Find { text: String },
-    Wait { selector: String, timeout: Option<u64> },
-    Drag { from_x: i32, from_y: i32, to_x: i32, to_y: i32 },
-    Keys { keys: String },
-    StartRecording { output: String },
+    Click {
+        x: i32,
+        y: i32,
+    },
+    Type {
+        text: String,
+    },
+    Screenshot {
+        path: Option<String>,
+    },
+    Find {
+        text: String,
+    },
+    Wait {
+        selector: String,
+        timeout: Option<u64>,
+    },
+    Drag {
+        from_x: i32,
+        from_y: i32,
+        to_x: i32,
+        to_y: i32,
+    },
+    Keys {
+        keys: String,
+    },
+    StartRecording {
+        output: String,
+    },
     StopRecording,
 }
 
@@ -101,8 +122,8 @@ pub enum CredAction {
 // ─── Core Automation Traits ───────────────────────────────────────────────────
 
 pub mod automation {
-    use async_trait::async_trait;
     use crate::error::Result;
+    use async_trait::async_trait;
 
     /// Core automation interface — click, type, screenshot, find elements.
     #[async_trait]
@@ -112,7 +133,11 @@ pub mod automation {
         async fn key_press(&mut self, key: &str) -> Result<()>;
         async fn screenshot(&mut self, path: Option<&str>) -> Result<String>;
         async fn find_element(&mut self, selector: &str) -> Result<ElementHandle>;
-        async fn wait_for_element(&mut self, selector: &str, timeout: Option<u64>) -> Result<ElementHandle>;
+        async fn wait_for_element(
+            &mut self,
+            selector: &str,
+            timeout: Option<u64>,
+        ) -> Result<ElementHandle>;
     }
 
     #[derive(Debug, Clone)]
@@ -177,7 +202,13 @@ pub mod utils {
 
     pub fn sanitize_filename(name: &str) -> String {
         name.chars()
-            .map(|c| if c.is_alphanumeric() || c == '_' || c == '-' { c } else { '_' })
+            .map(|c| {
+                if c.is_alphanumeric() || c == '_' || c == '-' {
+                    c
+                } else {
+                    '_'
+                }
+            })
             .collect()
     }
 }

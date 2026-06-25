@@ -441,7 +441,9 @@ fn cstr_to_string(ptr: *const c_char) -> String {
     if ptr.is_null() {
         return String::new();
     }
-    unsafe { CStr::from_ptr(ptr) }.to_string_lossy().into_owned()
+    unsafe { CStr::from_ptr(ptr) }
+        .to_string_lossy()
+        .into_owned()
 }
 
 fn write_name(dst: &mut [c_char; 256], value: &str) {
@@ -521,7 +523,11 @@ mod shim {
 
     #[no_mangle]
     pub extern "C" fn nvms_apple_silicon_init() -> i32 {
-        if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") { 0 } else { -1 }
+        if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") {
+            0
+        } else {
+            -1
+        }
     }
 
     #[no_mangle]
@@ -538,10 +544,14 @@ mod shim {
     }
 
     #[no_mangle]
-    pub extern "C" fn nvms_cuda_init() -> i32 { 0 }
+    pub extern "C" fn nvms_cuda_init() -> i32 {
+        0
+    }
 
     #[no_mangle]
-    pub extern "C" fn nvms_cuda_device_count() -> i32 { 0 }
+    pub extern "C" fn nvms_cuda_device_count() -> i32 {
+        0
+    }
 
     #[no_mangle]
     pub extern "C" fn nvms_cuda_alloc_unified(size: u64) -> *mut c_void {
@@ -549,10 +559,14 @@ mod shim {
     }
 
     #[no_mangle]
-    pub extern "C" fn nvms_rocm_init() -> i32 { 0 }
+    pub extern "C" fn nvms_rocm_init() -> i32 {
+        0
+    }
 
     #[no_mangle]
-    pub extern "C" fn nvms_rocm_device_count() -> i32 { 0 }
+    pub extern "C" fn nvms_rocm_device_count() -> i32 {
+        0
+    }
 
     #[no_mangle]
     pub extern "C" fn nvms_neon_available() -> bool {
@@ -616,7 +630,9 @@ mod shim {
         if inst.is_null() {
             return -1;
         }
-        unsafe { (*inst).status = sys::NvmsStatus::Running; }
+        unsafe {
+            (*inst).status = sys::NvmsStatus::Running;
+        }
         0
     }
 
@@ -625,7 +641,9 @@ mod shim {
         if inst.is_null() {
             return -1;
         }
-        unsafe { (*inst).status = sys::NvmsStatus::Stopped; }
+        unsafe {
+            (*inst).status = sys::NvmsStatus::Stopped;
+        }
         0
     }
 
@@ -647,7 +665,8 @@ mod shim {
     }
 
     // Tracking for the shim's own instances so list_instances() works
-    static SHIM_INSTANCES: std::sync::Mutex<Vec<SendInstancePtr>> = std::sync::Mutex::new(Vec::new());
+    static SHIM_INSTANCES: std::sync::Mutex<Vec<SendInstancePtr>> =
+        std::sync::Mutex::new(Vec::new());
 
     #[no_mangle]
     pub extern "C" fn nvms_instance_list(count: *mut i32) -> *mut *mut sys::NvmsInstance {
@@ -658,7 +677,10 @@ mod shim {
             return std::ptr::null_mut();
         }
         let arr = Box::into_raw(
-            instances.iter().map(|p| p.0).collect::<Box<[*mut sys::NvmsInstance]>>(),
+            instances
+                .iter()
+                .map(|p| p.0)
+                .collect::<Box<[*mut sys::NvmsInstance]>>(),
         ) as *mut *mut sys::NvmsInstance;
         unsafe { *count = total as i32 };
         arr
@@ -869,7 +891,11 @@ mod tests {
         let _b = unsafe { Instance::create(Tier::Gvisor, "list-test-b") }.unwrap();
 
         let listed = list_instances();
-        assert_eq!(listed.len(), before + 2, "should have exactly 2 more instances than before creation");
+        assert_eq!(
+            listed.len(),
+            before + 2,
+            "should have exactly 2 more instances than before creation"
+        );
 
         let names: Vec<String> = listed.iter().map(|(_, n, _, _)| n.clone()).collect();
         assert!(names.contains(&"list-test-a".to_string()));

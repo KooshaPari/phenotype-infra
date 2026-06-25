@@ -35,10 +35,10 @@ use serde::{Deserialize, Serialize};
 // Re-exports
 // ---------------------------------------------------------------------------
 
-pub use nvms::NvmsConfig;
-pub use sandbox::SandboxConfig;
 pub use gpu::GpuConfig;
+pub use nvms::NvmsConfig;
 pub use perf::PerfConfig;
+pub use sandbox::SandboxConfig;
 
 // ---------------------------------------------------------------------------
 // Top-level config
@@ -94,8 +94,12 @@ impl Default for DriverConfig {
     }
 }
 
-const fn default_firecracker_cpus() -> u32 { 2 }
-const fn default_firecracker_memory() -> u64 { 2 * 1024 * 1024 * 1024 }
+const fn default_firecracker_cpus() -> u32 {
+    2
+}
+const fn default_firecracker_memory() -> u64 {
+    2 * 1024 * 1024 * 1024
+}
 
 // ---------------------------------------------------------------------------
 // NvmsConfig
@@ -127,8 +131,12 @@ pub mod nvms {
         }
     }
 
-    fn default_version() -> String { "1.0.0".to_string() }
-    fn default_platform() -> String { format!("{}/{}", std::env::consts::OS, std::env::consts::ARCH) }
+    fn default_version() -> String {
+        "1.0.0".to_string()
+    }
+    fn default_platform() -> String {
+        format!("{}/{}", std::env::consts::OS, std::env::consts::ARCH)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -171,10 +179,18 @@ pub mod sandbox {
         }
     }
 
-    const fn default_max_sandbox_id_len() -> usize { 128 }
-    const fn default_wasm_startup_ms() -> u32 { 1 }
-    const fn default_gvisor_startup_ms() -> u32 { 90 }
-    const fn default_firecracker_startup_ms() -> u32 { 125 }
+    const fn default_max_sandbox_id_len() -> usize {
+        128
+    }
+    const fn default_wasm_startup_ms() -> u32 {
+        1
+    }
+    const fn default_gvisor_startup_ms() -> u32 {
+        90
+    }
+    const fn default_firecracker_startup_ms() -> u32 {
+        125
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -212,9 +228,15 @@ pub mod perf {
         }
     }
 
-    const fn default_startup_ns() -> u64 { 1_000_000 }
-    const fn default_memory_bytes() -> u64 { 64 * 1024 * 1024 }
-    const fn default_gpu_utilization() -> f64 { 0.0 }
+    const fn default_startup_ns() -> u64 {
+        1_000_000
+    }
+    const fn default_memory_bytes() -> u64 {
+        64 * 1024 * 1024
+    }
+    const fn default_gpu_utilization() -> f64 {
+        0.0
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -247,8 +269,12 @@ pub mod gpu {
         }
     }
 
-    const fn default_gpu_memory_bytes() -> u64 { 8 * 1024 * 1024 * 1024 }
-    const fn default_compute_units() -> u32 { 8 }
+    const fn default_gpu_memory_bytes() -> u64 {
+        8 * 1024 * 1024 * 1024
+    }
+    const fn default_compute_units() -> u32 {
+        8
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -293,7 +319,8 @@ impl PhenoConfig {
     /// Convenience for `init` / `main` contexts where a missing
     /// config file is a hard failure.
     pub fn load_or_panic() -> Self {
-        Self::load().expect("PhenoConfig: failed to load (check PhenoCompose.toml or PHENO_* env vars)")
+        Self::load()
+            .expect("PhenoConfig: failed to load (check PhenoCompose.toml or PHENO_* env vars)")
     }
 
     /// Return only the parsed defaults (ignores file and env
@@ -359,7 +386,10 @@ mod tests {
         let cfg = PhenoConfig::default();
         assert!(!cfg.nvms.version.is_empty(), "version must not be empty");
         assert!(!cfg.nvms.platform.is_empty(), "platform must not be empty");
-        assert!(cfg.nvms.platform.contains('/'), "platform should contain '/'");
+        assert!(
+            cfg.nvms.platform.contains('/'),
+            "platform should contain '/'"
+        );
     }
 
     #[test]
@@ -375,7 +405,10 @@ mod tests {
     fn default_config_has_sane_driver_values() {
         let cfg = PhenoConfig::default();
         assert_eq!(cfg.driver.firecracker_default_cpus, 2);
-        assert_eq!(cfg.driver.firecracker_default_memory_bytes, 2 * 1024 * 1024 * 1024);
+        assert_eq!(
+            cfg.driver.firecracker_default_memory_bytes,
+            2 * 1024 * 1024 * 1024
+        );
     }
 
     #[test]
@@ -423,7 +456,10 @@ mod tests {
         };
         let cfg = PhenoConfig::default().with_driver(drv);
         assert_eq!(cfg.driver.firecracker_default_cpus, 4);
-        assert_eq!(cfg.driver.firecracker_default_memory_bytes, 4 * 1024 * 1024 * 1024);
+        assert_eq!(
+            cfg.driver.firecracker_default_memory_bytes,
+            4 * 1024 * 1024 * 1024
+        );
     }
 
     // -- Serialization round-trip ------------------------------------------
@@ -433,7 +469,10 @@ mod tests {
         let cfg = PhenoConfig::default();
         let json = serde_json::to_string(&cfg).expect("serialize");
         let deserialized: PhenoConfig = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(deserialized.sandbox.max_sandbox_id_len, cfg.sandbox.max_sandbox_id_len);
+        assert_eq!(
+            deserialized.sandbox.max_sandbox_id_len,
+            cfg.sandbox.max_sandbox_id_len
+        );
         assert_eq!(
             deserialized.driver.firecracker_default_cpus,
             cfg.driver.firecracker_default_cpus,

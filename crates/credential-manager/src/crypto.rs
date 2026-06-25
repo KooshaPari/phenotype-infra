@@ -1,16 +1,18 @@
-use crate::error::{CredentialError, Result};
 use crate::config::EncryptionConfig;
+use crate::error::{CredentialError, Result};
 use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
 use argon2::{
-    password_hash::{rand_core::OsRng as ArgonOsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{
+        rand_core::OsRng as ArgonOsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
+    },
     Argon2,
 };
-use sha2::{Digest, Sha256};
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
+use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 use zeroize::Zeroize;
 
@@ -51,7 +53,9 @@ impl CryptoEngine {
 
     /// Encrypt plaintext using AES-256-GCM
     pub fn encrypt(&self, plaintext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
-        let key = self.master_key.as_ref()
+        let key = self
+            .master_key
+            .as_ref()
             .ok_or_else(|| CredentialError::Crypto("Master key not initialized".to_string()))?;
 
         let cipher = Aes256Gcm::new_from_slice(key)
@@ -81,7 +85,9 @@ impl CryptoEngine {
 
     /// Decrypt ciphertext using AES-256-GCM
     pub fn decrypt(&self, ciphertext: &[u8], aad: Option<&[u8]>) -> Result<Vec<u8>> {
-        let key = self.master_key.as_ref()
+        let key = self
+            .master_key
+            .as_ref()
             .ok_or_else(|| CredentialError::Crypto("Master key not initialized".to_string()))?;
 
         let cipher = Aes256Gcm::new_from_slice(key)
@@ -95,7 +101,8 @@ impl CryptoEngine {
 
         let ct_len = total_len - self.config.nonce_size as usize - aad_size;
         let nonce = Nonce::from_slice(&ciphertext[..self.config.nonce_size as usize]);
-        let ct = &ciphertext[self.config.nonce_size as usize..self.config.nonce_size as usize + ct_len];
+        let ct =
+            &ciphertext[self.config.nonce_size as usize..self.config.nonce_size as usize + ct_len];
 
         let plaintext = cipher
             .decrypt(nonce, ct)
@@ -119,7 +126,9 @@ impl CryptoEngine {
         let parsed_hash = PasswordHash::new(hash)
             .map_err(|e| CredentialError::Crypto(format!("Invalid password hash: {}", e)))?;
         let argon2 = Argon2::default();
-        Ok(argon2.verify_password(password.as_bytes(), &parsed_hash).is_ok())
+        Ok(argon2
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .is_ok())
     }
 
     /// Derive a key from a password using Argon2id
@@ -209,7 +218,9 @@ mod tests {
         };
         let mut engine = CryptoEngine::new(config);
         let salt = CryptoEngine::generate_salt(32);
-        engine.initialize_from_password("test-password", &salt).unwrap();
+        engine
+            .initialize_from_password("test-password", &salt)
+            .unwrap();
 
         let plaintext = b"Hello, KVirtualStage!";
         let encrypted = engine.encrypt(plaintext, None).unwrap();

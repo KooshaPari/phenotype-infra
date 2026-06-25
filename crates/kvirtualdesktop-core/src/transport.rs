@@ -1,10 +1,10 @@
 //! MCP Transport Layer
-//! 
+//!
 //! This module provides transport mechanisms for MCP communication,
 //! including stdio and HTTP+SSE transports.
 
-use crate::types::*;
 use crate::error::*;
+use crate::types::*;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
@@ -118,40 +118,46 @@ impl Transport for StdioTransport {
         if !self.connected {
             return Err(McpTransportError::NotConnected);
         }
-        
-        let json_message = serde_json::to_string(&message)
-            .map_err(McpTransportError::SerializationError)?;
-        
+
+        let json_message =
+            serde_json::to_string(&message).map_err(McpTransportError::SerializationError)?;
+
         let content_length = json_message.len();
         let frame = format!("Content-Length: {}\r\n\r\n{}", content_length, json_message);
-        
+
         use tokio::io::AsyncWriteExt;
-        self.stdout.write_all(frame.as_bytes()).await
+        self.stdout
+            .write_all(frame.as_bytes())
+            .await
             .map_err(McpTransportError::IoError)?;
-        
-        self.stdout.flush().await
+
+        self.stdout
+            .flush()
+            .await
             .map_err(McpTransportError::IoError)?;
-        
+
         Ok(())
     }
-    
+
     async fn receive_message(&mut self) -> Result<Message, McpTransportError> {
         if !self.connected {
             return Err(McpTransportError::NotConnected);
         }
-        
+
         use tokio::io::AsyncReadExt;
-        
+
         // Read header
         let mut header_buffer = Vec::new();
         let mut byte = [0u8; 1];
-        
+
         loop {
-            self.stdin.read_exact(&mut byte).await
+            self.stdin
+                .read_exact(&mut byte)
+                .await
                 .map_err(McpTransportError::IoError)?;
-            
+
             header_buffer.push(byte[0]);
-            
+
             if header_buffer.len() >= 4 {
                 let tail = &header_buffer[header_buffer.len() - 4..];
                 if tail == b"\r\n\r\n" {
@@ -159,40 +165,42 @@ impl Transport for StdioTransport {
                 }
             }
         }
-        
+
         let header_str = String::from_utf8(header_buffer)
             .map_err(|e| McpTransportError::InvalidMessage(e.to_string()))?;
-        
+
         let content_length = parse_content_length(&header_str)?;
-        
+
         // Read content
         let mut content_buffer = vec![0u8; content_length];
-        self.stdin.read_exact(&mut content_buffer).await
+        self.stdin
+            .read_exact(&mut content_buffer)
+            .await
             .map_err(McpTransportError::IoError)?;
-        
+
         let content_str = String::from_utf8(content_buffer)
             .map_err(|e| McpTransportError::InvalidMessage(e.to_string()))?;
-        
-        let message: Message = serde_json::from_str(&content_str)
-            .map_err(McpTransportError::SerializationError)?;
-        
+
+        let message: Message =
+            serde_json::from_str(&content_str).map_err(McpTransportError::SerializationError)?;
+
         Ok(message)
     }
-    
+
     async fn start(&mut self) -> Result<(), McpTransportError> {
         self.connected = true;
         Ok(())
     }
-    
+
     async fn stop(&mut self) -> Result<(), McpTransportError> {
         self.connected = false;
         Ok(())
     }
-    
+
     fn is_connected(&self) -> bool {
         self.connected
     }
-    
+
     fn transport_info(&self) -> TransportInfo {
         TransportInfo {
             transport_type: TransportType::Stdio,
@@ -235,12 +243,16 @@ impl HttpSseTransport {
             session_id: None,
         }
     }
-    
+
     pub async fn connect(&mut self) -> Result<(), McpTransportError> {
-        let connect_url = self.base_url.join("/connect")
+        let connect_url = self
+            .base_url
+            .join("/connect")
             .map_err(|e| McpTransportError::InvalidEndpoint(e.to_string()))?;
-        
-        let response = self.client.post(connect_url)
+
+        let response = self
+            .client
+            .post(connect_url)
             .json(&ConnectRequest {
                 protocol_version: crate::MCP_VERSION.to_string(),
                 capabilities: TransportCapabilities {
@@ -253,37 +265,43 @@ impl HttpSseTransport {
             .send()
             .await
             .map_err(McpTransportError::NetworkError)?;
-        
+
         if !response.status().is_success() {
-            return Err(McpTransportError::ConnectionFailed(
-                format!("HTTP {}", response.status())
-            ));
+            return Err(McpTransportError::ConnectionFailed(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
-        
-        let connect_response: ConnectResponse = response.json().await
+
+        let connect_response: ConnectResponse = response
+            .json()
+            .await
             .map_err(McpTransportError::NetworkError)?;
-        
+
         self.session_id = Some(connect_response.session_id);
         self.connected = true;
-        
+
         // Start SSE event stream
         self.start_event_stream().await?;
-        
+
         Ok(())
     }
-    
+
     async fn start_event_stream(&mut self) -> Result<(), McpTransportError> {
-        let events_url = self.base_url.join("/events")
+        let events_url = self
+            .base_url
+            .join("/events")
             .map_err(|e| McpTransportError::InvalidEndpoint(e.to_string()))?;
-        
+
         let (tx, rx) = mpsc::channel(1000);
-        
+
         let client = self.client.clone();
         let session_id = self.session_id.clone().unwrap();
-        
+
         tokio::spawn(async move {
             use futures_util::StreamExt;
-            let response = client.get(events_url)
+            let response = client
+                .get(events_url)
                 .header("Accept", "text/event-stream")
                 .header("Cache-Control", "no-cache")
                 .header("X-Session-ID", &session_id)
@@ -302,7 +320,7 @@ impl HttpSseTransport {
                 }
             }
         });
-        
+
         self.event_source = Some(rx);
         Ok(())
     }
@@ -314,65 +332,76 @@ impl Transport for HttpSseTransport {
         if !self.connected {
             return Err(McpTransportError::NotConnected);
         }
-        
-        let send_url = self.base_url.join("/send")
+
+        let send_url = self
+            .base_url
+            .join("/send")
             .map_err(|e| McpTransportError::InvalidEndpoint(e.to_string()))?;
-        
-        let response = self.client.post(send_url)
+
+        let response = self
+            .client
+            .post(send_url)
             .header("X-Session-ID", self.session_id.as_ref().unwrap())
             .json(&message)
             .send()
             .await
             .map_err(McpTransportError::NetworkError)?;
-        
+
         if !response.status().is_success() {
-            return Err(McpTransportError::SendFailed(
-                format!("HTTP {}", response.status())
-            ));
+            return Err(McpTransportError::SendFailed(format!(
+                "HTTP {}",
+                response.status()
+            )));
         }
-        
+
         Ok(())
     }
-    
+
     async fn receive_message(&mut self) -> Result<Message, McpTransportError> {
         if !self.connected {
             return Err(McpTransportError::NotConnected);
         }
-        
+
         if let Some(event_source) = &mut self.event_source {
-            event_source.recv().await
+            event_source
+                .recv()
+                .await
                 .ok_or(McpTransportError::ConnectionClosed)
         } else {
             Err(McpTransportError::NotConnected)
         }
     }
-    
+
     async fn start(&mut self) -> Result<(), McpTransportError> {
         self.connect().await
     }
-    
+
     async fn stop(&mut self) -> Result<(), McpTransportError> {
         if self.connected {
-            let disconnect_url = self.base_url.join("/disconnect")
+            let disconnect_url = self
+                .base_url
+                .join("/disconnect")
                 .map_err(|e| McpTransportError::InvalidEndpoint(e.to_string()))?;
-            
-            let _ = self.client.post(disconnect_url)
+
+            let _ = self
+                .client
+                .post(disconnect_url)
                 .header("X-Session-ID", self.session_id.as_ref().unwrap())
                 .send()
                 .await;
-            
+
             self.connected = false;
             self.session_id = None;
             self.event_source = None;
         }
-        
+
         Ok(())
     }
-    
+
     fn is_connected(&self) -> bool {
         self.connected
     }
-    
+
     fn transport_info(&self) -> TransportInfo {
         TransportInfo {
             transport_type: TransportType::HttpSse,
@@ -406,17 +435,15 @@ struct ConnectResponse {
 fn parse_content_length(header: &str) -> Result<usize, McpTransportError> {
     for line in header.lines() {
         if line.starts_with("Content-Length:") {
-            let length_str = line.trim_start_matches("Content-Length:")
-                .trim();
-            return length_str.parse()
-                .map_err(|e| McpTransportError::InvalidMessage(
-                    format!("Invalid Content-Length: {}", e)
-                ));
+            let length_str = line.trim_start_matches("Content-Length:").trim();
+            return length_str.parse().map_err(|e| {
+                McpTransportError::InvalidMessage(format!("Invalid Content-Length: {}", e))
+            });
         }
     }
-    
+
     Err(McpTransportError::InvalidMessage(
-        "Missing Content-Length header".to_string()
+        "Missing Content-Length header".to_string(),
     ))
 }
 

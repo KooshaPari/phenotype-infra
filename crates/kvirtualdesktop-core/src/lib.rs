@@ -56,17 +56,17 @@
 #![warn(missing_docs)]
 #![warn(rustdoc::broken_intra_doc_links)]
 
+pub mod error;
 pub mod protocol;
+pub mod security;
 pub mod transport;
 pub mod types;
-pub mod error;
-pub mod security;
 
+pub use error::*;
 pub use protocol::*;
+pub use security::*;
 pub use transport::*;
 pub use types::*;
-pub use error::*;
-pub use security::*;
 
 /// MCP Protocol Version
 ///

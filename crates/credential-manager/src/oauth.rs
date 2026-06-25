@@ -1,5 +1,5 @@
-use crate::error::{CredentialError, Result};
 use crate::config::OAuthConfig;
+use crate::error::{CredentialError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -66,8 +66,12 @@ impl OAuthManager {
 
     /// Generate the authorization URL for a provider
     pub fn authorization_url(&mut self, provider_name: &str, state: &str) -> Result<Url> {
-        let provider = self.config.get_oauth_provider(provider_name)
-            .ok_or_else(|| CredentialError::NotFound(format!("OAuth provider '{}' not found", provider_name)))?;
+        let provider = self
+            .config
+            .get_oauth_provider(provider_name)
+            .ok_or_else(|| {
+                CredentialError::NotFound(format!("OAuth provider '{}' not found", provider_name))
+            })?;
 
         let code_verifier = self.generate_code_verifier();
         let code_challenge = self.generate_code_challenge(&code_verifier);
@@ -100,12 +104,22 @@ impl OAuthManager {
     }
 
     /// Exchange an authorization code for tokens
-    pub async fn exchange_code(&mut self, provider_name: &str, code: &str, state: &str) -> Result<StoredToken> {
-        let request = self.pending_requests.remove(state)
-            .ok_or_else(|| CredentialError::OAuth("No pending auth request for this state".to_string()))?;
+    pub async fn exchange_code(
+        &mut self,
+        provider_name: &str,
+        code: &str,
+        state: &str,
+    ) -> Result<StoredToken> {
+        let request = self.pending_requests.remove(state).ok_or_else(|| {
+            CredentialError::OAuth("No pending auth request for this state".to_string())
+        })?;
 
-        let provider = self.config.get_oauth_provider(provider_name)
-            .ok_or_else(|| CredentialError::NotFound(format!("OAuth provider '{}' not found", provider_name)))?;
+        let provider = self
+            .config
+            .get_oauth_provider(provider_name)
+            .ok_or_else(|| {
+                CredentialError::NotFound(format!("OAuth provider '{}' not found", provider_name))
+            })?;
 
         let mut params = HashMap::new();
         params.insert("grant_type", "authorization_code".to_string());
@@ -115,7 +129,8 @@ impl OAuthManager {
         params.insert("client_secret", provider.client_secret.clone());
         params.insert("code_verifier", request.code_verifier.clone());
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(provider.token_url.clone())
             .form(&params)
             .send()
@@ -123,10 +138,9 @@ impl OAuthManager {
             .map_err(|e| CredentialError::OAuth(format!("Token request failed: {}", e)))?;
 
         let status = response.status();
-        let body: serde_json::Value = response
-            .json()
-            .await
-            .map_err(|e| CredentialError::OAuth(format!("Failed to parse token response: {}", e)))?;
+        let body: serde_json::Value = response.json().await.map_err(|e| {
+            CredentialError::OAuth(format!("Failed to parse token response: {}", e))
+        })?;
 
         if !status.is_success() {
             return Err(CredentialError::OAuth(format!(
@@ -157,10 +171,16 @@ impl OAuthManager {
 
     /// Refresh an access token
     pub async fn refresh_token(&self, stored: &StoredToken) -> Result<StoredToken> {
-        let provider = self.config.get_oauth_provider(&stored.provider)
-            .ok_or_else(|| CredentialError::NotFound(format!("OAuth provider '{}' not found", stored.provider)))?;
+        let provider = self
+            .config
+            .get_oauth_provider(&stored.provider)
+            .ok_or_else(|| {
+                CredentialError::NotFound(format!("OAuth provider '{}' not found", stored.provider))
+            })?;
 
-        let refresh_token = stored.refresh_token.as_ref()
+        let refresh_token = stored
+            .refresh_token
+            .as_ref()
             .ok_or_else(|| CredentialError::OAuth("No refresh token available".to_string()))?;
 
         let mut params = HashMap::new();
@@ -169,7 +189,8 @@ impl OAuthManager {
         params.insert("client_id", provider.client_id.clone());
         params.insert("client_secret", provider.client_secret.clone());
 
-        let response = self.http_client
+        let response = self
+            .http_client
             .post(provider.token_url.clone())
             .form(&params)
             .send()
@@ -177,13 +198,15 @@ impl OAuthManager {
             .map_err(|e| CredentialError::OAuth(format!("Token refresh failed: {}", e)))?;
 
         let status = response.status();
-        let body: TokenResponse = response
-            .json()
-            .await
-            .map_err(|e| CredentialError::OAuth(format!("Failed to parse refresh response: {}", e)))?;
+        let body: TokenResponse = response.json().await.map_err(|e| {
+            CredentialError::OAuth(format!("Failed to parse refresh response: {}", e))
+        })?;
 
         if !status.is_success() {
-            return Err(CredentialError::OAuth(format!("Token refresh failed with status {}", status)));
+            return Err(CredentialError::OAuth(format!(
+                "Token refresh failed with status {}",
+                status
+            )));
         }
 
         let now = current_timestamp();
@@ -203,8 +226,10 @@ impl OAuthManager {
     fn generate_code_verifier(&self) -> String {
         use rand::Rng;
         let mut rng = rand::rngs::OsRng;
-        let charset: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
-            .chars().collect();
+        let charset: Vec<char> =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+                .chars()
+                .collect();
         let verifier: String = (0..64)
             .map(|_| {
                 let idx = rng.gen_range(0..charset.len());
