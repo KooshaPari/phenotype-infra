@@ -1,0 +1,4 @@
+error: failed to parse lock file at: /mnt/c/Users/koosh/phenotype-infra-ci-fix/Cargo.lock
+
+Caused by:
+  lock file version 4 requires `-Znext-lockfile-bump`
