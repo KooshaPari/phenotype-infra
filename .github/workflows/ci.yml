@@ -30,9 +30,9 @@ jobs:
       - name: cargo fmt --check
         working-directory: iac
         run: cargo fmt --all -- --check
-      - name: cargo check --workspace --all-targets
+      - name: cargo build --workspace
         working-directory: iac
-        run: cargo check --workspace --all-targets --locked
+        run: cargo build --workspace --locked
       - name: cargo clippy --workspace --all-targets -- -D warnings
         working-directory: iac
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -120,6 +120,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: iac -> target
-      - name: cargo check --workspace
+      - name: cargo build --workspace
         working-directory: iac
-        run: cargo check --workspace --locked
+        run: cargo build --workspace --locked
