@@ -135,6 +135,21 @@ _*.txt
 _finish_marker.txt
 _cargo_pi*
 _pi_*
+_audit_*.ps1
+_audit_*.bat
+_meta.*
+_meta_*
+.scan_*
+_report_*
+grade_*
+_*.err
+_*.json
+_*.log
+.grade-reports/
+.audit-cache/
+.diagnose/
+.experiments/
+.scratch/
 
 # Test fixtures (used by integration tests)
 **/test_vault.json
