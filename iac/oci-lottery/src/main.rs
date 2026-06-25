@@ -15,6 +15,7 @@ mod state;
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Parser;
+use oci_helpers::home_or_fallback;
 use rand::prelude::*;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -53,12 +54,6 @@ struct Args {
     once: bool,
 }
 
-fn home() -> PathBuf {
-    std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("/tmp"))
-}
-
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> Result<()> {
     phenotype_logging::init("oci-lottery");
@@ -70,13 +65,13 @@ async fn main() -> Result<()> {
 
     let config_path = args
         .config
-        .unwrap_or_else(|| home().join(".cloudprovider/oci-lottery.json"));
+        .unwrap_or_else(|| home_or_fallback().join(".cloudprovider/oci-lottery.json"));
     let state_path = args
         .state_file
-        .unwrap_or_else(|| home().join(".cloudprovider/oci-lottery-state.json"));
+        .unwrap_or_else(|| home_or_fallback().join(".cloudprovider/oci-lottery-state.json"));
     let acquired_path = args
         .acquired_file
-        .unwrap_or_else(|| home().join(".cloudprovider/oci-instance.json"));
+        .unwrap_or_else(|| home_or_fallback().join(".cloudprovider/oci-instance.json"));
 
     let cfg = Config::load_or_default(&config_path)
         .await

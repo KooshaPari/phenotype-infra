@@ -1,13 +1,14 @@
 //! Mesh-state commit — flips OCI to ✅ in compute-mesh-state.md and commits.
 
-use crate::{InstanceFile, expand};
+use crate::InstanceFile;
+use oci_helpers::expand_home;
 use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
 use tokio::process::Command;
 use tracing::info;
 
 pub async fn commit_state(repo: &str, inst: &InstanceFile) -> Result<()> {
-    let repo_path = expand(repo);
+    let repo_path = expand_home(repo);
     let doc = repo_path.join("docs/governance/compute-mesh-state.md");
     let original = tokio::fs::read_to_string(&doc)
         .await

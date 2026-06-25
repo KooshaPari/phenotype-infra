@@ -28,3 +28,4 @@ chrono = { workspace = true }
 glob = { workspace = true }
 phenotype-logging = { workspace = true }
 phenotype-infra-observability = { path = "../observability" }
+oci-helpers = { path = "../oci-helpers" }

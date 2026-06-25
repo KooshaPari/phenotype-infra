@@ -3,13 +3,14 @@
 //! fields as env vars. A failing hook does not abort the chain; we collect
 //! errors and warn at the end.
 
-use crate::{InstanceFile, expand};
+use crate::InstanceFile;
+use oci_helpers::expand_home;
 use anyhow::{Result, anyhow};
 use tokio::process::Command;
 use tracing::{info, warn};
 
 pub async fn run_dropins(dir: &str, inst: &InstanceFile) -> Result<()> {
-    let p = expand(dir);
+    let p = expand_home(dir);
     if !p.exists() {
         info!(dir = %p.display(), "no hooks.d dir; skipping");
         return Ok(());

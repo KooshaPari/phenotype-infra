@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "oci-helpers",
     "oci-lottery",
     "oci-post-acquire",
     "tailscale/tailscale-keygen",

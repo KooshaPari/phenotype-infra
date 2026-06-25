@@ -3,6 +3,7 @@
 //! remaining hooks from running. We log + continue.
 
 use anyhow::Result;
+use oci_helpers::which_on_path;
 use serde_json::json;
 use std::path::PathBuf;
 use tokio::process::Command;
@@ -79,19 +80,6 @@ async fn run_post_acquire_hook(inst: &AcquiredInstance) -> Result<()> {
         error!(?status, %program, "post-acquire hook exited non-zero");
     }
     Ok(())
-}
-
-async fn which_on_path(bin: &str) -> bool {
-    // Use `sh -c command -v` rather than scanning $PATH ourselves; the
-    // shell respects functions, aliases, and per-shell PATH munging that
-    // a manual walk would miss. This is a 1-line shellout, not a script.
-    Command::new("sh")
-        .arg("-c")
-        .arg(format!("command -v {bin} >/dev/null 2>&1"))
-        .status()
-        .await
-        .map(|s| s.success())
-        .unwrap_or(false)
 }
 
 async fn post_webhook(inst: &AcquiredInstance) -> Result<()> {

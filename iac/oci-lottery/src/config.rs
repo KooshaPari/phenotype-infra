@@ -1,3 +1,4 @@
+use oci_helpers::home_or_fallback;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -49,19 +50,13 @@ impl Default for Config {
             image_ocid: None,
             subnet_ocid: None,
             display_name: "phenotype-arm-mesh-node".into(),
-            ssh_authorized_keys_path: dirs_home().join(".ssh").join("id_ed25519.pub"),
+            ssh_authorized_keys_path: home_or_fallback().join(".ssh").join("id_ed25519.pub"),
             profile: "DEFAULT".into(),
             compartment_ocid: None,
             backoff_min_secs: 60,
             backoff_max_secs: 180,
         }
     }
-}
-
-fn dirs_home() -> PathBuf {
-    std::env::var_os("HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("/tmp"))
 }
 
 impl Config {

@@ -4,7 +4,7 @@ use anyhow::{Context, Result, anyhow};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::expand;
+use oci_helpers::expand_home;
 
 #[derive(Debug, Serialize)]
 struct ARecord<'a> {
@@ -34,7 +34,7 @@ struct ApiResp {
 }
 
 pub async fn upsert_a_record(zone_id: &str, token_file: &str, name: &str, ip: &str) -> Result<()> {
-    let token = tokio::fs::read_to_string(expand(token_file))
+    let token = tokio::fs::read_to_string(expand_home(token_file))
         .await
         .with_context(|| format!("read CF token from {token_file}"))?;
     let token = token.trim();

@@ -9,6 +9,7 @@
 use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
 use clap::Parser;
+use oci_helpers::expand_home;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::time::Duration;
@@ -82,20 +83,6 @@ pub struct InstanceFile {
     pub public_ip: String,
     pub acquired_at: String,
 }
-
-fn expand(p: &str) -> PathBuf {
-    if let Some(rest) = p.strip_prefix("~/")
-        && let Some(home) = dirs_home()
-    {
-        return home.join(rest);
-    }
-    PathBuf::from(p)
-}
-
-fn dirs_home() -> Option<PathBuf> {
-    std::env::var_os("HOME").map(PathBuf::from)
-}
-
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     phenotype_logging::init("oci-post-acquire");
@@ -175,7 +162,7 @@ async fn main() -> Result<()> {
 }
 
 async fn read_instance(path: &str) -> Result<InstanceFile> {
-    let p = expand(path);
+    let p = expand_home(path);
     let bytes = tokio::fs::read(&p)
         .await
         .with_context(|| format!("read {}", p.display()))?;
@@ -207,7 +194,7 @@ async fn wait_for_ssh(host: &str, port: u16, max_secs: u64) -> Result<()> {
 }
 
 async fn run_ansible(repo: &str, playbook: &str, host: &str) -> Result<()> {
-    let repo_path = expand(repo);
+    let repo_path = expand_home(repo);
     let inventory = format!("{host},");
     info!(
         host,
@@ -241,7 +228,7 @@ async fn notify(inst: &InstanceFile) -> Result<()> {
     }
     // 7b: append worklog.
     let date = Utc::now().format("%Y_%m_%d");
-    let path = expand(&format!(
+    let path = expand_home(&format!(
         "~/CodeProjects/Phenotype/repos/worklogs/SESSION_{date}_OCI_ACQUIRED.md"
     ));
     if let Some(parent) = path.parent() {
