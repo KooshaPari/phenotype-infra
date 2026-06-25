@@ -76,12 +76,23 @@ mod command {
 
     /// Check if a command exists in PATH
     pub fn command_exists(cmd: &str) -> bool {
-        Command::new("command")
-            .arg("-v")
-            .arg(cmd)
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
+        // Use `where` on Windows, `command -v` on Unix
+        let result = if cfg!(windows) {
+            Command::new("where")
+                .arg(cmd)
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status()
+        } else {
+            Command::new("command")
+                .arg("-v")
+                .arg(cmd)
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status()
+        };
+
+        result.map(|status| status.success()).unwrap_or(false)
     }
 
     #[cfg(test)]

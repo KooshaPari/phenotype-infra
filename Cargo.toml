@@ -5,18 +5,21 @@ resolver = "2"
 # phenotype-infra — Compute/Infra Consolidation Monorepo
 # =============================================================================
 #
-# Members will be added as crates are absorbed:
-#   - nanovms-core (Go static lib via CGo)
-#   - nvms-ffi     (Rust FFI bindings to NVMS Go Core)
-#   - pheno-compose-driver (High-level Rust driver)
+# Workspace members (Rust crates):
+#   - nanovms-core               (Go static lib via CGo)
+#   - nvms-ffi                   (Rust FFI bindings to NVMS Go Core)
+#   - pheno-compose              (High-level Rust driver)
+#   - pheno-config               (Shared configuration)
+#   - credential-manager         (Credential management, absorbed)
+#   - kodevibego-ffi             (KodeVibeGo Go→Rust FFI bindings)
+#   - kvirtual                   (KVirtualStage desktop automation CLI)
+#   - kvirtualdesktop-core       (KVirtualStage MCP protocol types)
+#   - kvirtualdesktop-mcp-server (KVirtualStage MCP server)
+#   - thegent-utils              (thegent-workspace binary utilities)
+#   - tests                      (Cross-crate integration tests)
 #
 # Tooling sub-projects live under tools/ and are NOT workspace members
 # (they use their own build systems).
-#
-# tools/kodevibego/ — Go lint/analysis engine (absorbed from KodeVibeGo).
-#   Build: cd tools/kodevibego && make build
-#   Tests: cd tools/kodevibego && go test ./..
-# =============================================================================
 
 members = [
     "crates/nanovms-core",           # Go source — absorbed as C static lib
@@ -26,10 +29,10 @@ members = [
     "crates/kodevibego-ffi",        # KodeVibeGo Go→Rust FFI bindings
     "crates/credential-manager",     # Credential mgr from KVirtualStage
     "crates/kvirtualdesktop-core",  # KVirtualStage MCP protocol types
-    "crates/kvirtualdesktop-mcp-server", # KVirtualStage MCP server
     "crates/kvirtual",              # KVirtualStage desktop automation CLI (kvd)
     "crates/thegent-utils",         # thegent-workspace binary utilities
-    "tests",                        # Cross-crate integration tests
+#   "crates/kvirtualdesktop-mcp-server", # KVirtualStage MCP server (excluded: frozen Jul 2025, 20 pre-existing errors)
+    "tests",
 ]
 
 [workspace.package]

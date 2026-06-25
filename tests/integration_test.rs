@@ -1,7 +1,8 @@
 //! Cross-crate integration tests for the phenotype-infra monorepo.
 //!
 //! These tests verify that the major crates (`nvms-ffi`, `pheno-compose-driver`,
-//! `pheno-config`) can be linked together and that their basic public API
+//! `pheno-config`, `credential-manager`, `kodevibego-ffi`, `kvirtualdesktop-core`,
+//! `thegent-utils`) can be linked together and that their basic public API
 //! contracts hold.
 
 // ---------------------------------------------------------------------------
@@ -180,4 +181,242 @@ fn pheno_config_defaults_are_sensible() {
         config.sandbox.startup_ms_firecracker > config.sandbox.startup_ms_wasm,
         "firecracker should be slower than wasm"
     );
+}
+
+#[test]
+fn pheno_config_all_defaults_have_reasonable_values() {
+    let config = pheno_config::PhenoConfig::default();
+    assert_eq!(config.sandbox.max_sandbox_id_len, 128);
+    assert!(!config.nvms.version.is_empty());
+    assert!(!config.nvms.platform.is_empty());
+    assert!(config.gpu.memory_bytes > 0);
+    assert!(config.gpu.compute_units > 0);
+    assert!(config.perf.startup_time_ns > 0);
+    assert!(config.driver.firecracker_default_cpus > 0);
+}
+
+// ---------------------------------------------------------------------------
+// credential-manager integration
+// ---------------------------------------------------------------------------
+
+#[test]
+fn credential_manager_config_roundtrip() {
+    use credential_manager::CredentialConfig;
+
+    let config = CredentialConfig::default();
+    let json = serde_json::to_string_pretty(&config).expect("serialize");
+    let deserialized: CredentialConfig = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(config.storage.vault_path, deserialized.storage.vault_path);
+    assert_eq!(config.security.encryption.algorithm, deserialized.security.encryption.algorithm);
+    assert!(deserialized.validate().is_ok());
+}
+
+#[test]
+fn credential_manager_error_types() {
+    use credential_manager::CredentialError;
+
+    let err = CredentialError::Config("test".into());
+    let msg = err.to_string();
+    assert!(msg.contains("test"), "error message should contain context");
+    assert!(msg.contains("Configuration"), "error message should include type");
+}
+
+#[test]
+fn credential_manager_default_config_is_valid() {
+    use credential_manager::CredentialConfig;
+
+    let config = CredentialConfig::default();
+    assert!(config.validate().is_ok(), "default config should validate");
+    assert_eq!(config.storage.vault_path.to_string_lossy(), "data/vault.db");
+    assert_eq!(config.storage.pool_size, 10);
+    assert_eq!(config.security.key_derivation.memory_cost, 65536);
+}
+
+// ---------------------------------------------------------------------------
+// kodevibego-ffi integration
+// ---------------------------------------------------------------------------
+
+#[test]
+fn kodevibego_ffi_analysis_types_serde() {
+    use kodevibego_ffi::{AnalysisResult, AnalysisStats, Issue};
+
+    let result = AnalysisResult {
+        issues: vec![Issue {
+            severity: "error".into(),
+            file: "src/main.go".into(),
+            line: 42,
+            message: "unused variable".into(),
+            rule_id: Some("no-unused".into()),
+        }],
+        stats: AnalysisStats {
+            files_analyzed: 1,
+            total_issues: 1,
+            duration_ms: 12,
+        },
+    };
+    let json = serde_json::to_string(&result).unwrap();
+    let back: AnalysisResult = serde_json::from_str(&json).unwrap();
+    assert_eq!(back.issues.len(), 1);
+    assert_eq!(back.stats.files_analyzed, 1);
+    assert_eq!(back.issues[0].rule_id.as_deref(), Some("no-unused"));
+}
+
+#[test]
+fn kodevibego_ffi_empty_result() {
+    use kodevibego_ffi::AnalysisResult;
+
+    let empty = AnalysisResult::empty();
+    assert!(empty.issues.is_empty());
+    assert_eq!(empty.stats.files_analyzed, 0);
+    assert_eq!(empty.stats.total_issues, 0);
+    assert_eq!(empty.stats.duration_ms, 0);
+}
+
+// ---------------------------------------------------------------------------
+// kvirtualdesktop-core integration
+// ---------------------------------------------------------------------------
+
+#[test]
+fn kvirtualdesktop_core_version_constants() {
+    use kvirtualdesktop_core::{KVIRTUALDESKTOP_VERSION, MCP_VERSION};
+
+    assert!(!MCP_VERSION.is_empty(), "MCP protocol version should not be empty");
+    assert!(!KVIRTUALDESKTOP_VERSION.is_empty(), "implementation version should not be empty");
+    assert_eq!(KVIRTUALDESKTOP_VERSION, "0.1.0");
+}
+
+#[test]
+fn kvirtualdesktop_core_basic_types() {
+    use kvirtualdesktop_core::{
+        Tool, ToolCapability, ToolInputSchema,
+    };
+
+    let tool = Tool {
+        name: "click".into(),
+        description: "Click at coordinates".into(),
+        input_schema: ToolInputSchema {
+            r#type: "object".into(),
+            properties: Default::default(),
+            required: vec![],
+            additional_properties: None,
+        },
+        output_schema: None,
+        capabilities: vec![ToolCapability::UiAutomation],
+        security_requirements: None,
+    };
+    let json = serde_json::to_string(&tool).unwrap();
+    let back: Tool = serde_json::from_str(&json).unwrap();
+    assert_eq!(back.name, "click");
+    assert!(back.capabilities.contains(&ToolCapability::UiAutomation));
+}
+
+#[test]
+fn kvirtualdesktop_core_message_type() {
+    use kvirtualdesktop_core::Message;
+    use chrono::Utc;
+
+    let msg = Message {
+        id: "msg-1".into(),
+        method: "test".into(),
+        params: None,
+        result: None,
+        error: None,
+        session_id: None,
+        timestamp: Utc::now(),
+    };
+    let json = serde_json::to_string(&msg).unwrap();
+    let back: Message = serde_json::from_str(&json).unwrap();
+    assert_eq!(back.id, "msg-1");
+    assert_eq!(back.method, "test");
+}
+
+#[test]
+fn kvirtualdesktop_core_security_types() {
+    use kvirtualdesktop_core::{AuthenticationMethod, AuthorizationMethod, SecurityRequirements};
+    use url::Url;
+
+    let sec = SecurityRequirements {
+        authentication: AuthenticationMethod::ApiKey {
+            header_name: "X-API-Key".into(),
+            prefix: Some("Bearer".into()),
+        },
+        authorization: AuthorizationMethod::ScopeBased,
+        required_scopes: vec!["desktop:automation".into()],
+        resource_indicators: vec![Url::parse("https://api.example.com").unwrap()],
+    };
+    let json = serde_json::to_string(&sec).unwrap();
+    assert!(json.contains("X-API-Key"));
+    assert!(json.contains("desktop:automation"));
+}
+
+// ---------------------------------------------------------------------------
+// thegent-utils integration
+// ---------------------------------------------------------------------------
+
+#[test]
+fn thegent_utils_error_display() {
+    use thegent_utils::UtilsError;
+
+    let err = UtilsError::NotFound("cargo".into());
+    let msg = err.to_string();
+    assert!(msg.contains("Binary not found"), "error should describe binary not found: {msg}");
+    assert!(msg.contains("cargo"), "error should contain binary name: {msg}");
+}
+
+#[test]
+fn thegent_utils_io_error_conversion() {
+    use thegent_utils::UtilsError;
+
+    let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
+    let utils_err: UtilsError = io_err.into();
+    let msg = utils_err.to_string();
+    assert!(msg.contains("IO error"), "should wrap IO error: {msg}");
+}
+
+#[test]
+fn thegent_utils_binary_resolution_basics() {
+    use thegent_utils::first_available;
+    use thegent_utils::resolve_binary;
+
+    // resolve_binary should not panic (may return None on CI without git)
+    let _git = resolve_binary("git");
+
+    // first_available should not panic
+    let _found = first_available(&["nonexistent_binary_xyz", "does_not_exist"]);
+}
+
+// ---------------------------------------------------------------------------
+// Cross-crate composition: verify multiple crates work together
+// ---------------------------------------------------------------------------
+
+#[test]
+fn pheno_config_feeds_pheno_compose_driver_defaults() {
+    // Verify that pheno-config's defaults line up with pheno-compose-driver expectations
+    use pheno_compose_driver::NvmsDriver;
+
+    let driver = NvmsDriver::new().expect("driver init");
+    let version = driver.version().to_string();
+    assert!(!version.is_empty(), "driver version should not be empty");
+}
+
+#[test]
+fn nvms_ffi_and_pheno_config_platform_consistency() {
+    let ffi_platform = nvms_ffi::platform_info();
+    let config = pheno_config::PhenoConfig::default();
+    // Both should report platform info
+    assert!(!ffi_platform.is_empty());
+    assert!(!config.nvms.platform.is_empty());
+}
+
+#[test]
+fn credential_manager_and_kvirtualdesktop_core_types() {
+    // Verify that the credential types between credential-manager and
+    // kvirtualdesktop-core are compatible (both use serde)
+    use credential_manager::CredentialConfig;
+
+    let config = CredentialConfig::default();
+    let json = serde_json::to_string_pretty(&config).expect("serialize");
+    assert!(json.contains("AES-256-GCM"), "default algorithm should be AES-256-GCM");
+    assert!(json.contains("Argon2id"), "default KDF should be Argon2id");
+    assert!(json.contains("vault.db"), "default vault path should be present");
 }

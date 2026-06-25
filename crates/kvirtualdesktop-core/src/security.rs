@@ -11,10 +11,14 @@ use chrono::{DateTime, Utc, Duration};
 use url::Url;
 use uuid::Uuid;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use oauth2::*;
-use oauth2::TokenResponse;
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
+use oauth2::{self, TokenResponse as _, // trait for access_token/token_type/expires_in methods
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
+    PkceCodeVerifier, RedirectUrl, Scope, StandardTokenResponse, TokenUrl,
+};
+use sha2::{Digest, Sha256};
+use base64::Engine;
 
 /// Security Manager for MCP
 pub struct SecurityManager {
@@ -68,7 +72,7 @@ impl SecurityManager {
         state: Option<String>,
         resource_indicators: Vec<Url>,
     ) -> Result<Url, McpSecurityError> {
-        use oauth2::url::Url as OAuthUrl;
+        
         let client = self.oauth_clients.get(client_id)
             .ok_or_else(|| McpSecurityError::OAuth(
                 format!("OAuth client not found: {}", client_id)
@@ -304,26 +308,31 @@ pub struct PkceHelper;
 impl PkceHelper {
     /// Generate PKCE code verifier and challenge
     pub fn generate_pkce_pair() -> (String, String) {
-        use oauth2::PkceCodeChallenge as _;
-        // oauth2 4.x: new_random_sha256 returns (PkceCodeVerifier, PkceCodeChallenge)
-        let (code_verifier, code_challenge) = PkceCodeChallenge::new_random_sha256();
+        // Generate random code verifier (43-128 chars, alphanumeric)
+        let verifier: String = (0..64)
+            .map(|_| {
+                let idx = rand::random::<usize>() % 64;
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+                    .chars()
+                    .nth(idx)
+                    .unwrap()
+            })
+            .collect();
 
-        (
-            code_verifier.secret().clone(),
-            code_challenge.as_str().to_string(),
-        )
+        // SHA-256 hash → base64url-encoded (no pad) = code challenge
+        let hash = Sha256::digest(verifier.as_bytes());
+        let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(hash);
+
+        (verifier, challenge)
     }
     
     /// Verify PKCE challenge
     pub fn verify_pkce_challenge(verifier: &str, challenge: &str) -> bool {
-        let code_verifier = PkceCodeVerifier::new(verifier.to_string());
-        // oauth2 4.x: from_code_verifier_sha256 returns PkceCodeChallenge directly
-        let expected_challenge = PkceCodeChallenge::from_code_verifier_sha256(&code_verifier);
-        
-        expected_challenge.as_str() == challenge
+        let hash = Sha256::digest(verifier.as_bytes());
+        let expected = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(hash);
+        expected == challenge
     }
 }
-
 /// Session Token for MCP sessions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionToken {

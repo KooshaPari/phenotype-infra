@@ -135,4 +135,8 @@ _*.txt
 _finish_marker.txt
 _cargo_pi*
 _pi_*
+
+# Test fixtures (used by integration tests)
+**/test_vault.json
+**/test_*.json
 # ===== End standard hygiene =====

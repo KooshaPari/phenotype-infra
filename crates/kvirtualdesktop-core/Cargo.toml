@@ -23,3 +23,5 @@ futures = { workspace = true }
 futures-util = "0.3"
 reqwest = { workspace = true, features = ["stream", "json"] }
 rand = { workspace = true }
+sha2 = "0.10"
+base64 = "0.22"

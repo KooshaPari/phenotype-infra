@@ -45,19 +45,32 @@ technical merits.
 ```
 phenotype-infra/
 ├── crates/
-│   ├── nanovms-core/     # NVMS Go core — C static archive
-│   ├── nvms-ffi/          # Rust FFI bindings to NVMS Go Core
-│   ├── pheno-compose/     # High-level Rust driver
-│   └── pheno-config/      # Shared configuration
-├── tests/                 # Cross-crate integration tests
-├── docs/                  # ADRs, scorecards, governance
-├── scripts/               # Repository automation
+│   ├── nanovms-core/               # NVMS Go core — C static archive
+│   ├── nvms-ffi/                   # Rust FFI bindings to NVMS Go Core
+│   ├── pheno-compose/              # High-level Rust driver (pheno-compose-driver)
+│   ├── pheno-config/               # Shared configuration (figment-backed)
+│   ├── credential-manager/         # Credential management (absorbed from KVirtualStage)
+│   ├── kodevibego-ffi/             # KodeVibeGo Go→Rust FFI bindings
+│   ├── kvirtual/                   # KVirtualStage desktop automation CLI (kvd)
+│   ├── kvirtualdesktop-core/       # KVirtualStage MCP protocol types
+│   ├── kvirtualdesktop-mcp-server/ # KVirtualStage MCP server
+│   └── thegent-utils/              # thegent-workspace binary utilities
+├── tests/                          # Cross-crate integration tests
+├── tools/                          # Tooling sub-projects (separate build systems)
+│   ├── byteport/                   # Svelte infra tooling
+│   ├── kodevibego/                 # Go lint/analysis engine
+│   └── kvirtualstage-go/           # Go KVirtualStage server
+├── docs/                           # ADRs, scorecards, governance
+├── configs/                        # Shared configuration files
+├── iac/                            # Infrastructure-as-Code
 ├── .github/
-│   └── workflows/         # CI, scorecard, audit, quality gates
-├── CODEOWNERS             # Root-level ownership alias
-├── CONTRIBUTING.md        # This file
-├── Cargo.toml             # Workspace manifest
+│   └── workflows/                  # CI, scorecard, audit, quality gates
+├── CODEOWNERS                      # Root-level ownership alias
+├── CONTRIBUTING.md                 # This file
+├── Cargo.toml                      # Workspace manifest
 ├── Cargo.lock
+├── deny.toml                       # cargo-deny configuration
+├── rust-toolchain.toml             # Rust toolchain pinning
 └── LICENSE
 ```
 

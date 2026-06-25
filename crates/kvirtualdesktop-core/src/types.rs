@@ -67,7 +67,7 @@ pub struct ToolOutputSchema {
 }
 
 /// Tool Capability
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ToolCapability {
     #[serde(rename = "ui_automation")]
     UiAutomation,
