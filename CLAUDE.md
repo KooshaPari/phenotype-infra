@@ -1,31 +1,61 @@
-# phenotype-infra — CLAUDE.md
+# CLAUDE.md — phenotype-infra
 
-Defers to `~/.claude/CLAUDE.md` for global rules. Repo-specific overrides below.
+Extends parent governance. See:
+- Global baseline: `~/.claude/CLAUDE.md`
+- Plan: `~/plans/2026-06-23-master-compute-infra-observability-dag-v1.md`
 
-## Repo-specific rules
+## Project Overview
 
-- **Terraform apply is human-only.** Agents may `terraform fmt`, `terraform validate`, `terraform plan`, and open PRs. `terraform apply` requires explicit user confirmation in the terminal session where the user is present.
-- **Vaultwarden is read-only from agents.** Agents may fetch credentials for use within a task but must not add, rotate, or delete entries without user confirmation.
-- **No `gh repo create` from agents.** Per the sandbox policy / #67 lesson, public-repo creation is denied. The user runs `gh repo create` manually (see `SETUP_STEPS.md`).
-- **ADR before IaC.** Any new node, provider, or topology change requires an accepted ADR in `docs/adr/` before the `iac/` scaffold lands.
-- **Runbook before node.** Every node in the mesh has a matching runbook in `docs/runbooks/`.
-- **Scripting hierarchy** (from `~/.claude/CLAUDE.md`): Rust default; Zig/Mojo/Go with one-line justification; Bash only as ≤5-line glue with justification comment. Terraform and Ansible are exempt as domain-specific tools.
+- **Name:** phenotype-infra
+- **Description:** Compute/Infra Consolidation Monorepo — nanovms + PhenoCompose + BytePort
+- **Language Stack:** Go 1.23+, Rust (edition 2021), TypeScript/Svelte
+- **Key Areas:** `crates/`, `tools/`, `docs/`, `.github/workflows/`
+- **Status:** Active (L1-Alpha consolidation)
 
-## Safe-to-edit map
+## Repository Layout
 
-| Directory | Autonomous agent? |
-|-----------|-------------------|
-| `docs/` | Yes (docs, ADR stubs, runbooks) |
-| `configs/*.example` | Yes |
-| `iac/terraform/` | Plan-only (PR, never apply) |
-| `iac/ansible/` | Plan-only (dry-run, never execute) |
-| `iac/scripts/` | Yes, with scripting-hierarchy justification |
-| `.github/workflows/` | Yes |
+- `crates/nanovms-core/` — Go source for 3-tier isolation
+- `crates/nvms-ffi/` — Rust FFI bindings to NVMS Go Core
+- `crates/pheno-compose/` — High-level Rust driver
+- `tools/byteport/` — Svelte infra tooling
+- `docs/adr/` — Architecture Decision Records
+- `docs/specs/` — Specifications
+- `docs/governance/` — Governance documents
+- `docs/audit/` — Audit scorecards
+- `.github/workflows/` — CI/CD
 
-## See also
+## Quality Checks
 
-- `AGENTS.md` — agent operational rules
-- `docs/governance/security-policy.md` — token + SSH rotation
-- `docs/governance/incident-response.md` — outage playbooks
-- `docs/governance/journey-traceability-standard.md` — required journey
-  evidence pattern for docs that describe real flows
+From this repository root:
+
+```bash
+# Go vet + test
+go vet ./crates/nanovms-core/...
+go test ./crates/nanovms-core/...
+
+# Rust checks
+cargo check --workspace
+cargo test --workspace
+cargo clippy --workspace -- -D warnings
+cargo fmt -- --check
+
+# Pre-commit
+pre-commit run --all-files
+```
+
+## Worktree & Git Discipline
+
+- Feature work uses repo-specific worktrees
+- Canonical repo stays on `main` except during explicit merge operations
+- All feature branches are temporary; integrate via pull request or squash commit
+- Git commit after each wave with wave-tagged message
+
+## Related Documents
+
+- `README.md` — project overview and quick start
+- `AGENTS.md` — agent-facing repository guidance
+- `PLAN.md` — master DAG plan
+
+---
+
+For CI, scripting language hierarchy, and other policies, see the canonical sources listed above.
