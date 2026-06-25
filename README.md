@@ -8,8 +8,8 @@
 ![AI-Only-Maintained](https://img.shields.io/badge/Planned%20%26%20Maintained%20by-AI%20Agents%20Only-red?style=flat-square)
 <!-- AI-DD-META:END -->
 
-> **Work state:** SCAFFOLD · **Progress:** `█████░░░░░ 50%`
-> Compute/Infra consolidation monorepo (nanovms + PhenoCompose + BytePort). IaC validates, crates compile, but human-apply-only gate. · updated 2026-06-24
+> **Work state:** ACTIVE · **Progress:** `███████░░░ 75%`
+> Phase 1 (all 15 units) complete — IaC validates, crates compile, compute mesh operational. Phase 2 consolidation and HW mesh agent bus in progress. · updated 2026-06-25
 
 # phenotype-infra — Compute/Infra Consolidation Monorepo
 
