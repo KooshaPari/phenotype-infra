@@ -61,12 +61,6 @@ impl Default for Config {
 
 impl Config {
     pub async fn load_or_default(path: &PathBuf) -> anyhow::Result<Self> {
-        if tokio::fs::try_exists(path).await.unwrap_or(false) {
-            let raw = tokio::fs::read_to_string(path).await?;
-            let cfg: Config = serde_json::from_str(&raw)?;
-            Ok(cfg)
-        } else {
-            Ok(Self::default())
-        }
+        oci_helpers::load_json_or(path, Self::default()).await
     }
 }

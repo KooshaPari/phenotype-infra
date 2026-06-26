@@ -24,29 +24,14 @@ pub struct AcquiredInstance {
 
 impl LotteryState {
     pub async fn load(path: &PathBuf) -> anyhow::Result<Self> {
-        if tokio::fs::try_exists(path).await.unwrap_or(false) {
-            let raw = tokio::fs::read_to_string(path).await?;
-            Ok(serde_json::from_str(&raw).unwrap_or_default())
-        } else {
-            Ok(Self::default())
-        }
+        oci_helpers::load_json_or(path, Self::default()).await
     }
 
     pub async fn save(&self, path: &PathBuf) -> anyhow::Result<()> {
-        if let Some(parent) = path.parent() {
-            tokio::fs::create_dir_all(parent).await?;
-        }
-        let raw = serde_json::to_string_pretty(self)?;
-        tokio::fs::write(path, raw).await?;
-        Ok(())
+        oci_helpers::save_json(path, self).await
     }
 }
 
 pub async fn write_acquired(path: &PathBuf, inst: &AcquiredInstance) -> anyhow::Result<()> {
-    if let Some(parent) = path.parent() {
-        tokio::fs::create_dir_all(parent).await?;
-    }
-    let raw = serde_json::to_string_pretty(inst)?;
-    tokio::fs::write(path, raw).await?;
-    Ok(())
+    oci_helpers::save_json(path, inst).await
 }
