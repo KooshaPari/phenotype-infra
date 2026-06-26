@@ -1,7 +1,7 @@
 # Grade Card: phenotype-infra
 
-**Date:** 2026-06-24
-**Repository:** phenotype-infra (working copy: `phenotype-infra-ci-fix`)
+**Date:** 2026-06-25
+**Repository:** phenotype-infra (branch: `dag-B43-2026-06-25`)
 **Stack:** Rust (Go FFI) + Svelte + Python + Markdown (governance)
 
 ---
@@ -15,7 +15,16 @@
 | **Grand Total (phenotype-infra)** | 146 | 325 | 44.9% | **C-** |
 | **Governance docs (ci-fix branch)** | 201 | 325 | 61.8% | **B-** |
 
-> _Source: [`docs/audit/scorecard.json`](../audit/scorecard.json)_
+> _Source: [`docs/audit/scorecard.json`](../audit/scorecard.json) (2026-06-23)_
+
+### Fresh Grade Runner (grade.sh --json)
+
+| Mode | Score | Max | % | Grade |
+|------|-------|-----|---|-------|
+| **Full** | 0 | 17 | 0% | **F** |
+| **Fast** | 0 | 10 | 0% | **F** |
+
+> **Note:** Full grade run reports all failures due to Cargo.lock v4 compatibility issue (`lock file version 4 requires -Znext-lockfile-bump`), fmt diff in `nvms-ffi/build.rs`, deny.toml config value mismatch, and missing tooling (llvm-cov, cargo-nextest, cargo-audit). These are CI/environment issues rather than code quality regressions.
 
 ### Batch Grade (structural checks)
 
@@ -56,7 +65,7 @@
 | L5 — Security Scanning | 3 | Adequate — .gitleaks, codecov, deny.toml |
 | L6 — Dependency Management | 3 | Adequate — Cargo.lock, deny.toml |
 | L7 — Architecture Governance | 4 | **Good** — ADRs for compute/HW-mesh, polyglot |
-| L8 — Branch Hygiene | 3 | Adequate — Git flow, but stale branches exist |
+| L8 — Branch Hygiene | 3 | Adequate — Git flow, branches present |
 | L9 — Release Process | 2 | Weak — release.yml present, no automation |
 | L10 — Performance Criteria | 2 | Weak — tier specs exist, no benchmarks |
 | L11 — Error Handling | 1 | **Critical** — No consistent error strategy |
@@ -91,70 +100,34 @@
 
 ---
 
-## Branch Hygiene Summary
+## Recent Changes Since Last Grade Card
 
-Source: [A1 — Stale Branches Audit](../../.grade-reports/A1-stale-branches.md) (on `audit/A1-list-stale-branches` branch)
+| Commit | Date | Description |
+|--------|------|-------------|
+| `d767475` | 2026-06-25 | fix(pi-007c): restore rustc-check-cfg + fmt --all after restructure |
+| `6616ebd` | 2026-06-25 | feat(audit): implement Recommendation #3 — automated no-idle-audit workflow |
+| `3c1ab56` | 2026-06-25 | Phase-5-Resume: External grade run reports (build/fmt/test-unit) + Cargo.lock refresh |
 
-| Metric | Value |
-|--------|-------|
-| Total branches (excl. main) | 22 (local + remote) |
-| Stale branches (>30d) | 16 |
-| Cursor branches (unmerged) | 6 — see [A8 Cursor Audit](../../.grade-reports/A8-cursor-audit.md) |
-
-### Remote Branches Overview
-
-| Category | Count | Status |
-|----------|-------|--------|
-| `cursor/*` | 6 | Unmerged, stale since April 2026 |
-| `chore/*` | 4 | Stale (5-8 weeks) |
-| `feat/*` | 2 | Stale |
-| `ci/*` | 1 | Stale |
-| `audit/*` | 1 | Stale |
-| `dependabot/*` | 1 | Active dependency updates |
-| `wip/*` | 1 | Stale |
-| `iac-integration` | 1 | Stale |
-| `kvd/*` | 1 | Stale |
-| **Total stale** | **16** | All >30 days since last commit |
-
-### Local Branches
-
-| Branch | Purpose |
-|--------|---------|
-| `audit/A1-list-stale-branches` | A1 audit work branch |
-| `main` | Primary development |
+Working tree also contains uncommitted changes to 7 source files (nvms-ffi, pheno-compose, pheno-config, integration tests).
 
 ---
 
-## Dead Code Sweep Summary
+## Grade Runner Detailed Results
 
-### A25 — Orphaned Scripts Audit
-
-**Scope:** All `.sh`, `.rs`, `.ps1` files under `iac/`
-
-| Category | Total | Referenced | Orphaned |
-|----------|-------|------------|----------|
-| Standalone scripts | 6 | 6 | **0** |
-| Hook scripts | 2 | 2 | **0** |
-| Rust crate `.rs` files | — | All under Cargo.toml | **0** |
-
-**Verdict:** No orphaned scripts found.
-
-> _Full report: [`iac/.grade-reports/A25-orphaned-scripts-audit.md`](../../iac/.grade-reports/A25-orphaned-scripts-audit.md)_
-
-### A26 — Orphaned Configs Audit
-
-**Scope:** All files under `configs/`
-
-| Config File | Service | Status |
-|-------------|---------|--------|
-| `cloudflared/config.yml.example` | Cloudflare Tunnel | Referenced (path ref in runbook) |
-| `forgejo/app.ini.example` | Forgejo | Referenced (Ansible counterpart exists) |
-| `vaultwarden/config.env.example` | Vaultwarden | Referenced (Ansible counterpart exists) |
-| `woodpecker/server.env.example` | Woodpecker | Referenced (Ansible counterpart exists) |
-
-**Verdict:** No orphaned configs found. All `.example` files correspond to real services.
-
-> _Full report: [`iac/.grade-reports/A26-orphaned-configs-audit.md`](../../iac/.grade-reports/A26-orphaned-configs-audit.md)_
+| Check | Score | Max | Detail |
+|-------|-------|-----|--------|
+| build | 0 | 2 | Cargo.lock v4 parsing error |
+| test-unit | 0 | 3 | Cargo.lock v4 parsing error |
+| fmt | 0 | 2 | Diff in `nvms-ffi/build.rs` |
+| clippy | 0 | 2 | Cargo.lock v4 parsing error |
+| deny | 0 | 1 | deny.toml: unexpected value for `unmaintained` (expected `"deny"`) |
+| doc | 0 | 1 | Cargo.lock v4 parsing error |
+| test-snapshot | 0 | 1 | Cargo.lock v4 parsing error |
+| test-fuzz | 0 | 1 | Cargo.lock v4 parsing error |
+| coverage | 0 | 2 | `cargo llvm-cov` not installed |
+| audit | 0 | 1 | `cargo audit` not installed |
+| bench | 0 | 1 | No benchmark harness configured |
+| **Total** | **0** | **17** | **Grade: F** |
 
 ---
 
@@ -162,13 +135,17 @@ Source: [A1 — Stale Branches Audit](../../.grade-reports/A1-stale-branches.md)
 
 | Unit | Report | Location |
 |------|--------|----------|
-| **A1** | Stale Branches Audit | `.grade-reports/A1-stale-branches.md` (on `audit/A1-list-stale-branches`) |
-| **A6-A7** | CI/CD + ADR reconciliation | `git log` — see commits `5b8e214`, `91be06d` |
+| **A1** | Stale Branches Audit | `.grade-reports/A1-stale-branches.md` |
+| **A6-A7** | CI/CD + ADR reconciliation | `git log` — commits `5b8e214`, `91be06d` |
 | **A8** | Cursor Branch Audit | [`.grade-reports/A8-cursor-audit.md`](../../.grade-reports/A8-cursor-audit.md) |
 | **A19** | Work-state header (README) | Commit `cb65647` |
 | **A22** | TOC reconciliation | Commit `92fe1de` — [`docs/TOC.md`](../TOC.md) |
 | **A25** | Orphaned Scripts Sweep | [`iac/.grade-reports/A25-orphaned-scripts-audit.md`](../../iac/.grade-reports/A25-orphaned-scripts-audit.md) |
 | **A26** | Orphaned Configs Sweep | [`iac/.grade-reports/A26-orphaned-configs-audit.md`](../../iac/.grade-reports/A26-orphaned-configs-audit.md) |
+| **B14** | OCI Helpers Dedup | [`.grade-reports/B14-oci-helpers-dedup.md`](../../.grade-reports/B14-oci-helpers-dedup.md) |
+| **B26** | Tier-0 PR Gate | [`.grade-reports/B26-tier0-pr-gate.md`](../../.grade-reports/B26-tier0-pr-gate.md) |
+| **B32** | Tier-1 PR Gate | [`.grade-reports/B32-tier1-pr-gate.md`](../../.grade-reports/B32-tier1-pr-gate.md) |
+| **B38** | Tier-2 Coverage Gate | [`.grade-reports/B38-tier2-coverage-gate.md`](../../.grade-reports/B38-tier2-coverage-gate.md) |
 | **Scorecard** | Master aggregate scorecard | [`docs/audit/scorecard.json`](../audit/scorecard.json) |
 | **Scorecard** | Remediation plan + master average | [`docs/audit/master-scorecard.json`](../audit/master-scorecard.json) |
 | **Grade batch** | Structural check runner | [`.grade-reports/grade-batch.cmd`](../../.grade-reports/grade-batch.cmd) |
@@ -178,4 +155,4 @@ Source: [A1 — Stale Branches Audit](../../.grade-reports/A1-stale-branches.md)
 ---
 
 *Generated by DAG unit B43.*
-*Date: 2026-06-24*
+*Date: 2026-06-25*
