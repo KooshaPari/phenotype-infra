@@ -1,38 +1,81 @@
-name: ci
+name: Coverage Gate (Tier-2)
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/**, feat/**, chore/**]
   pull_request:
     branches: [main]
 
 permissions:
   contents: read
-  id-token: write  # for OIDC trust (no PAT secrets)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
-  HOOKS_SKIP: ${{ vars.HOOKS_SKIP || 'false' }}
-  SKIP: ${{ vars.SKIP || '' }}
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
-  lint:
-    if: ${{ !contains(env.SKIP, 'lint') }}
-    runs-on: ubuntu-latest
+  coverage-root:
+    name: Root workspace coverage (lib/framework — ≥71%)
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Run lint
-        run: echo "Running language-specific lint"
-  test:
-    if: ${{ !contains(env.SKIP, 'test') }}
-    runs-on: ubuntu-latest
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin --locked
+
+      - name: Run coverage gate (root workspace)
+        run: |
+          cargo tarpaulin \
+            --manifest-path Cargo.toml \
+            --workspace \
+            --fail-under 71 \
+            --out Xml --out Json \
+            --engine llvm \
+            --target-dir target
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-root-report
+          path: target/tarpaulin-report/
+
+  coverage-iac:
+    name: IAC workspace coverage (service — ≥60%)
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Run tests
-        run: echo "Running language-specific tests"
-  coverage:
-    if: ${{ !contains(env.SKIP, 'coverage') }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Generate coverage
-        run: echo "Generating coverage (language-specific)"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: iac -> target
+
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin --locked
+
+      - name: Run coverage gate (iac workspace)
+        run: |
+          cargo tarpaulin \
+            --manifest-path iac/Cargo.toml \
+            --workspace \
+            --fail-under 60 \
+            --out Xml --out Json \
+            --engine llvm \
+            --target-dir iac/target
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-iac-report
+          path: iac/target/tarpaulin-report/

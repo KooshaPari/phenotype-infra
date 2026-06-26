@@ -2,13 +2,16 @@ coverage:
   status:
     project:
       default:
-        target: 70%
+        target: 71%
         threshold: 1%
         paths:
+          - "crates/"
           - "src/"
-          - "nanovms/"
-          - "*.go"
-        
+      iac:
+        target: 60%
+        threshold: 1%
+        paths:
+          - "iac/"
     patch:
       default:
         target: 80%
@@ -29,6 +32,7 @@ ignore:
   - ".github/"
   - "examples/"
   - "scripts/"
+  - "tools/"
 
 flags:
   unit:
@@ -38,4 +42,8 @@ flags:
   integration:
     paths:
       - tests/integration/
+    carryforward: true
+  iac:
+    paths:
+      - iac/
     carryforward: true
