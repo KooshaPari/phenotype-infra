@@ -1,0 +1,52 @@
+{
+  "credentials": [
+    {
+      "id": "search-1",
+      "name": "AWS Access Key",
+      "credential_type": "ApiKey",
+      "encrypted_data": [],
+      "metadata": {
+        "description": "Production AWS key",
+        "tags": [
+          "aws",
+          "production"
+        ],
+        "target": null,
+        "username": null,
+        "url": null,
+        "custom": {}
+      },
+      "created_at": 1782299869,
+      "updated_at": 1782299869,
+      "expires_at": null,
+      "version": 1
+    },
+    {
+      "id": "test-1",
+      "name": "Test API Key",
+      "credential_type": "ApiKey",
+      "encrypted_data": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "metadata": {
+        "description": "Test key",
+        "tags": [
+          "test"
+        ],
+        "target": null,
+        "username": null,
+        "url": null,
+        "custom": {}
+      },
+      "created_at": 1782299869,
+      "updated_at": 1782299869,
+      "expires_at": null,
+      "version": 1
+    }
+  ],
+  "exported_at": 1782299869,
+  "version": 1
+}

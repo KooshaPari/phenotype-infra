@@ -89,6 +89,12 @@ worklogs/
 # Temp files
 tmp_*
 tmp-*
+# Forge agent artifacts
+path_*
+_pi_*
+_cargo_*
+_build_*
+_meta.json
 # --- adopted from phenotype-tooling/templates/gitignore-node ---
 .cache/
 .eslintcache
@@ -106,6 +112,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # ===== Phenotype-org standard hygiene (do not edit) =====
+# Forge agent grade reports
+.grade-reports/
+
 # Audit artifacts
 .audit/
 *.audit.json

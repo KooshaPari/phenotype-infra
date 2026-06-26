@@ -1,0 +1,14 @@
+[package]
+name = "credential-manager"
+version.workspace = true
+edition.workspace = true
+description = "Secret vault credential manager for NVMS/KVirtualStage — zero-trust token rotation"
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+async-trait.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true

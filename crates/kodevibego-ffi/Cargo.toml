@@ -1,0 +1,27 @@
+[package]
+name = "kodevibego-ffi"
+version = "0.1.0"
+edition = "2021"
+description = "Rust FFI bindings for KodeVibeGo Go core — phased absorb into phenotype-infra"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/KooshaPari/phenotype-infra"
+authors = ["kooshapari"]
+publish = false
+
+[lib]
+name = "kodevibego_ffi"
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+libc = "0.2"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt", "sync"] }
+
+[build-dependencies]
+cc = "1"
+
+[features]
+default = []
+kodevibego_core_lib = []
