@@ -1,0 +1,36 @@
+name: License Check
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  license-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check top-level LICENSE files exist
+        run: |
+          for f in LICENSE LICENSE-APACHE LICENSE-MIT; do
+            if [ ! -f "$f" ]; then
+              echo "::error file=$f::Missing license file: $f"
+              exit 1
+            fi
+            echo "LICENSE $f found ($(wc -l < "$f") lines)"
+          done
+      - name: Check Rust workspace license declaration
+        run: |
+          LICENSE_DECL=$(grep -E '^license\s*=' iac/Cargo.toml | head -1)
+          if echo "$LICENSE_DECL" | grep -qiE "MIT|Apache"; then
+            echo "Cargo workspace license: $LICENSE_DECL"
+          else
+            echo "::warning::Workspace license declaration may be missing or non-standard: $LICENSE_DECL"
+          fi

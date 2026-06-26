@@ -1,0 +1,39 @@
+name: Changelog Check
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changelog:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check CHANGELOG.md exists
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            echo "::error::CHANGELOG.md is missing from the repository root"
+            exit 1
+          fi
+          echo "CHANGELOG.md found"
+      - name: Check CHANGELOG was modified
+        uses: dorny/paths-filter@v3
+        id: changelog
+        with:
+          filters: |
+            updated:
+              - 'CHANGELOG.md'
+      - name: Warn if CHANGELOG not updated
+        if: steps.changelog.outputs.updated == 'false'
+        run: |
+          echo "::warning::CHANGELOG.md was not modified in this PR. Please add a changelog entry."

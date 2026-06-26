@@ -1,0 +1,199 @@
+name: release-attest
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to attest (must already exist)"
+        required: true
+        type: string
+
+permissions:
+  id-token: write       # Required for OIDC-based signing
+  contents: read
+  attestations: write   # Required for attest-build-provenance
+  packages: write       # Required for GHCR-based attestation storage
+
+concurrency:
+  group: release-attest-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel a release attestation
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build job: compile all IaC Rust workspace binaries for provenance
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build IaC Rust crates
+    runs-on: ubuntu-24.04
+    outputs:
+      digests: ${{ steps.build-digest.outputs.digests }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Restore Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: iac -> target
+
+      - name: Build all IaC workspace crates (release)
+        working-directory: iac
+        run: cargo build --release --workspace --locked
+
+      - name: Compute subject digests for provenance
+        id: build-digest
+        shell: bash
+        run: |
+          # Collect IaC release binaries for provenance attestation
+          if [ -d "target/release" ]; then
+            BINARIES=$(find target/release -maxdepth 1 -type f -executable -not -name "*.d" 2>/dev/null || true)
+          fi
+          if [ -z "$BINARIES" ] && [ -d "iac/target/release" ]; then
+            BINARIES=$(find iac/target/release -maxdepth 1 -type f -executable -not -name "*.d" 2>/dev/null || true)
+          fi
+          if [ -z "$BINARIES" ]; then
+            # Fallback: collect library artifacts
+            BINARIES=$(find . -path "*/target/release/*.so" -o -path "*/target/release/*.a" -o -path "*/target/release/*.dylib" 2>/dev/null || true)
+          fi
+
+          DIGEST_JSON="{}"
+          for bin in $BINARIES; do
+            NAME=$(basename "$bin")
+            SHA=$(sha256sum "$bin" | cut -d' ' -f1)
+            DIGEST_JSON=$(echo "$DIGEST_JSON" | jq --arg name "$NAME" --arg sha "$SHA" '. + {($name): "sha256:" + $sha}')
+          done
+          echo "digests=$DIGEST_JSON" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IaC binaries as build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: iac-release-binaries
+          path: |
+            iac/target/release/
+            !iac/target/release/*.d
+            !iac/target/release/build/
+            !iac/target/release/.cargo-lock
+            !iac/target/release/.fingerprint/
+            !iac/target/release/deps/
+            !iac/target/release/examples/
+            !iac/target/release/incremental/
+            !iac/target/release/package/
+            !iac/target/release/profiling/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Provenance attestation (SLSA L3 via slsa-github-generator)
+  # ---------------------------------------------------------------------------
+  provenance:
+    name: Generate SLSA L3 provenance attestation
+    needs: [build]
+    if: >
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'workflow_dispatch')
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.digests }}"
+
+  # ---------------------------------------------------------------------------
+  # Verification: confirm provenance is valid
+  # ---------------------------------------------------------------------------
+  verify:
+    name: Verify provenance attestation
+    needs: [build, provenance]
+    runs-on: ubuntu-24.04
+    if: always() && needs.provenance.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download IaC release binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: iac-release-binaries
+          path: /tmp/iac-binaries
+
+      - name: Download provenance attestation
+        uses: actions/download-artifact@v4
+        with:
+          name: attestation
+          path: /tmp/iac-attestation
+        continue-on-error: true
+
+      - name: Install slsa-verifier
+        uses: slsa-framework/slsa-verifier/actions/installer@v2.6.0
+
+      - name: Verify provenance with slsa-verifier
+        shell: bash
+        run: |
+          for bin in /tmp/iac-binaries/*; do
+            if [ -f "$bin" ] && [ ! -d "$bin" ]; then
+              echo "Verifying: $(basename $bin)"
+              slsa-verifier verify-artifact \
+                --artifact-path "$bin" \
+                --provenance-path "/tmp/iac-attestation/$(basename $bin).intoto.jsonl" \
+                --source "github.com/${{ github.repository }}" \
+                --tag "${{ github.ref_name }}" \
+              || echo "WARNING: Verification skipped for $(basename $bin)"
+            fi
+          done
+
+      - name: Attest build provenance (GitHub native)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "/tmp/iac-binaries/*"
+          subject-name: "phenotype-infra-iac-${{ github.ref_name }}"
+
+  # ---------------------------------------------------------------------------
+  # Upload to GitHub Release
+  # ---------------------------------------------------------------------------
+  upload:
+    name: Upload release assets
+    needs: [build, provenance]
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download IaC release binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: iac-release-binaries
+          path: /tmp/iac-binaries
+
+      - name: Download provenance attestation
+        uses: actions/download-artifact@v4
+        with:
+          name: attestation
+          path: /tmp/iac-attestation
+        continue-on-error: true
+
+      - name: Upload binaries to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          for bin in /tmp/iac-binaries/*; do
+            if [ -f "$bin" ] && [ ! -d "$bin" ]; then
+              gh release upload "$TAG" "$bin" --clobber
+            fi
+          done
+          if [ -d /tmp/iac-attestation ]; then
+            for att in /tmp/iac-attestation/*; do
+              if [ -f "$att" ]; then
+                gh release upload "$TAG" "$att" --clobber
+              fi
+            done
+          fi

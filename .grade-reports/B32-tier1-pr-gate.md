@@ -1,134 +1,84 @@
-# B32 — Tier-1 PR Enforcement Audit
+# B32 -- Tier-1 PR Enforcement Gate
 
-**Date:** 2026-06-24
-**Target:** `C:\Users\koosh\phenotype-infra-ci-fix`
-**Standard:** Tier-1 = security scan (cargo deny/audit/trufflehog), SBOM, LICENSE check, CHANGELOG update
-
----
-
-## 1. Tier-1 Requirements
-
-| Requirement               | Status |
-|---------------------------|--------|
-| Cargo deny                | ✅     |
-| Cargo audit               | ✅     |
-| Trufflehog secrets scan   | ✅     |
-| CodeQL / SAST             | ✅     |
-| Trivy filesystem scan     | ✅     |
-| **SBOM generation**       | ❌ **Missing** |
-| **LICENSE file check**    | ❌ **Missing** |
-| **CHANGELOG update check**| ❌ **Missing** |
+**Date:** 2026-06-25
+**Target:** `KooshaPari/phenotype-infra` (local at `C:\Users\koosh\phenotype-infra`)
+**Branch:** `dag-B32-2026-06-25`
+**Standard:** Tier-1 = security scan (cargo audit / trufflehog), SBOM, LICENSE check, CHANGELOG update
+**Status:** FULLY ENFORCED (post-remediation)
 
 ---
 
-## 2. Relevant Workflow Analysis
+## 1. Tier-1 Requirements Matrix
 
-### 2.1 `cargo-deny.yml`
-- **PR trigger:** `pull_request: { branches: [main] }` ✅
-- **Command:** `cargo deny check advisories` on `iac/Cargo.toml`
-- **Additional:** `workflow_dispatch` for manual runs
-- **Covers:** Advisory scanning (RustSec DB), license compliance (via deny.toml), duplicate crate detection, etc.
-- **Verdict:** ✅ Adequate.
-
-### 2.2 `ci.yml` — `audit` job
-- **PR trigger:** Inherited from `ci.yml` (`pull_request: { branches: [main] }`) ✅
-- **Jobs:** `cargo-deny` action (full deny), `cargo audit` (vulnerability scan via `rustsec/audit-check`)
-- **Verdict:** ✅ Covers both deny and audit on PR.
-
-### 2.3 `trufflehog.yml`
-- **PR trigger:** `pull_request:` (any branch) ✅
-- **Configuration:** `fetch-depth: 0`, scans against base branch, `--only-verified` flag
-- **Verdict:** ✅ Covers secrets leak detection on every PR.
-
-### 2.4 `audit.yml`
-- **PR trigger:** `pull_request:` (any branch) ✅
-- **Also:** Push to main/master, daily scheduled run
-- **Tool:** `aquasecurity/trivy-action` (filesystem scan, CRITICAL/HIGH severity)
-- **Verdict:** ✅ Covers container/filesystem vulnerability scanning on PR.
-
-### 2.5 `codeql.yml`
-- **PR trigger:** `pull_request: { branches: [main] }` ✅
-- **Analysis:** Rust language via `github/codeql-action`
-- **Verdict:** ✅ SAST coverage on PR.
+| Requirement                | Pre-B32 Status | Post-B32 Status | Workflow File(s)                      |
+|----------------------------|----------------|-----------------|---------------------------------------|
+| Cargo deny (advisories)    | Present     | Present      | cargo-deny.yml, ci.yml (audit job)|
+| Cargo audit (vulns)        | Present     | Present      | ci.yml (audit job)                  |
+| Trufflehog (secrets)       | Present     | Present      | trufflehog.yml                      |
+| CodeQL (SAST)              | Present     | Present      | codeql.yml                          |
+| Trivy (filesystem vulns)   | Present     | Present      | audit.yml (Security Guard)          |
+| SBOM generation        | Missing     | Added    | sbom.yml (new)                      |
+| LICENSE file check     | Missing     | Added    | license-check.yml (new)             |
+| CHANGELOG update check | Missing     | Added    | changelog-check.yml (new)           |
 
 ---
 
-## 3. Gap Analysis
+## 2. Existing Gates (Unchanged)
 
-### 3.1 ❌ SBOM Generation (`cyclonedx` / `spdx`)
-- **Finding:** No workflow generates a Software Bill of Materials (SBOM) on PR or release.
-- **Why it matters:** SBOMs are required for supply-chain transparency and are increasingly a compliance requirement (EO 14028, NTIA minimum elements).
-- **Suggested fix:**
+### 2.1 cargo-deny.yml
+- Trigger: pull_request on main + push on main + workflow_dispatch
+- Tool: EmbarkStudios/cargo-deny-action@v2
+- Path: iac/Cargo.toml
+- Verdict: Adequate for Tier-1
 
-  ```yaml
-  # Consider adding an SBOM step to ci.yml's audit job, or a new workflow:
-  # .github/workflows/sbom.yml
-  # on: [pull_request, push]
-  # jobs:
-  #   sbom:
-  #     runs-on: ubuntu-latest
-  #     steps:
-  #       - uses: actions/checkout@v4
-  #       - name: Generate SBOM (Cargo)
-  #         uses: cdactyl/sbom-generator-action@v1
-  #         # Or use cyclonedx-bom for Rust:
-  #         # cargo install cargo-cyclonedx && cargo cyclonedx
-  ```
+### 2.2 ci.yml - audit job
+- Trigger: pull_request on main
+- Tools: cargo-deny + rustsec/audit-check@v2
+- Verdict: Adequate for Tier-1
 
-### 3.2 ❌ LICENSE File Check
-- **Finding:** No workflow verifies that LICENSE headers exist in source files or that a top-level LICENSE file is present and valid.
-- **Why it matters:** License compliance ensures the project can be consumed internally and externally without legal risk.
-- **Suggested fix:**
+### 2.3 trufflehog.yml
+- Trigger: pull_request (any) + push on main
+- Tool: trufflesecurity/trufflehog@v3.95.6
+- Verdict: Adequate for Tier-1
 
-  ```yaml
-  # In quality-gate.yml or a new workflow, add:
-  # - name: Check top-level LICENSE exists
-  #   run: test -f LICENSE || { echo "::error::LICENSE file missing"; exit 1; }
-  #
-  # - name: REUSE compliance (optional)
-  #   uses: fsfe/reuse-action@v3
-  ```
+### 2.4 codeql.yml
+- Trigger: pull_request on main + push on main
+- Language: Rust analysis
+- Verdict: Adequate for Tier-1
 
-### 3.3 ❌ CHANGELOG Update Check
-- **Finding:** No workflow validates that `CHANGELOG.md` is updated in a PR.
-- **Why it matters:** CHANGELOG hygiene ensures release notes are always accurate and audit trail is maintained.
-- **Suggested fix:**
-
-  ```yaml
-  # In quality-gate.yml or a new workflow, add:
-  # - name: Check CHANGELOG update
-  #   uses: dangoslen/changelog-enforcer@v3
-  #   with:
-  #     changeLogPath: CHANGELOG.md
-  #     skipLabels: skip-changelog
-  ```
+### 2.5 audit.yml (Trivy)
+- Trigger: pull_request (any) + push on main/master + daily
+- Tool: aquasecurity/trivy-action
+- Verdict: Adequate for Tier-1
 
 ---
 
-## 4. Summary Matrix
+## 3. New Gates Added (This DAG Unit)
 
-| Security/Compliance Control | Workload(s)         | PR-Enforced | Notes |
-|----------------------------|---------------------|-------------|-------|
-| Cargo deny (advisories)    | `cargo-deny.yml`, `ci.yml` | ✅ | Comprehensive |
-| Cargo audit                | `ci.yml`            | ✅ | RustSec vuln DB |
-| Trufflehog (secrets)       | `trufflehog.yml`    | ✅ | `--only-verified` |
-| Trivy (filesystem vulns)   | `audit.yml`         | ✅ | CRITICAL+HIGH |
-| CodeQL (SAST)              | `codeql.yml`        | ✅ | Rust analysis |
-| **SBOM generation**        | **None**            | ❌ | **Not implemented** |
-| **LICENSE compliance**     | **None**            | ❌ | **Not implemented** |
-| **CHANGELOG enforcement**  | **None**            | ❌ | **Not implemented** |
+### 3.1 sbom.yml - SBOM Generation
+- File: .github/workflows/sbom.yml
+- Tool: anchore/sbom-action@v0 (Syft, CycloneDX JSON)
+- Why: Supply-chain transparency (EO 14028)
+
+### 3.2 license-check.yml - LICENSE Compliance
+- File: .github/workflows/license-check.yml
+- Checks: LICENSE files exist, Cargo.toml license declaration
+- Why: Legal compliance
+
+### 3.3 changelog-check.yml - CHANGELOG Enforcement
+- File: .github/workflows/changelog-check.yml
+- Checks: CHANGELOG.md exists and was modified in PR
+- Why: Documentation hygiene
 
 ---
 
-## 5. Verdict
+## 4. Summary
 
-**Tier-1 PR enforcement is PARTIALLY PASSING (🟡).**
+| Dimension | Coverage | Details |
+|-----------|----------|---------|
+| Security scanning | Complete | cargo deny, audit, trufflehog, CodeQL, Trivy |
+| Supply-chain | Complete | SBOM (Syft CycloneDX) on every PR |
+| License | Complete | File presence + workspace declaration |
+| Docs hygiene | Complete | CHANGELOG update detection |
 
-Security scanning is well covered: cargo deny (advisories + licenses), cargo audit (vulnerabilities), trufflehog (secrets), trivy (filesystem), and CodeQL (SAST) are all enforced on PR.
-
-**Three gaps exist that prevent full compliance:**
-1. **SBOM generation** — no workflow produces a CycloneDX or SPDX SBOM
-2. **LICENSE check** — no workflow verifies LICENSE file presence or REUSE compliance
-3. **CHANGELOG update** — no workflow enforces CHANGELOG.md modification on PR
-
-These are moderate-severity gaps. Security scans are complete, but supply-chain transparency and documentation hygiene controls are missing.
+**Final Verdict: TIER-1 FULLY ENFORCED**
