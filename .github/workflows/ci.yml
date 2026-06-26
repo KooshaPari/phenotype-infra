@@ -11,9 +11,53 @@ env:
   RUSTFLAGS: "-D warnings"
   RUST_BACKTRACE: 1
 
+# ============================================================================
+# Tier-0 Enforcement on PR
+# -------------------------
+# Every PR targeting `main` must pass all Tier-0 gates before merge.  These
+# jobs map 1:1 to the required checks configured in the main branch
+# protection rule:
+#
+#   build        —  cargo check (compiles without errors)
+#   test-unit    —  cargo test  (all unit tests green)
+#   fmt-clippy   —  cargo fmt + cargo clippy (style + lint -D warnings)
+#   lint         —  cargo deny / audit (advisory + license + supply-chain)
+# ============================================================================
+
 jobs:
-  check:
-    name: cargo check (ubuntu-latest, stable)
+  # ------------------------------------------------------------------ build
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: iac -> target
+      - name: cargo check --workspace --all-targets
+        working-directory: iac
+        run: cargo check --workspace --all-targets --locked
+
+  # --------------------------------------------------------------- test-unit
+  test-unit:
+    name: test-unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: iac -> target
+      - name: cargo test --workspace
+        working-directory: iac
+        run: cargo test --workspace --locked --all-features
+
+  # -------------------------------------------------------------- fmt-clippy
+  fmt-clippy:
+    name: fmt-clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,28 +71,13 @@ jobs:
       - name: cargo fmt --check
         working-directory: iac
         run: cargo fmt --all -- --check
-      - name: cargo check --workspace --all-targets
-        working-directory: iac
-        run: cargo check --workspace --all-targets --locked
       - name: cargo clippy --workspace --all-targets -- -D warnings
         working-directory: iac
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
-  test:
-    name: cargo test (ubuntu-latest, stable)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: iac -> target
-      - name: cargo test --workspace
-        working-directory: iac
-        run: cargo test --workspace --locked --all-features
-
-  audit:
-    name: cargo deny + cargo audit
+  # ------------------------------------------------------------------- lint
+  lint:
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +88,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+  # ------------------------------------------------------ cross-platform sig
   macos:
     name: cargo check (macos-latest, stable)
     runs-on: macos-latest
