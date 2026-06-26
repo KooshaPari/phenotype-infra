@@ -210,7 +210,7 @@ pub struct PerfStats {
     pub gpu_utilization: f64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum NvmsError {
     InitFailed,
     CreateFailed,

@@ -92,23 +92,9 @@ pub enum Error {
 /// Convenience alias for `Result<T, Error>`.
 pub type Result<T> = std::result::Result<T, Error>;
 
-// ── Conversions from nvms_ffi::NvmsError ──────────────────────────
-
-impl From<nvms_ffi::NvmsError> for Error {
-    fn from(e: nvms_ffi::NvmsError) -> Self {
-        use nvms_ffi::NvmsError as Ffi;
-        match e {
-            Ffi::InitFailed => Error::InitFailed("NVMS init returned non-zero".into()),
-            Ffi::CreateFailed => Error::CreateFailed("NVMS null instance".into()),
-            Ffi::StartFailed => Error::StartFailed("start returned non-zero".into()),
-            Ffi::StopFailed => Error::StopFailed("stop returned non-zero".into()),
-            Ffi::DestroyFailed => Error::DestroyFailed("destroy returned non-zero".into()),
-            Ffi::AppleSiliconNotSupported => Error::AppleSiliconNotSupported,
-            Ffi::CudaInitFailed => Error::CudaInitFailed("CUDA init returned non-zero".into()),
-            Ffi::RocmInitFailed => Error::RocmInitFailed("ROCm init returned non-zero".into()),
-        }
-    }
-}
+// NOTE: Conversion from nvms_ffi::NvmsError is auto-derived via
+// `#[from]` on the `Ffi` variant above — do NOT add a manual
+// `impl From<NvmsError> for Error` or you will get E0119.
 
 // ── Conversions from String / &str (convenience for internal use) ─
 
