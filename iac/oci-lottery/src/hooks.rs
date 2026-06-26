@@ -170,7 +170,7 @@ async fn imessage_relay(inst: &AcquiredInstance) -> Result<()> {
     // Optional: only fires if agent-imessage MCP socket is reachable.
     // We do a "best effort" CLI invocation; absence is not an error.
     let bin = std::env::var("AGENT_IMESSAGE_CLI").unwrap_or_else(|_| "agent-imessage".to_string());
-    if which::which(&bin).is_err() {
+    if !oci_helpers::which_on_path(&bin).await {
         info!(bin = %bin, "imessage CLI not on PATH, skipping");
         return Ok(());
     }
@@ -185,19 +185,4 @@ async fn imessage_relay(inst: &AcquiredInstance) -> Result<()> {
         .status()
         .await;
     Ok(())
-}
-
-// Tiny embedded `which` to avoid an extra crate dep at compile time.
-mod which {
-    use std::path::PathBuf;
-    pub fn which(name: &str) -> Result<PathBuf, ()> {
-        let path = std::env::var_os("PATH").ok_or(())?;
-        for dir in std::env::split_paths(&path) {
-            let candidate = dir.join(name);
-            if candidate.is_file() {
-                return Ok(candidate);
-            }
-        }
-        Err(())
-    }
 }
