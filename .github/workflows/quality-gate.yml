@@ -56,14 +56,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          components: rustfmt
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
       - name: Install Go (for libnvms_core.a build)
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
-      - run: cargo check --workspace
+      - name: cargo build --workspace
+        run: cargo build --workspace --locked
       - run: cargo fmt --check
+      - run: cargo clippy --workspace --locked -- -D warnings
+      - run: cargo test --workspace --locked
 
   go-lint:
     needs: changes
