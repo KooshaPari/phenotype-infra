@@ -11,13 +11,19 @@ categories = ["api-bindings"]
 authors = ["kooshapari"]
 
 [dependencies]
+thiserror = { workspace = true }
 
 [build-dependencies]
-bindgen = "0.68"
+cc = "1"
 
 [features]
 default = []
 cuda = []  # Enable CUDA support for ML workloads
+
+[dev-dependencies]
+
+[profile.release]
+lto = "thin"
 
 [lib]
 name = "nvms_ffi"

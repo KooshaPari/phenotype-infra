@@ -15,11 +15,15 @@
 
 use std::env;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 fn main() {
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+
+    // Declare the custom cfg so Rust 1.80+ doesn't emit `unexpected_cfgs` lint
+    // when we set `cargo:rustc-cfg=nvms_core_lib` below.
+    println!("cargo:rustc-check-cfg=cfg(nvms_core_lib)");
 
     // Possible locations for the Go static library
     let target_dir = manifest_dir
@@ -35,8 +39,14 @@ fn main() {
         target_dir.join("libnvms_core_darwin_arm64.a"),
     ];
 
-    // Try to find the Go toolchain
-    let go_available = Command::new("go").arg("version").output().is_ok();
+    // Try to find the Go toolchain (silenced: we don't want `go version`
+    // printing to stderr on every cargo invocation when Go is absent)
+    let go_available = Command::new("go")
+        .arg("version")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .is_ok();
 
     // Check if any pre-built static lib exists
     let lib_exists = lib_paths.iter().any(|p| p.exists());
@@ -46,13 +56,13 @@ fn main() {
         for path in &lib_paths {
             if path.exists() {
                 let dir = path.parent().unwrap();
-                println!(
-                    "cargo:rustc-link-search=native={}",
-                    dir.display()
-                );
+                println!("cargo:rustc-link-search=native={}", dir.display());
                 println!("cargo:rustc-link-lib=static=nvms_core");
                 println!("cargo:rustc-cfg=nvms_core_lib");
-                println!("cargo:warning=Linking against real NVMS Go core at {}", path.display());
+                println!(
+                    "cargo:warning=Linking against real NVMS Go core at {}",
+                    path.display()
+                );
                 break;
             }
         }
@@ -77,13 +87,13 @@ fn main() {
 
             match status {
                 Ok(output) if output.status.success() => {
-                    println!(
-                        "cargo:rustc-link-search=native={}",
-                        out_dir.display()
-                    );
+                    println!("cargo:rustc-link-search=native={}", out_dir.display());
                     println!("cargo:rustc-link-lib=static=nvms_core");
                     println!("cargo:rustc-cfg=nvms_core_lib");
-                    println!("cargo:warning=NVMS Go core built on-the-fly at {}", output_path.display());
+                    println!(
+                        "cargo:warning=NVMS Go core built on-the-fly at {}",
+                        output_path.display()
+                    );
                 }
                 Ok(output) => {
                     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -108,7 +118,8 @@ fn main() {
     }
 
     // Re-run build script if Go source changes
-    let go_source_path = manifest_dir.join("../../crates/nanovms-core/bindings/go-c-export/nvms_core.go");
+    let go_source_path =
+        manifest_dir.join("../../crates/nanovms-core/bindings/go-c-export/nvms_core.go");
     if go_source_path.exists() {
         println!("cargo:rerun-if-changed={}", go_source_path.display());
     }

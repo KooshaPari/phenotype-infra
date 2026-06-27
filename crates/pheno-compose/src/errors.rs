@@ -93,25 +93,7 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 // ── Conversions from nvms_ffi::NvmsError ──────────────────────────
-
-impl From<nvms_ffi::NvmsError> for Error {
-    fn from(e: nvms_ffi::NvmsError) -> Self {
-        use nvms_ffi::NvmsError as Ffi;
-        match e {
-            Ffi::InitFailed => Error::InitFailed("NVMS init returned non-zero".into()),
-            Ffi::CreateFailed => Error::CreateFailed("NVMS null instance".into()),
-            Ffi::StartFailed => Error::StartFailed("start returned non-zero".into()),
-            Ffi::StopFailed => Error::StopFailed("stop returned non-zero".into()),
-            Ffi::DestroyFailed => Error::DestroyFailed("destroy returned non-zero".into()),
-            Ffi::AppleSiliconNotSupported => Error::AppleSiliconNotSupported,
-            Ffi::CudaInitFailed => Error::CudaInitFailed("CUDA init returned non-zero".into()),
-            Ffi::RocmInitFailed => Error::RocmInitFailed("ROCm init returned non-zero".into()),
-        }
-    }
-}
-
 // ── Conversions from String / &str (convenience for internal use) ─
-
 impl From<&str> for Error {
     fn from(msg: &str) -> Self {
         Error::Internal(msg.to_owned())
@@ -160,7 +142,7 @@ mod tests {
             Error::Internal("x".into()),
         ];
         for v in &variants {
-            let _ = format!("{v}");   // Display
+            let _ = format!("{v}"); // Display
             let _ = format!("{v:?}"); // Debug
         }
     }

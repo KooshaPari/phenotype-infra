@@ -3,6 +3,7 @@
 
 use std::ffi::{c_char, c_void, CStr, CString};
 use std::sync::atomic::{AtomicU64, Ordering};
+use thiserror::Error;
 
 pub mod sys {
     use std::os::raw::{c_char, c_int, c_ulonglong};
@@ -210,15 +211,23 @@ pub struct PerfStats {
     pub gpu_utilization: f64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
 pub enum NvmsError {
+    #[error("NVMS initialization failed")]
     InitFailed,
+    #[error("instance creation failed")]
     CreateFailed,
+    #[error("instance start failed")]
     StartFailed,
+    #[error("instance stop failed")]
     StopFailed,
+    #[error("instance destroy failed")]
     DestroyFailed,
+    #[error("Apple Silicon platform is not supported on this host")]
     AppleSiliconNotSupported,
+    #[error("CUDA init failed")]
     CudaInitFailed,
+    #[error("ROCm init failed")]
     RocmInitFailed,
 }
 
@@ -383,7 +392,9 @@ fn cstr_to_string(ptr: *const c_char) -> String {
     if ptr.is_null() {
         return String::new();
     }
-    unsafe { CStr::from_ptr(ptr) }.to_string_lossy().into_owned()
+    unsafe { CStr::from_ptr(ptr) }
+        .to_string_lossy()
+        .into_owned()
 }
 
 fn write_name(dst: &mut [c_char; 256], value: &str) {
@@ -463,7 +474,11 @@ mod shim {
 
     #[unsafe(no_mangle)]
     pub extern "C" fn nvms_apple_silicon_init() -> i32 {
-        if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") { 0 } else { -1 }
+        if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") {
+            0
+        } else {
+            -1
+        }
     }
 
     #[unsafe(no_mangle)]
@@ -480,10 +495,14 @@ mod shim {
     }
 
     #[unsafe(no_mangle)]
-    pub extern "C" fn nvms_cuda_init() -> i32 { 0 }
+    pub extern "C" fn nvms_cuda_init() -> i32 {
+        0
+    }
 
     #[unsafe(no_mangle)]
-    pub extern "C" fn nvms_cuda_device_count() -> i32 { 0 }
+    pub extern "C" fn nvms_cuda_device_count() -> i32 {
+        0
+    }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn nvms_cuda_alloc_unified(size: u64) -> *mut c_void {
@@ -491,10 +510,14 @@ mod shim {
     }
 
     #[unsafe(no_mangle)]
-    pub extern "C" fn nvms_rocm_init() -> i32 { 0 }
+    pub extern "C" fn nvms_rocm_init() -> i32 {
+        0
+    }
 
     #[unsafe(no_mangle)]
-    pub extern "C" fn nvms_rocm_device_count() -> i32 { 0 }
+    pub extern "C" fn nvms_rocm_device_count() -> i32 {
+        0
+    }
 
     #[unsafe(no_mangle)]
     pub extern "C" fn nvms_neon_available() -> bool {
@@ -547,7 +570,9 @@ mod shim {
         if inst.is_null() {
             return -1;
         }
-        unsafe { (*inst).status = sys::NvmsStatus::Running; }
+        unsafe {
+            (*inst).status = sys::NvmsStatus::Running;
+        }
         0
     }
 
@@ -556,7 +581,9 @@ mod shim {
         if inst.is_null() {
             return -1;
         }
-        unsafe { (*inst).status = sys::NvmsStatus::Stopped; }
+        unsafe {
+            (*inst).status = sys::NvmsStatus::Stopped;
+        }
         0
     }
 
