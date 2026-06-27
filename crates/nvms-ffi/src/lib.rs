@@ -195,6 +195,16 @@ impl From<sys::NvmsMemoryType> for MemoryType {
     }
 }
 
+impl From<MemoryType> for sys::NvmsMemoryType {
+    fn from(value: MemoryType) -> Self {
+        match value {
+            MemoryType::Cpu => sys::NvmsMemoryType::Cpu,
+            MemoryType::Gpu => sys::NvmsMemoryType::Gpu,
+            MemoryType::Unified => sys::NvmsMemoryType::Unified,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct GpuDevice {
     pub name: String,
