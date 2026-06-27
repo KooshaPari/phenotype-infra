@@ -9,11 +9,11 @@
 //! # Example
 //!
 //! ```rust
-//! use pheno_compose_driver::Error;
+//! use pheno_compose_driver::errors::Error;
 //!
 //! fn example() -> Result<(), Error> {
 //!     // All nvms_ffi::NvmsError values convert automatically.
-//!     nvms_ffi::init().map_err(Error::from)?;
+//!     nvms_ffi::init()?;
 //!     Ok(())
 //! }
 //! ```
@@ -133,7 +133,7 @@ mod tests {
             Error::StopFailed("x".into()),
             Error::DestroyFailed("x".into()),
             Error::Ffi(nvms_ffi::NvmsError::InitFailed),
-            Error::InvalidCString(std::ffi::CString::new("a").unwrap_err()),
+            Error::InvalidCString(std::ffi::CString::new("a\0b").unwrap_err()),
             Error::Config("x".into()),
             Error::AppleSiliconNotSupported,
             Error::CudaInitFailed("x".into()),

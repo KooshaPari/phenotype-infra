@@ -16,6 +16,9 @@ pheno-config = { path = "../pheno-config" }
 serde = { workspace = true }
 thiserror = { workspace = true }
 
+[dev-dependencies]
+serde_json = { workspace = true }
+
 [features]
 default = ["nvms"]
 nvms = []  # Enable NVMS backend (nvms-ffi is always a dep for error types)
