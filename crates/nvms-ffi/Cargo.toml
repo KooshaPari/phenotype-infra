@@ -22,8 +22,7 @@ cuda = []  # Enable CUDA support for ML workloads
 
 [dev-dependencies]
 
-[profile.release]
-lto = "thin"
+# [profile.*] sections belong in the workspace root Cargo.toml, not in workspace members
 
 [lib]
 name = "nvms_ffi"

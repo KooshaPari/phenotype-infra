@@ -88,7 +88,6 @@ pub struct Instance {
 
 impl Instance {
     /// Create from FFI instance (internal use)
-    ///
     /// # Safety
     /// The pointer must be non-null and valid for the lifetime of the Instance.
     pub(crate) unsafe fn from_ffi_ptr(ptr: *mut nvms_ffi::sys::NvmsInstance) -> Result<Self, NvmsError> {
