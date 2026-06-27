@@ -1,3 +1,6 @@
+[dev-dependencies]
+serde_json = { workspace = true }
+
 [package]
 name = "pheno-config"
 version = "0.1.0"
