@@ -8,13 +8,16 @@
 //   Mode B: Go static lib absent  → no external link; Rust shim module
 //            provides stub `extern "C"` implementations (supports `cargo check`
 //            and `cargo test` without a Go toolchain).
+//   Mode C: Go toolchain present, on-the-fly build succeeds → link against
+//            freshly-built archive (deduplicates `rustc-link-search`).
 //
 // Expected static lib location (built by `make nvms-c-archive`):
 //   target/libnvms_core.a     (for linux/amd64 or darwin/amd64)
 //   target/libnvms_core_arm64.a (for darwin/arm64)
 
+use std::collections::HashSet;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 fn main() {
@@ -39,6 +42,16 @@ fn main() {
         target_dir.join("libnvms_core_darwin_arm64.a"),
     ];
 
+    // Track emitted search directives so we don't emit duplicates when both
+    // the pre-built lib path and the on-the-fly Go build share an out_dir.
+    let mut emitted_search: HashSet<String> = HashSet::new();
+    let mut emit_search = |path: &Path| {
+        let path_str = path.display().to_string();
+        if emitted_search.insert(path_str.clone()) {
+            println!("cargo:rustc-link-search=native={}", path_str);
+        }
+    };
+
     // Try to find the Go toolchain (silenced: we don't want `go version`
     // printing to stderr on every cargo invocation when Go is absent)
     let go_available = Command::new("go")
@@ -48,32 +61,23 @@ fn main() {
         .output()
         .is_ok();
 
-    // Check if any pre-built static lib exists
-    let lib_exists = lib_paths.iter().any(|p| p.exists());
+    // Check if any pre-built static lib exists (Mode A)
+    let prebuilt = lib_paths.iter().find(|p| p.exists());
 
-    if lib_exists {
-        // Mode A: Link against the real Go static library
-        for path in &lib_paths {
-            if path.exists() {
-                let dir = path.parent().unwrap();
-                println!("cargo:rustc-link-search=native={}", dir.display());
-                println!("cargo:rustc-link-lib=static=nvms_core");
-                println!("cargo:rustc-cfg=nvms_core_lib");
-                println!(
-                    "cargo:warning=Linking against real NVMS Go core at {}",
-                    path.display()
-                );
-                break;
-            }
-        }
+    if let Some(path) = prebuilt {
+        // Mode A: Link against the real pre-built Go static library
+        emit_search(path.parent().unwrap());
+        println!("cargo:rustc-link-lib=static=nvms_core");
+        println!("cargo:rustc-cfg=nvms_core_lib");
+        println!(
+            "cargo:warning=Linking against real NVMS Go core at {}",
+            path.display()
+        );
     } else if go_available {
-        // Mode B: Go toolchain available but no pre-built lib
-        // Try to build it on-the-fly
+        // Mode C: Go toolchain available — try to build the archive on-the-fly
         let go_src = manifest_dir.join("../../crates/nanovms-core/bindings/go-c-export");
         if go_src.exists() {
-            let lib_name = format!("libnvms_core");
-            let output_path = out_dir.join(format!("{}.a", lib_name));
-
+            let output_path = out_dir.join("nvms_core.a");
             let status = Command::new("go")
                 .args([
                     "build",
@@ -87,7 +91,7 @@ fn main() {
 
             match status {
                 Ok(output) if output.status.success() => {
-                    println!("cargo:rustc-link-search=native={}", out_dir.display());
+                    emit_search(&out_dir);
                     println!("cargo:rustc-link-lib=static=nvms_core");
                     println!("cargo:rustc-cfg=nvms_core_lib");
                     println!(
@@ -99,7 +103,6 @@ fn main() {
                     let stderr = String::from_utf8_lossy(&output.stderr);
                     println!("cargo:warning=Go build failed: {}", stderr);
                     println!("cargo:warning=Falling back to Rust shim (stub) implementation");
-                    // Mode C: Go available but build failed — use shim (no cfg needed)
                 }
                 Err(e) => {
                     println!("cargo:warning=Go build error: {}", e);
@@ -111,9 +114,9 @@ fn main() {
             println!("cargo:warning=Falling back to Rust shim (stub) implementation");
         }
     } else {
-        // Mode C: No Go toolchain and no pre-built lib
+        // Mode B: No Go toolchain and no pre-built lib
         // The Rust shim module provides stub implementations
-        println!("cargo:warning=No Go toolchain found — using Rust shim (stub) for NVMS FFI");
+        println!("cargo:warning=No Go toolchain found - using Rust shim (stub) for NVMS FFI");
         println!("cargo:warning=Install Go and run `make nvms-c-archive` for real NVMS linkage");
     }
 
