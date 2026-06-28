@@ -15,11 +15,12 @@ mod state;
 use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::Parser;
-use rand::Rng;
+use rand::{Rng, RngExt};
 use std::path::PathBuf;
 use std::time::Duration;
+use tracing::{debug, error, info, warn};
+#[cfg(unix)]
 use tokio::signal::unix::{SignalKind, signal};
-use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
 
 use crate::config::Config;
@@ -55,8 +56,12 @@ fn home() -> PathBuf {
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("/tmp"))
 }
+#[cfg(unix)]
+use tokio::signal::unix::{signal, SignalKind};
+#[cfg(not(unix))]
+use tokio::signal::ctrl_c as shutdown_signal;
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 2)]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
@@ -95,9 +100,13 @@ async fn main() -> Result<()> {
         "oci-lottery starting"
     );
 
-    // SIGTERM/SIGINT handlers.
-    let mut sigterm = signal(SignalKind::terminate()).context("install SIGTERM handler")?;
-    let mut sigint = signal(SignalKind::interrupt()).context("install SIGINT handler")?;
+    // SIGTERM/SIGINT handlers (Unix only). On Windows we fall back to ctrl_c().
+    #[cfg(unix)]
+    let (mut sigterm, mut sigint) = {
+        let sigterm = signal(SignalKind::terminate()).context("install SIGTERM handler")?;
+        let sigint = signal(SignalKind::interrupt()).context("install SIGINT handler")?;
+        (sigterm, sigint)
+    };
 
     loop {
         for region in &cfg.regions {
@@ -185,10 +194,15 @@ async fn main() -> Result<()> {
                 // Backoff jitter between attempts.
                 let sleep_secs = jitter(cfg.backoff_min_secs, cfg.backoff_max_secs);
                 info!(secs = sleep_secs, "backoff");
+                #[cfg(unix)]
                 tokio::select! {
                     _ = tokio::time::sleep(Duration::from_secs(sleep_secs)) => {},
                     _ = sigterm.recv() => { info!("SIGTERM received"); return Ok(()); }
                     _ = sigint.recv()  => { info!("SIGINT received");  return Ok(()); }
+                }
+                #[cfg(not(unix))]
+                {
+                    tokio::time::sleep(Duration::from_secs(sleep_secs)).await;
                 }
             }
         }
@@ -200,5 +214,6 @@ fn jitter(min: u64, max: u64) -> u64 {
     if lo == hi {
         return lo;
     }
-    rand::thread_rng().gen_range(lo..=hi)
+    // rand 0.10 renamed thread_rng() to rng(); use the modern API
+    rand::rng().random_range(lo..=hi)
 }
