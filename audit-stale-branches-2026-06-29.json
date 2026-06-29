@@ -1,0 +1,164 @@
+{
+  "meta": {
+    "repository": "phenotype-infra",
+    "remote": "origin (https://github.com/KooshaPari/phenotype-infra.git)",
+    "audit_date": "2026-06-29",
+    "staleness_threshold_days": 30,
+    "staleness_cutoff_date": "2026-05-30",
+    "generator": "Unit A1 — Infra Pool: Branch Audit"
+  },
+  "summary": {
+    "total_branches": 6,
+    "local_branches": 4,
+    "remote_tracking_branches": 3,
+    "stale_branches_gt_30d": 0,
+    "merged_branches": 3,
+    "cursor_worktree_branches": 0,
+    "recover_stashes": 0,
+    "total_stashes": 1
+  },
+  "branches": [
+    {
+      "name": "branch-clean/A6-reverify-2026-06-27",
+      "type": "local",
+      "ref": "refs/heads/branch-clean/A6-reverify-2026-06-27",
+      "last_commit_date": "2026-06-28 15:23:05 -0700",
+      "last_commit_author": "KooshaPari",
+      "last_commit_subject": "chore(merge): resolve pheno-config DU conflict + accept lottery/main cross-platform signal handling + A6 audit doc",
+      "age_days": 1,
+      "stale": false,
+      "merged_into_main": false,
+      "checked_out": true,
+      "worktree_path": "C:/Users/koosh/phenotype-infra",
+      "action": "keep",
+      "reasoning": "Active branch (committed 1 day ago). Currently checked out as primary worktree branch for A6 reverification."
+    },
+    {
+      "name": "main",
+      "type": "local",
+      "ref": "refs/heads/main",
+      "last_commit_date": "2026-06-27 18:26:07 -0700",
+      "last_commit_author": "KooshaPari",
+      "last_commit_subject": "chore(grade): refresh .grade-reports/*.raw + grade.json from latest grade.sh run",
+      "age_days": 2,
+      "stale": false,
+      "merged_into_main": true,
+      "checked_out": false,
+      "worktree_path": null,
+      "action": "keep",
+      "reasoning": "Primary integration branch. Not stale. Keep indefinitely."
+    },
+    {
+      "name": "phenotype-infra-ci-fix",
+      "type": "local",
+      "ref": "refs/heads/phenotype-infra-ci-fix",
+      "last_commit_date": "2026-06-27 15:12:23 -0700",
+      "last_commit_author": "KooshaPari",
+      "last_commit_subject": "fix(crate-deps): repair 3 pre-existing compile failures across nvms-ffi, pheno-config, pheno-compose",
+      "age_days": 2,
+      "stale": false,
+      "merged_into_main": true,
+      "checked_out": false,
+      "worktree_path": null,
+      "action": "delete",
+      "reasoning": "Merged into main. Contents fully integrated. Local branch safe to delete; all commits reachable from main."
+    },
+    {
+      "name": "origin",
+      "type": "local",
+      "ref": "refs/heads/origin",
+      "last_commit_date": "2026-06-27 18:26:07 -0700",
+      "last_commit_author": "KooshaPari",
+      "last_commit_subject": "chore(grade): refresh .grade-reports/*.raw + grade.json from latest grade.sh run",
+      "age_days": 2,
+      "stale": false,
+      "merged_into_main": true,
+      "checked_out": false,
+      "worktree_path": null,
+      "action": "delete",
+      "reasoning": "Local branch named 'origin' (no-slash) — likely created accidentally (e.g., `git branch origin` mis-type). References same commit as main. Not standard naming; should be removed to avoid confusion with remote-tracking refs."
+    },
+    {
+      "name": "origin/branch-clean/A6-close-wip-branch",
+      "type": "remote_tracking",
+      "ref": "refs/remotes/origin/branch-clean/A6-close-wip-branch",
+      "last_commit_date": "2026-06-25 10:44:55 -0700",
+      "last_commit_author": "KooshaPari",
+      "last_commit_subject": "A6: branch-clean report — wip/2026-06-18-phenotype-infra-l7-001-propagation was already gone",
+      "age_days": 4,
+      "stale": false,
+      "merged_into_main": false,
+      "checked_out": false,
+      "worktree_path": null,
+      "action": "keep",
+      "reasoning": "Recent remote branch (4 days old). Not merged into main. Contains A6 cleanup report. Keep for reference until A6 reverification completes and contents are reviewed."
+    },
+    {
+      "name": "origin/main",
+      "type": "remote_tracking",
+      "ref": "refs/remotes/origin/main",
+      "last_commit_date": "2026-06-27 18:26:07 -0700",
+      "last_commit_author": "KooshaPari",
+      "last_commit_subject": "chore(grade): refresh .grade-reports/*.raw + grade.json from latest grade.sh run",
+      "age_days": 2,
+      "stale": false,
+      "merged_into_main": true,
+      "checked_out": false,
+      "worktree_path": null,
+      "action": "keep",
+      "reasoning": "Remote tracking branch for main. Essential for fetch/push operations. Keep indefinitely."
+    }
+  ],
+  "worktrees": [
+    {
+      "path": "C:/Users/koosh/phenotype-infra",
+      "branch": "branch-clean/A6-reverify-2026-06-27",
+      "head_sha": "13d1869",
+      "type": "primary",
+      "cursor_branch": false,
+      "action": "keep",
+      "reasoning": "Primary repository worktree. Active A6 reverification branch."
+    }
+  ],
+  "stashes": [
+    {
+      "index": 0,
+      "ref": "refs/stash@{0}",
+      "message": "On main: pre-A6-checkout-stash-2026-06-27",
+      "date": "2026-06-27 18:58:57 -0700",
+      "age_days": 2,
+      "modified_file": "crates/pheno-config/Cargo.toml",
+      "recover_pattern": false,
+      "action": "review",
+      "reasoning": "Not a recover/* stash. Contains pending changes to crates/pheno-config/Cargo.toml (dependency changes). Should be reviewed and either applied or dropped after A6 reverification completes."
+    }
+  ],
+  "cursor_worktree_branches_found": false,
+  "recover_stashes_found": false,
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "delete",
+      "target": "phenotype-infra-ci-fix (local)",
+      "reasoning": "Merged into main, safe to prune locally."
+    },
+    {
+      "priority": 2,
+      "action": "delete",
+      "target": "origin (local branch named 'origin')",
+      "reasoning": "Likely accidental branch. Same commit as main. Remove to avoid confusion."
+    },
+    {
+      "priority": 3,
+      "action": "review",
+      "target": "stash@{0} (pre-A6-checkout-stash-2026-06-27)",
+      "reasoning": "Pending changes to pheno-config/Cargo.toml should be reconciled after A6 branch is finalized."
+    },
+    {
+      "priority": 4,
+      "action": "keep",
+      "target": "origin/branch-clean/A6-close-wip-branch",
+      "reasoning": "Keep until A6 reverification is complete and A6 deliverables are confirmed; then consider pruning."
+    }
+  ]
+}
