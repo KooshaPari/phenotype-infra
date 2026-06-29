@@ -52,26 +52,49 @@ vault_pass.txt
 __pycache__/
 *.py[cod]
 *$py.class
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
 .venv/
 venv/
 
 # --- Node (for docsite, if added later) ---
 node_modules/
+.pnp
 .pnp.*
+.pnp.js
 .yarn/
+.npm/
+.cache/
+.eslintcache
+.parcel-cache/
 dist/
 .next/
+build/
+/out/
+lerna-debug.log*
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # --- Secrets / creds (defense in depth) ---
 *.pem
 *.key
 *.p12
 *.pfx
+*_rsa
 id_rsa*
 id_ed25519*
+*credential*.json
+*credentials*.json
+*service-account*.json
 .env
 .env.*
 !.env.example
+.npmrc
+.pypirc
+.netrc
 credentials
 credentials.json
 secrets.yml
@@ -84,3 +107,22 @@ logs/
 # --- OS / misc ---
 Thumbs.db
 ehthumbs.db
+
+# --- Test / coverage ---
+coverage/
+/coverage/
+
+# --- Grade artifacts ---
+.grade-reports/
+grade.sh
+lefthook.yml
+
+# --- Incident evidence (local-only) ---
+incident-evidence/
+.incident-evidence/
+local/incident-evidence/
+
+# --- Root-level Rust lockfile (regenerated on first build) ---
+# Per workspace convention: do not track top-level Cargo.lock.
+# Per-crate Cargo.lock files (under workspace members) are unaffected.
+Cargo.lock
