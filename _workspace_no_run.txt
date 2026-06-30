@@ -1,0 +1,10 @@
+[1m[91merror[0m[1m[97m: duplicate key[0m
+  [1m[96m--> [0mcrates\pheno-config\Cargo.toml:18:2
+   [1m[96m|[0m
+[1m[96m18[0m [1m[96m|[0m [dev-dependencies]
+   [1m[96m|[0m  [1m[91m^^^^^^^^^^^^^^^^[0m
+[1m[91merror[0m: failed to load manifest for workspace member `C:\Users\koosh\phenotype-infra\crates\pheno-compose`
+referenced by workspace at `C:\Users\koosh\phenotype-infra\Cargo.toml`
+
+Caused by:
+  failed to load manifest for dependency `pheno-config`

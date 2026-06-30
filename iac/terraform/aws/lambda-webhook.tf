@@ -4,7 +4,14 @@ variable "aws_region" {
   type    = string
   default = "us-east-1"
 }
+<<<<<<< Updated upstream
 variable "aws_account_id" { type = string /* <AWS_ACCOUNT_ID> */ }
+=======
+variable "aws_account_id" {
+  type = string
+  # <AWS_ACCOUNT_ID>
+}
+>>>>>>> Stashed changes
 
 provider "aws" {
   region = var.aws_region

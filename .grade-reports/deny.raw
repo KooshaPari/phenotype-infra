@@ -4,4 +4,4 @@ error[unexpected-keys]: found 1 unexpected keys, expected: ["version", "private"
 35 │ confidence = 0.8
    │ ──────────
 
-2026-06-27 21:55:38 [ERROR] failed to deserialize config from '/mnt/c/Users/koosh/phenotype-infra/deny.toml'
+2026-06-30 04:27:48 [ERROR] failed to deserialize config from '/mnt/c/Users/koosh/phenotype-infra/deny.toml'
