@@ -1,39 +1,9 @@
-# CODEOWNERS — Phenotype Infra
-# Canonical reviewer: @KooshaPari
+# CODEOWNERS — phenotype-infra (root-level alias)
 #
-# GitHub CODEOWNERS location priority:
-#   1. .github/CODEOWNERS  (more detailed, preferred)
-#   2. /CODEOWNERS         (this file — root-level alias)
+# GitHub load order:
+#   1. .github/CODEOWNERS  (canonical — detailed rules live there)
+#   2. /CODEOWNERS         (this file — simplified fallback)
 #   3. /docs/CODEOWNERS
 #
-# See: https://docs.github.com/en/repositories/creating-and-managing-repositories/about-code-owners
-
-# Default catch-all
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-features/customizing-your-repository/about-code-owners
 * @KooshaPari
-
-# Rust source
-/*.rs @KooshaPari
-/*.toml @KooshaPari
-/*.lock @KooshaPari
-
-# Workspace crates
-/crates/ @KooshaPari
-/crates/nanovms-core/ @KooshaPari
-/crates/nvms-ffi/ @KooshaPari
-/crates/pheno-compose/ @KooshaPari
-/crates/pheno-config/ @KooshaPari
-
-# Cross-crate tests
-/tests/ @KooshaPari
-
-# Documentation
-/docs/ @KooshaPari
-/scripts/ @KooshaPari
-
-# Governance + CI
-/SECURITY.md @KooshaPari
-/CODEOWNERS @KooshaPari
-/CONTRIBUTING.md @KooshaPari
-/LICENSE @KooshaPari
-/.github/ @KooshaPari
-/.github/workflows/ @KooshaPari

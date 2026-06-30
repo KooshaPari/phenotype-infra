@@ -1,18 +1,40 @@
-# CODEOWNERS — phenotype-infra
-# Default fallback owner
+# CODEOWNERS — phenotype-infra (canonical)
+# GitHub loads this file first; root CODEOWNERS is a fallback alias.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-features/customizing-your-repository/about-code-owners
+
+# Default catch-all
 * @KooshaPari
 
-# Code areas
-/src/ @KooshaPari
+# Rust source and manifest
+*.rs @KooshaPari
+*.toml @KooshaPari
+*.lock @KooshaPari
+
+# Workspace crates
+/crates/ @KooshaPari
+/crates/nanovms-core/ @KooshaPari
+/crates/nvms-ffi/ @KooshaPari
+/crates/pheno-compose/ @KooshaPari
+/crates/pheno-config/ @KooshaPari
+
+# Cross-crate integration tests
 /tests/ @KooshaPari
+
+# Documentation and specs
 /docs/ @KooshaPari
 
-# Configuration
-/.github/ @KooshaPari
-/Cargo.toml @KooshaPari
-/package.json @KooshaPari
-/go.mod @KooshaPari
+# Scripts, tooling, IaC
+/scripts/ @KooshaPari
+/tools/ @KooshaPari
+/iac/ @KooshaPari
+/configs/ @KooshaPari
 
-# Sensitive
+# Governance files
 /SECURITY.md @KooshaPari
+/CODE_OF_CONDUCT.md @KooshaPari
+/CONTRIBUTING.md @KooshaPari
+
+# CI and GitHub config
+/.github/ @KooshaPari
 /.github/workflows/ @KooshaPari
