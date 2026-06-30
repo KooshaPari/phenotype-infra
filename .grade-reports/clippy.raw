@@ -1,4 +1,109 @@
-error: failed to parse lock file at: /mnt/c/Users/koosh/phenotype-infra/Cargo.lock
+[1m[92m   Compiling[0m nanovms-core v0.1.0 (C:\Users\koosh\phenotype-infra\crates\nanovms-core)
+[1m[92m   Compiling[0m nvms-ffi v0.1.0 (C:\Users\koosh\phenotype-infra\crates\nvms-ffi)
+[1m[92m    Checking[0m pheno-config v0.1.0 (C:\Users\koosh\phenotype-infra\crates\pheno-config)
+[1m[91merror[0m[1m[97m: error reading Clippy's configuration file: unknown field `imports-ignores`, expected one of[0m
+       [1m[97m    absolute-paths-allowed-crates[0m
+       [1m[97m    absolute-paths-max-segments[0m
+       [1m[97m    accept-comment-above-attributes[0m
+       [1m[97m    accept-comment-above-statement[0m
+       [1m[97m    allow-comparison-to-zero[0m
+       [1m[97m    allow-dbg-in-tests[0m
+       [1m[97m    allow-exact-repetitions[0m
+       [1m[97m    allow-expect-in-consts[0m
+       [1m[97m    allow-expect-in-tests[0m
+       [1m[97m    allow-indexing-slicing-in-tests[0m
+       [1m[97m    allow-large-stack-frames-in-tests[0m
+       [1m[97m    allow-mixed-uninlined-format-args[0m
+       [1m[97m    allow-one-hash-in-raw-strings[0m
+       [1m[97m    allow-panic-in-tests[0m
+       [1m[97m    allow-print-in-tests[0m
+       [1m[97m    allow-private-module-inception[0m
+       [1m[97m    allow-renamed-params-for[0m
+       [1m[97m    allow-unwrap-in-consts[0m
+       [1m[97m    allow-unwrap-in-tests[0m
+       [1m[97m    allow-unwrap-types[0m
+       [1m[97m    allow-useless-vec-in-tests[0m
+       [1m[97m    allowed-dotfiles[0m
+       [1m[97m    allowed-duplicate-crates[0m
+       [1m[97m    allowed-idents-below-min-chars[0m
+       [1m[97m    allowed-prefixes[0m
+       [1m[97m    allowed-scripts[0m
+       [1m[97m    allowed-wildcard-imports[0m
+       [1m[97m    arithmetic-side-effects-allowed[0m
+       [1m[97m    arithmetic-side-effects-allowed-binary[0m
+       [1m[97m    arithmetic-side-effects-allowed-unary[0m
+       [1m[97m    array-size-threshold[0m
+       [1m[97m    avoid-breaking-exported-api[0m
+       [1m[97m    await-holding-invalid-types[0m
+       [1m[97m    cargo-ignore-publish[0m
+       [1m[97m    check-incompatible-msrv-in-tests[0m
+       [1m[97m    check-inconsistent-struct-field-initializers[0m
+       [1m[97m    check-private-items[0m
+       [1m[97m    cognitive-complexity-threshold[0m
+       [1m[97m    const-literal-digits-threshold[0m
+       [1m[97m    disallowed-fields[0m
+       [1m[97m    disallowed-macros[0m
+       [1m[97m    disallowed-methods[0m
+       [1m[97m    disallowed-names[0m
+       [1m[97m    disallowed-types[0m
+       [1m[97m    doc-valid-idents[0m
+       [1m[97m    enable-raw-pointer-heuristic-for-send[0m
+       [1m[97m    enforce-iter-loop-reborrow[0m
+       [1m[97m    enforced-import-renames[0m
+       [1m[97m    enum-variant-name-threshold[0m
+       [1m[97m    enum-variant-size-threshold[0m
+       [1m[97m    excessive-nesting-threshold[0m
+       [1m[97m    future-size-threshold[0m
+       [1m[97m    ignore-interior-mutability[0m
+       [1m[97m    inherent-impl-lint-scope[0m
+       [1m[97m    large-error-ignored[0m
+       [1m[97m    large-error-threshold[0m
+       [1m[97m    lint-commented-code[0m
+       [1m[97m    literal-representation-threshold[0m
+       [1m[97m    matches-for-let-else[0m
+       [1m[97m    max-fn-params-bools[0m
+       [1m[97m    max-include-file-size[0m
+       [1m[97m    max-struct-bools[0m
+       [1m[97m    max-suggested-slice-pattern-length[0m
+       [1m[97m    max-trait-bounds[0m
+       [1m[97m    min-ident-chars-threshold[0m
+       [1m[97m    missing-docs-allow-unused[0m
+       [1m[97m    missing-docs-in-crate-items[0m
+       [1m[97m    module-item-order-groupings[0m
+       [1m[97m    module-items-ordered-within-groupings[0m
+       [1m[97m    msrv[0m
+       [1m[97m    pass-by-value-size-limit[0m
+       [1m[97m    pub-underscore-fields-behavior[0m
+       [1m[97m    recursive-self-in-type-definitions[0m
+       [1m[97m    semicolon-inside-block-ignore-singleline[0m
+       [1m[97m    semicolon-outside-block-ignore-multiline[0m
+       [1m[97m    single-char-binding-names-threshold[0m
+       [1m[97m    source-item-ordering[0m
+       [1m[97m    stack-size-threshold[0m
+       [1m[97m    standard-macro-braces[0m
+       [1m[97m    struct-field-name-threshold[0m
+       [1m[97m    suppress-restriction-lint-in-const[0m
+       [1m[97m    third-party[0m
+       [1m[97m    too-large-for-stack[0m
+       [1m[97m    too-many-arguments-threshold[0m
+       [1m[97m    too-many-lines-threshold[0m
+       [1m[97m    trait-assoc-item-kinds-order[0m
+       [1m[97m    trivial-copy-size-limit[0m
+       [1m[97m    type-complexity-threshold[0m
+       [1m[97m    unnecessary-box-size[0m
+       [1m[97m    unreadable-literal-lint-fractions[0m
+       [1m[97m    upper-case-acronyms-aggressive[0m
+       [1m[97m    vec-box-size-threshold[0m
+       [1m[97m    verbose-bit-mask-threshold[0m
+       [1m[97m    warn-on-all-wildcard-imports[0m
+       [1m[97m    warn-unsafe-macro-metavars-in-private-macros[0m
+ [1m[96m--> [0m\\?\C:\Users\koosh\phenotype-infra\clippy.toml:4:1
+  [1m[96m|[0m
+[1m[96m4[0m [1m[96m|[0m imports-ignores = []
+  [1m[96m|[0m [1m[91m^^^^^^^^^^^^^^^[0m
 
-Caused by:
-  lock file version 4 requires `-Znext-lockfile-bump`
+[1m[91merror[0m: could not compile `nvms-ffi` (build script) due to 1 previous error
+[1m[93mwarning[0m: build failed, waiting for other jobs to finish...
+[1m[91merror[0m: could not compile `nanovms-core` (build script) due to 1 previous error
+[1m[91merror[0m: could not compile `pheno-config` (lib) due to 1 previous error
+[1m[91merror[0m: could not compile `pheno-config` (lib test) due to 1 previous error

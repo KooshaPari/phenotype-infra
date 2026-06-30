@@ -1,4 +1,14 @@
-error: failed to parse lock file at: /mnt/c/Users/koosh/phenotype-infra/Cargo.lock
+[1m[93mwarning[0m: nanovms-core@0.1.0: Go build failed:
+[1m[93mwarning[0m: nanovms-core@0.1.0: Falling back — nanovms-core static lib not available
+[1m[92m   Compiling[0m nanovms-core v0.1.0 (C:\Users\koosh\phenotype-infra\crates\nanovms-core)
+[1m[93mwarning[0m: nvms-ffi@0.1.0: Go build failed: # github.com/kooshapari/nanovms/bindings/go-c-export
+[1m[93mwarning[0m: nvms-ffi@0.1.0: Falling back to Rust shim (stub) implementation
+[1m[92m   Compiling[0m pheno-compose-driver v0.1.0 (C:\Users\koosh\phenotype-infra\crates\pheno-compose)
+[1m[91merror[E0599][0m[1m[97m: no variant, associated function, or constant named `NullPointer` found for enum `NvmsError` in the current scope[0m
+  [1m[96m--> [0mcrates\pheno-compose\src\instance.rs:95:35
+   [1m[96m|[0m
+[1m[96m95[0m [1m[96m|[0m             return Err(NvmsError::NullPointer);
+   [1m[96m|[0m                                   [1m[91m^^^^^^^^^^^[0m [1m[91mvariant, associated function, or constant not found in `NvmsError`[0m
 
-Caused by:
-  lock file version 4 requires `-Znext-lockfile-bump`
+[1m[97mFor more information about this error, try `rustc --explain E0599`.[0m
+[1m[91merror[0m: could not compile `pheno-compose-driver` (lib) due to 1 previous error

@@ -19,7 +19,10 @@ fn nvms_ffi_version_and_platform() {
 
     let platform = nvms_ffi::platform_info();
     assert!(!platform.is_empty(), "platform should not be empty");
-    assert!(platform.contains('/'), "platform should contain '/', got: {platform}");
+    assert!(
+        platform.contains('/'),
+        "platform should contain '/', got: {platform}"
+    );
 }
 
 #[test]
@@ -117,7 +120,11 @@ fn pheno_compose_driver_with_config() {
 #[test]
 fn health_check_returns_report() {
     let report = pheno_compose_driver::health::check();
-    assert!(report.healthy, "health check should pass: {}", report.message);
+    assert!(
+        report.healthy,
+        "health check should pass: {}",
+        report.message
+    );
     assert!(!report.version.is_empty());
     assert!(!report.platform.is_empty());
     assert!(!report.probes.is_empty());
@@ -155,10 +162,22 @@ fn error_type_display_formatting() {
     use pheno_compose_driver::errors::Error;
 
     let cases = [
-        (Error::InitFailed("test".into()), "NVMS initialization failed: test"),
-        (Error::CreateFailed("null".into()), "instance creation failed: null"),
-        (Error::AppleSiliconNotSupported, "Apple Silicon platform is not supported on this host"),
-        (Error::UnsupportedPlatform, "no supported platform backend found"),
+        (
+            Error::InitFailed("test".into()),
+            "NVMS initialization failed: test",
+        ),
+        (
+            Error::CreateFailed("null".into()),
+            "instance creation failed: null",
+        ),
+        (
+            Error::AppleSiliconNotSupported,
+            "Apple Silicon platform is not supported on this host",
+        ),
+        (
+            Error::UnsupportedPlatform,
+            "no supported platform backend found",
+        ),
     ];
     for (err, expected) in &cases {
         assert_eq!(err.to_string(), *expected, "unexpected display for {err:?}");
