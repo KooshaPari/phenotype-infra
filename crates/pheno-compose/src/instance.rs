@@ -90,7 +90,9 @@ impl Instance {
     /// Create from FFI instance (internal use)
     /// # Safety
     /// The pointer must be non-null and valid for the lifetime of the Instance.
-    pub(crate) unsafe fn from_ffi_ptr(ptr: *mut nvms_ffi::sys::NvmsInstance) -> Result<Self, NvmsError> {
+    pub(crate) unsafe fn from_ffi_ptr(
+        ptr: *mut nvms_ffi::sys::NvmsInstance,
+    ) -> Result<Self, NvmsError> {
         if ptr.is_null() {
             return Err(NvmsError::NullPointer);
         }
@@ -133,9 +135,7 @@ impl Instance {
             if ptr.is_null() {
                 String::new()
             } else {
-                std::ffi::CStr::from_ptr(ptr)
-                    .to_string_lossy()
-                    .into_owned()
+                std::ffi::CStr::from_ptr(ptr).to_string_lossy().into_owned()
             }
         }
     }
