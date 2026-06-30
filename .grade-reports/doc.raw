@@ -1,4 +1,20 @@
-error: failed to parse lock file at: /mnt/c/Users/koosh/phenotype-infra/Cargo.lock
+[1m[93mwarning[0m: nanovms-core@0.1.0: Go build failed:
+[1m[93mwarning[0m: nanovms-core@0.1.0: Falling back — nanovms-core static lib not available
+[1m[92m Documenting[0m nanovms-core v0.1.0 (C:\Users\koosh\phenotype-infra\crates\nanovms-core)
+[1m[93mwarning[0m: nvms-ffi@0.1.0: Go build failed: # github.com/kooshapari/nanovms/bindings/go-c-export
+[1m[93mwarning[0m: nvms-ffi@0.1.0: Falling back to Rust shim (stub) implementation
+[1m[92m Documenting[0m nvms-ffi v0.1.0 (C:\Users\koosh\phenotype-infra\crates\nvms-ffi)
+[1m[92m Documenting[0m pheno-config v0.1.0 (C:\Users\koosh\phenotype-infra\crates\pheno-config)
+[1m[92m Documenting[0m pheno-compose-driver v0.1.0 (C:\Users\koosh\phenotype-infra\crates\pheno-compose)
+[1m[93mwarning[0m[1m[97m: unresolved link to `SandboxID`[0m
+   [1m[96m--> [0mcrates\pheno-config\src\lib.rs:146:44
+    [1m[96m|[0m
+[1m[96m146[0m [1m[96m|[0m         /// Maximum allowed length for a [`SandboxID`].
+    [1m[96m|[0m                                            [1m[93m^^^^^^^^^[0m [1m[93mno item named `SandboxID` in scope[0m
+    [1m[96m|[0m
+    [1m[96m= [0m[1m[97mhelp[0m: to escape `[` and `]` characters, add '\' before them like `\[` or `\]`
+    [1m[96m= [0m[1m[97mnote[0m: `#[warn(rustdoc::broken_intra_doc_links)]` on by default
 
-Caused by:
-  lock file version 4 requires `-Znext-lockfile-bump`
+[1m[93mwarning[0m: `pheno-config` (lib doc) generated 1 warning
+[1m[92m    Finished[0m ]8;;https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles\`dev` profile [unoptimized + debuginfo]]8;;\ target(s) in 14.27s
+[1m[92m   Generated[0m ]8;;file:///C:/temp/wt-proto-mcp-target/doc/nanovms_core/index.html\C:\temp\wt-proto-mcp-target\doc\nanovms_core\index.html]8;;\ and 3 other files
