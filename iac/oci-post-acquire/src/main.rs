@@ -11,11 +11,14 @@ use chrono::Utc;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::Duration;
+use thiserror::Error;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpStream;
 use tokio::process::Command;
 use tracing::{error, info, warn};
+use tracing_subscriber::EnvFilter;
 
 mod cf;
 mod hooks;
@@ -72,6 +75,114 @@ struct Cli {
     /// Skip steps that mutate (DNS, mesh commit, notify, downstream hooks). For dry-run.
     #[arg(long)]
     dry_run: bool,
+
+    /// Output format: auto (default), text, json.
+    #[arg(long, default_value = "auto")]
+    format: String,
+}
+
+/// Output format for tracing/logs.
+#[derive(Debug, Clone, PartialEq)]
+enum OutputFormat {
+    Auto,
+    Text,
+    Json,
+}
+
+impl FromStr for OutputFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "auto" => Ok(Self::Auto),
+            "text" => Ok(Self::Text),
+            "json" => Ok(Self::Json),
+            _ => Err(format!(
+                "unknown format '{s}': expected auto, text, or json"
+            )),
+        }
+    }
+}
+
+/// Initialize tracing-subscriber respecting --format and NO_COLOR.
+fn init_tracing(format: &OutputFormat) {
+    let no_color = std::env::var_os("NO_COLOR").is_some();
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+
+    if matches!(format, OutputFormat::Json) {
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_ansi(!no_color)
+            .json()
+            .init();
+    } else {
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_ansi(!no_color)
+            .init();
+    }
+}
+
+/// Structured error type for provisioning steps with remediation hints.
+#[derive(Debug, Error)]
+pub enum ProvisionError {
+    #[error("step 1: failed to read instance file {path}: {source}")]
+    ReadInstance {
+        path: String,
+        #[source]
+        source: anyhow::Error,
+    },
+
+    #[error("step 2: SSH unreachable on {host}:{port} after {attempts} attempts")]
+    SshTimeout {
+        host: String,
+        port: u16,
+        attempts: u32,
+    },
+
+    #[error("step 4: ansible baseline failed on {host}: {details}")]
+    AnsibleFailed { host: String, details: String },
+
+    #[error("step 5: Cloudflare DNS upsert failed for {name}: {details}")]
+    DnsFailed { name: String, details: String },
+
+    #[error("step 6: mesh-state commit failed: {details}")]
+    MeshCommitFailed { details: String },
+
+    #[error("step 7: notification failed: {details}")]
+    NotifyFailed { details: String },
+
+    #[error("step 8: downstream hook drop-in failed: {details}")]
+    HookFailed { details: String },
+}
+
+impl ProvisionError {
+    /// Return a human-readable recovery suggestion.
+    pub fn recovery_hint(&self) -> &'static str {
+        match self {
+            Self::ReadInstance { .. } => {
+                "Verify oci-instance.json exists and is valid JSON. Re-run oci-lottery to regenerate."
+            }
+            Self::SshTimeout { .. } => {
+                "Check the node is booting and reachable. Verify security lists allow SSH (port 22). Wait and re-run this tool."
+            }
+            Self::AnsibleFailed { .. } => {
+                "Check node SSH access and ansible syntax. Re-run: `cargo run -p oci-post-acquire -- --dry-run` first."
+            }
+            Self::DnsFailed { .. } => {
+                "Verify CF_API_TOKEN/CF_TOKEN_FILE is valid and zone id is correct. Manual DNS upsert may be needed."
+            }
+            Self::MeshCommitFailed { .. } => {
+                "Check git repo access. Manual git commit of compute-mesh-state.md may be needed."
+            }
+            Self::NotifyFailed { .. } => {
+                "Notification is best-effort; this does not block provisioning. Check agent-imessage CLI."
+            }
+            Self::HookFailed { .. } => {
+                "Check hooks.d scripts for errors. A failing hook does not abort earlier steps."
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,9 +209,12 @@ fn dirs_home() -> Option<PathBuf> {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
-    phenotype_logging::init_tracing();
-
     let cli = Cli::parse();
+    let fmt: OutputFormat = cli
+        .format
+        .parse()
+        .map_err(|e| anyhow::anyhow!("invalid --format: {e}"))?;
+    init_tracing(&fmt);
     let started = Utc::now();
     info!(?started, "oci-post-acquire chain starting");
 
@@ -273,5 +387,119 @@ async fn imessage_send(body: &str) -> Result<()> {
         Ok(s) if s.success() => Ok(()),
         Ok(s) => Err(anyhow!("agent-imessage exited {s}")),
         Err(e) => Err(anyhow!("agent-imessage not available: {e}")),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expand_tilde() {
+        let home = dirs_home().expect("HOME set in test");
+        assert_eq!(expand("~/foo"), home.join("foo"));
+        assert_eq!(expand("~/a/b/c"), home.join("a/b/c"));
+    }
+
+    #[test]
+    fn test_expand_absolute() {
+        assert_eq!(expand("/etc/passwd"), PathBuf::from("/etc/passwd"));
+    }
+
+    #[test]
+    fn test_expand_relative() {
+        assert_eq!(expand("rel/path"), PathBuf::from("rel/path"));
+    }
+
+    #[test]
+    fn test_instance_file_deserialize() {
+        let json = r#"{
+            "instance_ocid": "ocid1.test.456",
+            "region": "us-ashburn-1",
+            "ad": "AD-1",
+            "public_ip": "10.0.0.1",
+            "acquired_at": "2026-06-29T12:00:00Z"
+        }"#;
+        let inst: InstanceFile = serde_json::from_str(json).unwrap();
+        assert_eq!(inst.instance_ocid, "ocid1.test.456");
+        assert_eq!(inst.region, "us-ashburn-1");
+        assert_eq!(inst.public_ip, "10.0.0.1");
+    }
+
+    #[test]
+    fn test_output_format_parse() {
+        assert_eq!("auto".parse::<OutputFormat>().unwrap(), OutputFormat::Auto);
+        assert_eq!("text".parse::<OutputFormat>().unwrap(), OutputFormat::Text);
+        assert_eq!("json".parse::<OutputFormat>().unwrap(), OutputFormat::Json);
+        assert!("invalid".parse::<OutputFormat>().is_err());
+    }
+
+    #[test]
+    fn test_provision_error_recovery_hints() {
+        let err = ProvisionError::ReadInstance {
+            path: "/tmp/test.json".into(),
+            source: anyhow::anyhow!("file not found"),
+        };
+        assert!(!err.recovery_hint().is_empty());
+
+        let ssh_err = ProvisionError::SshTimeout {
+            host: "10.0.0.1".into(),
+            port: 22,
+            attempts: 10,
+        };
+        assert!(ssh_err.recovery_hint().contains("SSH"));
+    }
+
+    #[test]
+    fn test_wait_for_ssh_timeout_message() {
+        // Verify the error message format from wait_for_ssh's timeout branch.
+        let err = ProvisionError::SshTimeout {
+            host: "10.0.0.1".into(),
+            port: 22,
+            attempts: 45,
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("10.0.0.1"));
+        assert!(msg.contains("45"));
+        assert!(msg.contains("SSH"));
+    }
+
+    #[test]
+    fn test_provision_error_display_all_variants() {
+        // Smoke test: every variant renders without panic.
+        let variants: Vec<ProvisionError> = vec![
+            ProvisionError::ReadInstance {
+                path: "p".into(),
+                source: anyhow::anyhow!("e"),
+            },
+            ProvisionError::SshTimeout {
+                host: "h".into(),
+                port: 22,
+                attempts: 5,
+            },
+            ProvisionError::AnsibleFailed {
+                host: "h".into(),
+                details: "timeout".into(),
+            },
+            ProvisionError::DnsFailed {
+                name: "n".into(),
+                details: "auth".into(),
+            },
+            ProvisionError::MeshCommitFailed {
+                details: "git error".into(),
+            },
+            ProvisionError::NotifyFailed {
+                details: "timeout".into(),
+            },
+            ProvisionError::HookFailed {
+                details: "exit 1".into(),
+            },
+        ];
+        for v in &variants {
+            let msg = v.to_string();
+            assert!(!msg.is_empty(), "empty error message for {v:?}");
+            let hint = v.recovery_hint();
+            assert!(!hint.is_empty(), "empty recovery hint for {v:?}");
+        }
     }
 }

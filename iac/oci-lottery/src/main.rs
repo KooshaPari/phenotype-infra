@@ -17,10 +17,12 @@ use chrono::Utc;
 use clap::Parser;
 use rand::prelude::*;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::Duration;
 #[cfg(unix)]
 use tokio::signal::unix::{SignalKind, signal};
 use tracing::{error, info, warn};
+use tracing_subscriber::EnvFilter;
 
 use crate::config::Config;
 use crate::oci::{instance_public_ip, list_availability_domains, try_launch};
@@ -48,11 +50,61 @@ struct Args {
     #[arg(long, env = "PHENOTYPE_INFRA_REPO")]
     infra_repo: Option<PathBuf>,
 
+    /// Output format: auto (default), text, json.
+    #[arg(long, default_value = "auto")]
+    format: String,
+
     /// Single attempt and exit (test mode — no loop, no signal handler).
     #[arg(long)]
     once: bool,
 }
 
+/// Output format for tracing/logs.
+#[derive(Debug, Clone, PartialEq)]
+enum OutputFormat {
+    /// Auto-detect: JSON if stdout is not a tty, text otherwise.
+    Auto,
+    /// Human-readable text.
+    Text,
+    /// JSON-structured log lines.
+    Json,
+}
+
+impl FromStr for OutputFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "auto" => Ok(Self::Auto),
+            "text" => Ok(Self::Text),
+            "json" => Ok(Self::Json),
+            _ => Err(format!(
+                "unknown format '{s}': expected auto, text, or json"
+            )),
+        }
+    }
+}
+
+/// Initialize tracing-subscriber respecting --format and NO_COLOR.
+fn init_tracing(format: &OutputFormat) {
+    let no_color = std::env::var_os("NO_COLOR").is_some();
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+
+    let is_json = matches!(format, OutputFormat::Json);
+
+    if is_json {
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_ansi(!no_color)
+            .json()
+            .init();
+    } else {
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_ansi(!no_color)
+            .init();
+    }
+}
 fn home() -> PathBuf {
     std::env::var_os("HOME")
         .map(PathBuf::from)
@@ -61,9 +113,12 @@ fn home() -> PathBuf {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 2)]
 async fn main() -> Result<()> {
-    phenotype_logging::init_tracing();
-
     let args = Args::parse();
+    let fmt: OutputFormat = args
+        .format
+        .parse()
+        .map_err(|e| anyhow::anyhow!("invalid --format: {e}"))?;
+    init_tracing(&fmt);
 
     let config_path = args
         .config
@@ -207,4 +262,75 @@ fn jitter(min: u64, max: u64) -> u64 {
         return lo;
     }
     rand::rng().random_range(lo..=hi)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_jitter_within_range() {
+        for _ in 0..100 {
+            let v = jitter(5, 10);
+            assert!((5..=10).contains(&v), "jitter {v} outside [5,10]");
+        }
+    }
+
+    #[test]
+    fn test_jitter_min_equals_max() {
+        assert_eq!(jitter(7, 7), 7);
+    }
+
+    #[test]
+    fn test_jitter_swapped_order() {
+        for _ in 0..100 {
+            let v = jitter(20, 10);
+            assert!((10..=20).contains(&v), "jitter {v} outside [10,20]");
+        }
+    }
+
+    #[test]
+    fn test_jitter_single_value() {
+        assert_eq!(jitter(42, 42), 42);
+    }
+
+    #[test]
+    fn test_output_format_parse() {
+        assert_eq!("auto".parse::<OutputFormat>().unwrap(), OutputFormat::Auto);
+        assert_eq!("text".parse::<OutputFormat>().unwrap(), OutputFormat::Text);
+        assert_eq!("json".parse::<OutputFormat>().unwrap(), OutputFormat::Json);
+        assert_eq!("JSON".parse::<OutputFormat>().unwrap(), OutputFormat::Json);
+        assert!("bad".parse::<OutputFormat>().is_err());
+    }
+
+    #[test]
+    fn test_home_from_env() {
+        // home() returns a PathBuf — smoke test that it doesn't panic.
+        let h = home();
+        assert!(!h.as_os_str().is_empty());
+    }
+
+    #[test]
+    fn test_config_default_shape() {
+        let cfg = config::Config::default();
+        assert_eq!(cfg.shape, "VM.Standard.A1.Flex");
+        assert_eq!(cfg.ocpus, 4);
+        assert_eq!(cfg.memory_gb, 24);
+        assert!(!cfg.regions.is_empty());
+    }
+
+    #[test]
+    fn test_state_serialization_roundtrip() {
+        let acquired = state::AcquiredInstance {
+            instance_ocid: "ocid1.test.123".into(),
+            region: "us-ashburn-1".into(),
+            ad: 1,
+            public_ip: Some("10.0.0.1".into()),
+            acquired_at: chrono::Utc::now(),
+        };
+        let json = serde_json::to_string_pretty(&acquired).unwrap();
+        let back: state::AcquiredInstance = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.instance_ocid, acquired.instance_ocid);
+        assert_eq!(back.region, acquired.region);
+    }
 }

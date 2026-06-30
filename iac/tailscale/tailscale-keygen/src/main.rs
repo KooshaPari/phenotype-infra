@@ -16,6 +16,8 @@
 use anyhow::{Context, Result, bail};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
+use tracing_subscriber::EnvFilter;
 
 /// Mint an ephemeral, single-use, tagged Tailscale auth-key.
 #[derive(Parser, Debug)]
@@ -42,6 +44,33 @@ struct Cli {
     /// API base (override only for testing).
     #[arg(long, default_value = "https://api.tailscale.com", hide = true)]
     api_base: String,
+
+    /// Output format for stderr logs: auto (default), text, json.
+    #[arg(long, default_value = "auto", hide = true)]
+    format: String,
+}
+
+/// Output format for tracing/logs.
+#[derive(Debug, Clone, PartialEq)]
+enum OutputFormat {
+    Auto,
+    Text,
+    Json,
+}
+
+impl FromStr for OutputFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "auto" => Ok(Self::Auto),
+            "text" => Ok(Self::Text),
+            "json" => Ok(Self::Json),
+            _ => Err(format!(
+                "unknown format '{s}': expected auto, text, or json"
+            )),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -77,23 +106,30 @@ struct CreateKeyResponse {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let cli = Cli::parse();
+
     // NOTE: this binary must keep logs off stdout — stdout is the transport
     // for the Tailscale API key (consumed via `$(tailscale-keygen)` in shell or
-    // by the oci-post-acquire hook). We still wire to `phenotype-logging` for
-    // the default-filter contract (so `RUST_LOG` semantics match the rest of
-    // the mesh), but the local `with_writer(std::io::stderr)` override is
-    // load-bearing and must stay here.
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| {
-                    tracing_subscriber::EnvFilter::new(phenotype_logging::DEFAULT_FILTER)
-                }),
-        )
-        .with_writer(std::io::stderr) // never to stdout — stdout is the key
-        .init();
+    // by the oci-post-acquire hook). The local `with_writer(std::io::stderr)`
+    // override is load-bearing and must stay here.
+    let no_color = std::env::var_os("NO_COLOR").is_some();
+    let fmt: OutputFormat = cli.format.parse().unwrap_or(OutputFormat::Auto);
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
-    let cli = Cli::parse();
+    if matches!(fmt, OutputFormat::Json) {
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_writer(std::io::stderr) // never to stdout — stdout is the key
+            .with_ansi(!no_color)
+            .json()
+            .init();
+    } else {
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .with_writer(std::io::stderr) // never to stdout — stdout is the key
+            .with_ansi(!no_color)
+            .init();
+    }
 
     if cli.api_key.is_empty() {
         bail!("TS_API_KEY is empty (set env or pass --api-key)");
