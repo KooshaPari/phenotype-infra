@@ -1,6 +1,13 @@
 # e2-micro.tf — gcp-e2 tertiary runner + uptime sentinel.
 
+<<<<<<< Updated upstream
 variable "gcp_project_id" { type = string /* <GCP_PROJECT_ID> */ }
+=======
+variable "gcp_project_id" {
+  type = string
+  # <GCP_PROJECT_ID>
+}
+>>>>>>> Stashed changes
 variable "gcp_region" {
   type    = string
   default = "us-west1"

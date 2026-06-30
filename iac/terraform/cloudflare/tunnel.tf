@@ -1,5 +1,14 @@
 # tunnel.tf — Cloudflare Tunnel from edge to oci-primary.
 
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.18"
+    }
+  }
+}
+
 variable "cloudflare_account_id" { type = string /* <CLOUDFLARE_ACCOUNT_ID> */ }
 variable "cloudflare_zone_id" { type = string /* <CLOUDFLARE_ZONE_ID> */ }
 variable "cloudflare_api_token" {
