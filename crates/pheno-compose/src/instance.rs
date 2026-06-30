@@ -91,7 +91,10 @@ impl Instance {
     /// # Safety
     /// The pointer must be non-null and valid for the lifetime of the Instance.
     pub(crate) unsafe fn from_ffi_ptr(ptr: *mut nvms_ffi::sys::NvmsInstance) -> Result<Self, NvmsError> {
-        let inner = NonNull::new(ptr).ok_or(NvmsError::CreateFailed)?;
+        if ptr.is_null() {
+            return Err(NvmsError::NullPointer);
+        }
+        let inner = NonNull::new_unchecked(ptr);
         let tier = (*ptr).tier.into();
         Ok(Self { inner, tier })
     }
