@@ -45,7 +45,7 @@ jobs:
 
       - name: "Open / update tracker issue"
         if: steps.check.outputs.has_violations == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const report = require('fs').readFileSync('/tmp/audit_report.md','utf8');
