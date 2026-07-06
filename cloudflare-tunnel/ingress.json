@@ -1,0 +1,26 @@
+{
+  "ingress": [
+    {
+      "service": "http://localhost:3002",
+      "hostname": "agileplus-classic.pheno.studio"
+    },
+    {
+      "service": "http://localhost:8080",
+      "hostname": "trace.pheno.studio"
+    },
+    {
+      "service": "http://localhost:8888",
+      "hostname": "agileplus.pheno.studio"
+    },
+    {
+      "service": "http://localhost:3000",
+      "hostname": "api.pheno.studio"
+    },
+    {
+      "service": "http_status:404"
+    }
+  ],
+  "warp-routing": {
+    "enabled": false
+  }
+}
