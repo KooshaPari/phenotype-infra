@@ -46,6 +46,10 @@ Require-Pattern $toolSpheres "sharecli" "sharecli ownership entry"
 Require-Pattern $toolSpheres "phenodag" "phenodag ownership entry"
 Require-Pattern $toolSpheres "verified_utc" "tool-sphere evidence field"
 Require-Pattern $toolSpheres "must\s+not become a second cloud-state or runtime\s+control plane" "orchestration-only boundary"
+Require-Pattern $toolSpheres "Podman" "Podman substrate entry"
+Require-Pattern $toolSpheres "Apple Containers extension" "Apple Containers substrate entry"
+Require-Pattern $toolSpheres "First-party WSL containers extension" "WSL substrate entry"
+Require-Pattern $toolSpheres "BytePort does not own substrate\s+state" "substrate state boundary"
 
 if ($failures.Count -gt 0) {
     $failures | ForEach-Object { Write-Error $_ }

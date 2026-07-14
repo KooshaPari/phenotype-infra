@@ -22,6 +22,23 @@ The owning component remains authoritative after a handoff:
 - **phenotype-infra** owns this cross-repository policy, inventory, and
   runbooks; it does not copy mutable state from those components.
 
+## Execution substrate extensions
+
+These substrates are runtime targets behind the NanoVMS/PhenoCompose boundary.
+They are not additional cloud providers and do not change BytePort's scope.
+
+| Substrate | NanoVMS responsibility | PhenoCompose responsibility | BytePort boundary | Required evidence |
+|-----------|------------------------|-----------------------------|-------------------|-------------------|
+| Podman | detect the host engine, select capabilities, and own container lifecycle | render the unified composition into a Podman-compatible plan | must not persist Podman containers, images, or runtime state | Podman version, host capability probe, image digest, lifecycle receipt |
+| Apple Containers extension | provide the engine adapter and health/failure contract when available | render the composition target and preserve deterministic dependencies | must not become an Apple Containers state or credential owner | extension version, host/architecture, image digest, health receipt |
+| First-party WSL containers extension | provide the WSL host adapter, isolation tier, and lifecycle semantics | render the composition target for the WSL execution context | must not persist WSL distro/container state or own host credentials | WSL/extension version, distro identity, image digest, lifecycle receipt |
+
+The substrate rows describe an adapter contract, not a claim that every adapter
+is already production-ready. A new implementation must provide the evidence
+fields above before it is enabled by default. BytePort may carry an opaque
+execution request or receipt reference, but BytePort does not own substrate
+state.
+
 ## Evidence record
 
 Every tool-sphere change or operational run should leave a small, linkable
@@ -47,4 +64,3 @@ state snapshots, or mutable runtime records in this governance document.
 Review this map whenever a tool adds a provider adapter, a new renderer, or a
 new lifecycle operation. The review must identify the owning API and add a
 receipt/evidence field before the feature is enabled in production workflows.
-
