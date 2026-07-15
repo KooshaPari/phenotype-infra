@@ -1,8 +1,10 @@
+<!-- markdownlint-disable MD013 MD060 -->
+
 # phenotype-hub (absorbed)
 
 | Field | Value |
 |-------|-------|
-| **Source repo** | https://github.com/KooshaPari/phenotype-hub |
+| **Source repo** | [phenotype-hub](https://github.com/KooshaPari/phenotype-hub) |
 | **Absorption date** | 2026-06-18 |
 | **Registry wave** | G19 (wave15 stub absorption) |
 | **Disposition** | ABSORB |
@@ -38,3 +40,5 @@
 
 - Open new feature work against the archived `phenotype-hub` repo.
 - Treat `phenotype-hub` as a runtime or routing SSOT — use `phenotype-infra` ADRs, specs, and runbooks instead.
+
+<!-- markdownlint-enable MD013 MD060 -->
