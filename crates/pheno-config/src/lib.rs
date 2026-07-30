@@ -50,7 +50,7 @@ pub use sandbox::SandboxConfig;
 /// - Hard-coded Rust defaults
 /// - `PhenoCompose.toml` (optional) in the current directory
 /// - Environment variables prefixed with `PHENO_`
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PhenoConfig {
     /// NVMS driver / platform labels.
     #[serde(default)]
@@ -281,18 +281,6 @@ pub mod gpu {
 // Combined defaults
 // ---------------------------------------------------------------------------
 
-impl Default for PhenoConfig {
-    fn default() -> Self {
-        Self {
-            nvms: NvmsConfig::default(),
-            sandbox: SandboxConfig::default(),
-            perf: PerfConfig::default(),
-            gpu: GpuConfig::default(),
-            driver: DriverConfig::default(),
-        }
-    }
-}
-
 impl PhenoConfig {
     /// Load configuration using figment's layered providers:
     ///
@@ -306,6 +294,7 @@ impl PhenoConfig {
     ///
     /// Returns [`figment::Error`] if the TOML file exists but is
     /// malformed, or if env-var parsing fails.
+    #[allow(clippy::result_large_err)]
     pub fn load() -> Result<Self, figment::Error> {
         Figment::new()
             .merge(Serialized::defaults(PhenoConfig::default()))
