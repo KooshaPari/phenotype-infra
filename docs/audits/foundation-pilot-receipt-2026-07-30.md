@@ -1,17 +1,23 @@
 # Phenotype foundation pilot receipt — 2026-07-30
 
-Status: evidence receipt, not a release approval. All evidence below is
-head-specific or explicitly identified as a host/runtime probe. No secrets,
-tokens, or private addresses are recorded.
+Status: evidence receipt, not a release approval. Runtime evidence below is
+explicitly identified as a host/runtime probe; the review-head table is the
+authoritative snapshot observed 2026-07-30. No secrets, tokens, or private
+addresses are recorded.
 
 ## Reviewed heads
 
 | Component | Review surface | Exact head | Evidence |
 | --- | --- | --- | --- |
-| phenotype-infra | PR #125 | `f5ce6e26b0ba4030f826ea9ee995437028bdbb51` | Exact-head CI run `30509150577` passed Rust fmt/Clippy/build/tests, security, Trivy/SARIF, and aggregate; SonarCloud and Semgrep passed. |
-| BytePort | PR #318 | `383d9695` | Focused Go package gates, CodeQL, Semgrep, Snyk, links, and security checks passed. Sonar remains an external project-configuration gate; see blockers. |
-| PhenoCompose | PR #113 | `d514ac9` | YAML/action checks, lockfile enforcement, focused Cargo tests, tier1/tests, Sonar, CodeQL, Semgrep, GitGuardian, and Socket checks passed. |
-| NanoVMS | PR #123 | `737f8b5` | Lifecycle normalization (`Start`/`running`/`failed`) and focused API tests passed; a subsequent Podman provider is tracked separately in PR #128. |
+| phenotype-infra | PR #125 | `35e4868b868215348ff5ef3e4d90f1a2d10af394` | Latest rollup: Rust/security/links/observability/IAC check pass; markdown-lint, Trunk Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
+| BytePort | PR #318 | `d005fdc893db97694e05b03dddae2898e5dcbcfd` | Latest rollup has mixed repository gates: Go/Rust lint/coverage, cargo-deny, CodeQL/Sonar, SBOM, a11y, and audit checks remain failing or queued; external Mergify/Summary also fail. |
+| PhenoCompose | PR #113 | `cf847478a79396c6913d81847c487e15f05da244` | Latest rollup: security, CodeQL, Trivy, and supply-chain checks pass; Cargo audit/check/deny/clippy/test and Lint & Format remain failing or queued. |
+| NanoVMS | PR #128 | `71f52a21d297bb8559d157dfdec7a1250e632a85` | Latest rollup: cross-compilation and security checks pass; Lint & Format, Dependency Review, Trivy, and configuration checks remain failing or queued. |
+
+The exact heads above supersede the older commit identifiers in the runtime
+notes below. Those notes are retained as reproducible pilot evidence, but do
+not imply that the same runtime run was performed against every current PR
+head.
 
 ## Cross-component runtime evidence
 
