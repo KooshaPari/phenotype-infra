@@ -58,6 +58,24 @@ exit is surfaced as a failed start rather than normalized to running.
 | Apple Containers | Tailscale/SSH probe on `kooshas-laptop`: `/usr/local/bin/container`, version `1.0.0`, Darwin ARM64. | PhenoCompose Apple adapter; macOS-only execution surface. |
 | WSL Containers | Windows first-party `C:\Program Files\WSL\container.exe`, `wslc 2.9.3.0`; PhenoCompose adapter commit `d514ac9` prefers `container.exe` and falls back to legacy `wslc.exe`. | PhenoCompose WSL adapter; compatibility fallback only. |
 
+## Current-head end-to-end pilot gate
+
+**Status: NOT RUN.** The separate runtime probes above do not prove a
+PhenoCompose -> BytePort -> NanoVMS transaction. A current-head audit found no
+safe way to run that transaction without introducing an integration bridge or
+silently substituting a test double.
+
+| Required prerequisite | Current-head evidence | Blocking action before pilot |
+| --- | --- | --- |
+| PhenoCompose submission adapter | PR #113 head `cf847478` exposes `Orchestrator` implementations for Noop, Helm, and ArgoCD; no BytePort HTTP client or `/mesh/workloads` transport is present. | Add and review a provider-neutral BytePort adapter that emits a deterministic composition/render digest. |
+| BytePort control plane | PR #318 head `d005fdc` exposes authenticated `GET/POST /api/v1/mesh/workloads` and `GET /api/v1/health`; the live backend, Postgres, and a disposable auth token must be started for the run. | Start the exact head with isolated Postgres and capture health plus authenticated submit/read-back responses. |
+| NanoVMS execution bridge | PR #128 head `71f52a21` exposes authenticated `POST /v1/deploy` and unauthenticated `/readyz` over configured UDS/TCP; it requires `serve --provider podman`, Podman, and a disposable token. | Start the exact head, verify readiness, and submit the BytePort-selected execution request through an explicit transport bridge. |
+| Correlatable receipt | No current manifest or receipt maps a PhenoCompose render digest to a BytePort workload ID and NanoVMS sandbox ID. | Define and capture `{render_digest, workload_id, sandbox_id, provider, status, timestamps}` with no secrets or runtime-private addresses. |
+
+Until all four rows have head-specific evidence, the foundation remains
+pilot-ready only in separate component probes and is not end-to-end release
+approved.
+
 ## Ownership and safety boundaries
 
 - `phenotype-infra` remains the organization infrastructure spine and ADR /
