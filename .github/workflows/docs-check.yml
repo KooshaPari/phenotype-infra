@@ -29,5 +29,5 @@ jobs:
         run: |
           for f in docs/adr/*.md; do
             grep -Eq '^# ADR( |-)' "$f" || { echo "::error file=$f::missing '# ADR NNN — Title' header"; exit 1; }
-            grep -Eq '^(\- )?\*\*Status(:)?\*\*|^(\- )?\*\*Status\*\*:' "$f" || { echo "::error file=$f::missing Status line"; exit 1; }
+            grep -Eiq '^([[:space:]]*[-*][[:space:]]*)?\*\*Status(:)?\*\*|^([[:space:]]*[-*][[:space:]]*)?##?[[:space:]]+Status([[:space:]]*)$|^([[:space:]]*[-*][[:space:]]*)?\*\*Status\*\*:' "$f" || { echo "::error file=$f::missing Status line"; exit 1; }
           done

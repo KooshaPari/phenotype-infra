@@ -1,0 +1,11 @@
+# The repository intentionally retains imported ADRs and absorbed project
+# notes.  Keep structural checks enabled while allowing the historical prose
+# and table formatting to remain unchanged until each document is modernized.
+config:
+  MD013: false # historical ADRs contain long architecture references
+  MD060: false # imported tables use both compact and aligned styles
+  MD036: false # legacy ADRs use emphasis labels for decision sections
+  MD034: false # imported notes contain intentionally bare references
+ignores:
+  - docs/absorbed-from/**
+  - docs/ABSORPTION_INDEX.md
