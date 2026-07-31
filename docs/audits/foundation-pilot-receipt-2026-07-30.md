@@ -1,23 +1,43 @@
-# Phenotype foundation pilot receipt — 2026-07-30
+# Phenotype foundation pilot receipt — 2026-07-31
 
 Status: evidence receipt, not a release approval. Runtime evidence below is
 explicitly identified as a host/runtime probe; the review-head table is the
-authoritative snapshot observed 2026-07-30. No secrets, tokens, or private
+authoritative snapshot observed 2026-07-31. No secrets, tokens, or private
 addresses are recorded.
 
 ## Reviewed heads
 
 | Component | Review surface | Exact head | Evidence |
 | --- | --- | --- | --- |
-| phenotype-infra | PR #125 | `35e4868b868215348ff5ef3e4d90f1a2d10af394` | Latest rollup: Rust/security/links/observability/IAC check pass; markdown-lint, Trunk Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
-| BytePort | PR #318 | `d005fdc893db97694e05b03dddae2898e5dcbcfd` | Latest rollup has mixed repository gates: Go/Rust lint/coverage, cargo-deny, CodeQL/Sonar, SBOM, a11y, and audit checks remain failing or queued; external Mergify/Summary also fail. |
-| PhenoCompose | PR #113 | `cf847478a79396c6913d81847c487e15f05da244` | Latest rollup: security, CodeQL, Trivy, and supply-chain checks pass; Cargo audit/check/deny/clippy/test and Lint & Format remain failing or queued. |
-| NanoVMS | PR #128 | `71f52a21d297bb8559d157dfdec7a1250e632a85` | Latest rollup: cross-compilation and security checks pass; Lint & Format, Dependency Review, Trivy, and configuration checks remain failing or queued. |
+| phenotype-infra | PR #125 | `1bbffb46e6e528923400e393f27ce5b619e25201` | 29 success / 5 failure / 0 pending; markdown-lint, Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
+| BytePort | PR #318 | `d6ee86b7ef6202ce4e719316bec4ba6140dbffdb` | 44 success / 26 failure / 2 pending; CodeQL, coverage, lint, cargo-deny/audit, SBOM, a11y, frontend, Sonar, and external gates remain open. |
+| PhenoCompose | PR #113 | `f7313c8fdcba4718826c401e1c04842638f8810c` | 24 success / 10 failure / 2 pending; Cargo audit/check/deny/clippy, Trunk, and external gates remain open. |
+| NanoVMS | PR #128 | `600a8fd02354bb1ea53c7311b830131033923cf5` | 13 success / 5 failure / 3 pending; Trunk/configuration, Kilo, and external gates remain open. |
 
-The exact heads above supersede the older commit identifiers in the runtime
+The exact heads above supersede all older commit identifiers in the runtime
 notes below. Those notes are retained as reproducible pilot evidence, but do
 not imply that the same runtime run was performed against every current PR
 head.
+
+## Current scorecard (observed progress, not release approval)
+
+The check counts above are descriptive because GitHub exposes multiple checks
+per workflow and some are external automation. The weighted progress score is
+therefore separate from the hard release gate:
+
+| Area | Weight | Current | Evidence basis |
+| --- | ---: | ---: | --- |
+| Exact branch ancestry and review surfaces | 10 | 10 | All four PR heads are mergeable and 0 commits behind their protected main base. |
+| CI and security convergence | 35 | 25 | Observable success/(success+failure) ratios are 62.9%, 72.2%, 70.6%, and 85.3%; required failures remain. |
+| Runtime probes and substrate adapters | 15 | 9 | Podman smoke plus Apple/WSL host probes exist; current-head adapter wiring is incomplete. |
+| Provider-neutral reconciliation | 15 | 5 | BytePort validates desired intent and the receipt contract exists; no workload-ID/reconciliation transport is implemented. |
+| Cross-component pilot | 15 | 3 | Separate component smokes exist; no authenticated three-hop transaction or complete receipt exists. |
+| Governance, ownership, and evidence | 10 | 9 | Ownership matrix, correlation contract, and refreshed receipt are present. |
+| **Progress score** | **100** | **61** | Capability progress only; not a merge or release decision. |
+
+**Strict release gate: 0/4 exact heads green.** The score must not be read as
+publication readiness; all required checks, review approvals, and the live
+pilot remain mandatory.
 
 ## Cross-component runtime evidence
 
