@@ -9,10 +9,10 @@ addresses are recorded.
 
 | Component | Review surface | Exact head | Evidence |
 | --- | --- | --- | --- |
-| phenotype-infra | PR #125 | `1bbffb46e6e528923400e393f27ce5b619e25201` | 29 success / 5 failure / 0 pending; markdown-lint, Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
-| BytePort | PR #318 | `d6ee86b7ef6202ce4e719316bec4ba6140dbffdb` | 44 success / 26 failure / 2 pending; CodeQL, coverage, lint, cargo-deny/audit, SBOM, a11y, frontend, Sonar, and external gates remain open. |
+| phenotype-infra | PR #125 | `1344cd8f0d9bddf5feb66ce41dae2fbfd2e36ae2` | 28 success / 5 failure / 0 pending / 8 skipped; markdown-lint, Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
+| BytePort | PR #318 | `8c65c49` | 44 success / 27 failure / 2 pending / 3 skipped; CodeQL, coverage, lint, cargo-deny/audit, SBOM, a11y, frontend, Sonar, and external gates remain open. Stable mesh workload `id` is now exposed. |
 | PhenoCompose | PR #113 | `f7313c8fdcba4718826c401e1c04842638f8810c` | 24 success / 10 failure / 2 pending; Cargo audit/check/deny/clippy, Trunk, and external gates remain open. |
-| NanoVMS | PR #128 | `600a8fd02354bb1ea53c7311b830131033923cf5` | 13 success / 5 failure / 3 pending; Trunk/configuration, Kilo, and external gates remain open. |
+| NanoVMS | PR #128 | `3723b47` | 13 success / 5 failure / 3 pending / 3 skipped; Trunk/configuration, Kilo, and external gates remain open. Lifecycle labels, fail-closed readiness, and status/request-ID audit evidence are now present. |
 
 The exact heads above supersede all older commit identifiers in the runtime
 notes below. Those notes are retained as reproducible pilot evidence, but do
@@ -28,12 +28,12 @@ therefore separate from the hard release gate:
 | Area | Weight | Current | Evidence basis |
 | --- | ---: | ---: | --- |
 | Exact branch ancestry and review surfaces | 10 | 10 | All four PR heads are mergeable and 0 commits behind their protected main base. |
-| CI and security convergence | 35 | 25 | Observable success/(success+failure) ratios are 62.9%, 72.2%, 70.6%, and 85.3%; required failures remain. |
+| CI and security convergence | 35 | 25 | Current completed-check ratios are approximately 84.8%, 62.0%, 70.6%, and 72.2%; required failures remain. |
 | Runtime probes and substrate adapters | 15 | 9 | Podman smoke plus Apple/WSL host probes exist; current-head adapter wiring is incomplete. |
-| Provider-neutral reconciliation | 15 | 5 | BytePort validates desired intent and the receipt contract exists; no workload-ID/reconciliation transport is implemented. |
+| Provider-neutral reconciliation | 15 | 6 | BytePort validates desired intent and now exposes a stable persisted workload ID; idempotency, generation, and reconciliation transport remain unimplemented. |
 | Cross-component pilot | 15 | 3 | Separate component smokes exist; no authenticated three-hop transaction or complete receipt exists. |
-| Governance, ownership, and evidence | 10 | 9 | Ownership matrix, correlation contract, and refreshed receipt are present. |
-| **Progress score** | **100** | **61** | Capability progress only; not a merge or release decision. |
+| Governance, ownership, and evidence | 10 | 9 | Ownership matrix, correlation contract, and this exact-head receipt are present; historical ADR/provider inventory debt remains. |
+| **Progress score** | **100** | **62** | Capability progress only; not a merge or release decision. |
 
 **Strict release gate: 0/4 exact heads green.** The score must not be read as
 publication readiness; all required checks, review approvals, and the live
@@ -87,10 +87,10 @@ silently substituting a test double.
 
 | Required prerequisite | Current-head evidence | Blocking action before pilot |
 | --- | --- | --- |
-| PhenoCompose submission adapter | PR #113 head `cf847478` exposes `Orchestrator` implementations for Noop, Helm, and ArgoCD; no BytePort HTTP client or `/mesh/workloads` transport is present. | Add and review a provider-neutral BytePort adapter that emits a deterministic composition/render digest. |
-| BytePort control plane | PR #318 head `d005fdc` exposes authenticated `GET/POST /api/v1/mesh/workloads` and `GET /api/v1/health`; the live backend, Postgres, and a disposable auth token must be started for the run. | Start the exact head with isolated Postgres and capture health plus authenticated submit/read-back responses. |
-| NanoVMS execution bridge | PR #128 head `71f52a21` exposes authenticated `POST /v1/deploy` and unauthenticated `/readyz` over configured UDS/TCP; it requires `serve --provider podman`, Podman, and a disposable token. | Start the exact head, verify readiness, and submit the BytePort-selected execution request through an explicit transport bridge. |
-| Correlatable receipt | No current manifest or receipt maps a PhenoCompose render digest to a BytePort workload ID and NanoVMS sandbox ID. | Define and capture `{render_digest, workload_id, sandbox_id, provider, status, timestamps}` with no secrets or runtime-private addresses. |
+| PhenoCompose submission adapter | PR #113 head `f7313c8` has deterministic render and pure handoff types, but no BytePort HTTP client or `/mesh/workloads` transport. | Add and review a provider-neutral BytePort adapter that emits a deterministic composition/render digest. |
+| BytePort control plane | PR #318 head `8c65c49` exposes authenticated `GET/POST /api/v1/mesh/workloads` and now returns a stable workload `id`; the live backend, Postgres, and a disposable auth token must be started for the run. | Start the exact head with isolated Postgres and capture health plus authenticated submit/read-back responses. |
+| NanoVMS execution bridge | PR #128 head `3723b47` exposes `nvms serve --provider podman`, authenticated deploy, fail-closed readiness, and correlation labels/audit status; it still requires an explicit transport bridge. | Start the exact head, verify readiness, and submit the BytePort-selected execution request through an explicit bridge. |
+| Correlatable receipt | BytePort workload identity and NanoVMS container correlation labels now exist, but no current manifest maps render digest to both workload and sandbox IDs. | Define and capture `{render_digest, workload_id, sandbox_id, provider, status, timestamps}` with no secrets or runtime-private addresses. |
 
 Until all four rows have head-specific evidence, the foundation remains
 pilot-ready only in separate component probes and is not end-to-end release
