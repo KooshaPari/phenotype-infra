@@ -81,7 +81,7 @@ ansible-playbook playbooks/install-woodpecker.yml --limit oci-primary
 
 ## Step 5 — Vaultwarden bootstrap
 
-1. On oci-primary: `docker logs vaultwarden` to find the admin token; immediately rotate to a long random value via `docker-compose down && docker-compose up -d` with a new `ADMIN_TOKEN`.
+1. On oci-primary: `podman logs vaultwarden` to find the admin token; immediately rotate to a long random value via `podman compose down && podman compose up -d` with a new `ADMIN_TOKEN`. The host must use the Podman Compose provider; do not substitute Docker CLI commands.
 2. Store the new token in 1Password (NOT Vaultwarden — chicken/egg).
 3. Create a service-account-like collection for agents; generate a read-only API key (`VW-02`).
 
