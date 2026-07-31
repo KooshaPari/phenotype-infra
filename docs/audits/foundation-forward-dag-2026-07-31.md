@@ -1,17 +1,18 @@
 # Foundation forward DAG and current scorecard — 2026-07-31
 
 Status: execution plan and evidence snapshot, not a release approval. Check
-counts are volatile GitHub observations taken at 2026-07-31 05:10 UTC and
-must be refreshed when a head or workflow run changes.
+counts are volatile GitHub observations taken at 2026-07-31 06:01 UTC and
+must be refreshed when a head or workflow run changes. Two heads changed
+during this refresh; stale-head detection is itself a release gate.
 
 ## Frozen review surfaces
 
 | Component | PR | Exact head | Base ancestry | Review state | Checks at snapshot |
 | --- | ---: | --- | --- | --- | --- |
-| BytePort | #318 | `5b4dcf7592e1ebe0f92f82fc2997b65ac454ca3b` | 66 ahead / 0 behind `main` | open draft, mergeable / blocked | 46 success, 24 failure, 1 neutral, 3 skipped, 2 active |
-| NanoVMS | #128 | `3723b47c9bf3d8bc036a40844519b77b02b2049e` | 37 ahead / 0 behind `main` | open, mergeable / blocked | 14 success, 4 failure, 3 skipped, 3 active |
+| BytePort | #318 | `ec599fa5531d899e22b963d0648ac72f04ab6577` | 73 ahead / 0 behind `main` | open draft, mergeable / blocked | 50 success, 21 failure, 1 neutral, 3 skipped, 2 active |
+| NanoVMS | #128 | `9556e77dbedf2e5743df2c55569a46b5af6e22e9` | 43 ahead / 0 behind `main` | open, mergeable / blocked | 11 success, 4 failure, 3 skipped, 6 active |
 | PhenoCompose | #113 | `fa7ad4ea8752d13fcab4a162140b3db21629558b` | 40 ahead / 0 behind `main` | open draft, mergeable / unstable | 24 success, 10 failure, 4 skipped, 2 active |
-| phenotype-infra | #125 | `2a3152a208d2e676503c1ada69f65a92b6d7f3a8` | 32 ahead / 0 behind `main` | open draft, mergeable / blocked | 28 success, 5 failure, 8 skipped |
+| phenotype-infra | #125 | `002243f57576300a77f5bc62eb4f0894055e2611` | 33 ahead / 0 behind `main` | open draft, mergeable / blocked | 30 success, 5 failure, 7 skipped |
 
 All four review surfaces report no configured required checks through
 `gh pr checks --required`. Therefore a green-looking subset is not a merge
@@ -27,7 +28,7 @@ multiplied by its weight; skipped and active checks do not earn credit.
 | Pillar | Weight | Current | Basis and missing evidence |
 | --- | ---: | ---: | --- |
 | Exact ancestry and review surfaces | 10 | 10 | Every head is merge-base clean (0 behind) and has an open PR. |
-| CI and security convergence | 35 | 26 | Mean completed non-skipped success ratio is about 74.5%; failures and active runs remain on every component. |
+| CI and security convergence | 35 | 26 | Mean completed non-skipped success ratio is about 74.8%; failures and active runs remain on every component. |
 | Runtime probes and substrate adapters | 15 | 9 | Podman smoke and Apple/WSL capability probes exist; current-head lifecycle adapters are not yet proven. |
 | Provider-neutral reconciliation | 15 | 8 | Stable workload ID, same-process replay, and changed-digest conflict exist; generation, cross-process uniqueness, execution reconciliation, and attested artifact identity do not. |
 | Cross-component pilot | 15 | 3 | Component smokes exist; no authenticated current-head PhenoCompose -> BytePort -> NanoVMS receipt exists. |
@@ -105,9 +106,10 @@ A1 CI/security repair   A2 Contract lock
 1. Do not merge or publish any of the four PRs while their exact-head gates
    are non-green.
 2. Triage source/config failures before waiting on neutral, active, Mergify,
-   or Summary automation. NanoVMS's remaining lint failure is currently a
-   Trunk dependency/bootstrap issue; BytePort has the largest active failure
-   surface.
+   or Summary automation. NanoVMS's Trunk bootstrap is now green; its exact
+   head still has three workflow-format findings and one tool-helper typecheck
+   finding until the latest rerun settles. BytePort has the largest active
+   failure surface.
 3. Refresh `foundation-pilot-receipt-2026-07-30.md` only after the frozen SHAs
    and check snapshot are intentionally changed; do not overwrite historical
    runtime evidence.
