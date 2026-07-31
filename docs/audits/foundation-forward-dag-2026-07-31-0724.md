@@ -15,6 +15,31 @@ push, merge, workflow rerun, or policy change.
 | Execution and lifecycle | `NanoVMS` | sandbox/container lifecycle, readiness, inspect, status, audit correlation |
 
 `sharecli`, `phenodag`, and substrate implementations stay separately owned.
+
+## 08:02 UTC exact-head refresh
+
+The bounded production-auth change is now on BytePort #318 as
+`d396513196018012cc556935c86339af407f253e`. It keeps the legacy synthetic
+token path behind the test constructor, adds fail-closed WorkOS startup, and
+adds startup/rejection tests. GitHub's new run proves Go modules, build, vet,
+Rust coverage, and SBOM generation; the advisory Go test still exits 1, while
+Go framework coverage, service/E2E setup, a11y, frontend lint, npm audit,
+semver, Sonar, Mergify/Summary, and the CodeQL configuration surface remain
+unresolved or active. The exact head is therefore still blocked and must not
+be called release-ready.
+
+The other frozen heads remain `808beac1` (NanoVMS #128), `18365987`
+(PhenoCompose #113), and `ea630658` (phenotype-infra #125). NanoVMS,
+PhenoCompose, and phenotype-infra have no newly green release gate in the
+08:02 refresh. The Podman runbook correction is already present in infra; no
+Docker command is part of the intended substrate path.
+
+This refresh does not change the 66.1/100 capability-progress baseline above:
+that number is still heuristic and provisional while BytePort's rerun is
+active. The hard release state remains 0/4 exact heads green, with C1/C2/D1
+unproven. The next DAG edge is to finish source/config CI convergence, then
+run the authenticated current-head bridge; no provider expansion or publish
+step may bypass those gates.
 Docker is not a foundation dependency. Podman is the first positive local
 substrate; first-party WSL Containers (`wslc`/`container.exe`) and Apple
 Containers are capability-gated adapters.
