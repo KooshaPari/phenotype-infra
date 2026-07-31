@@ -9,9 +9,9 @@ addresses are recorded.
 
 | Component | Review surface | Exact head | Evidence |
 | --- | --- | --- | --- |
-| phenotype-infra | PR #125 | `1344cd8f0d9bddf5feb66ce41dae2fbfd2e36ae2` | 28 success / 5 failure / 0 pending / 8 skipped; markdown-lint, Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
+| phenotype-infra | PR #125 | `64d33ad` (receipt parent; this update is evidence-only) | 28 success / 5 failure / 0 pending / 8 skipped; markdown-lint, Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
 | BytePort | PR #318 | `8c65c49` | 44 success / 27 failure / 2 pending / 3 skipped; CodeQL, coverage, lint, cargo-deny/audit, SBOM, a11y, frontend, Sonar, and external gates remain open. Stable mesh workload `id` is now exposed. |
-| PhenoCompose | PR #113 | `f7313c8fdcba4718826c401e1c04842638f8810c` | 24 success / 10 failure / 2 pending; Cargo audit/check/deny/clippy, Trunk, and external gates remain open. |
+| PhenoCompose | PR #113 | `fa7ad4e` | 24 success / 10 failure / 2 pending / 4 skipped; Cargo audit/check/deny/clippy, Trunk, and external gates remain open. |
 | NanoVMS | PR #128 | `3723b47` | 13 success / 5 failure / 3 pending / 3 skipped; Trunk/configuration, Kilo, and external gates remain open. Lifecycle labels, fail-closed readiness, and status/request-ID audit evidence are now present. |
 
 The exact heads above supersede all older commit identifiers in the runtime
