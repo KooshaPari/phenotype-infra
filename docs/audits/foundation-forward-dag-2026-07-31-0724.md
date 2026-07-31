@@ -36,7 +36,7 @@ created from these exact SHAs and must preserve every sibling ref.
 NanoVMS #128 contains an intentional merge from `main` and the archived
 tombstone ancestry; do not squash or rebase it. BytePort #317/#319/#313/#316
 overlap the selected PR on 65-86 paths and diverge from a common base. Pheno
-#107/#110/#111/#112 overlap the contract files in #113. Infra #125 covers the
+PRs 107, 110, 111, and 112 overlap the contract files in PR 113. Infra #125 covers the
 same governance paths as #115 on current main. These are preserved alternatives,
 not serial merge inputs.
 
