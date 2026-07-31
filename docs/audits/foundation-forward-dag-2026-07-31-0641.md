@@ -1,6 +1,7 @@
-# Foundation forward DAG and exact-head scorecard - 2026-07-31 06:41 UTC
+# Foundation forward DAG and exact-head scorecard - 2026-07-31 06:44 UTC
 
-Status: working execution plan and evidence snapshot. This is not a merge,
+Status: working execution plan and evidence snapshot, refreshed after the
+06:41 UTC publication. This is not a merge,
 publish, or release approval. GitHub check counts are a point-in-time
 observation and must be refreshed whenever a head or workflow run changes.
 
@@ -31,8 +32,8 @@ checks and/or review policy.
 | --- | ---: | --- | --- | --- | --- | --- |
 | BytePort | #318 | `codex/byteport-workflow-syntax-pilot` | `aec8e356ab6b622f1d9aa6de806b05a706951a2d` | 75 / 0 | draft; mergeable, **BLOCKED**; review required | 49 pass, 21 fail, 1 neutral, 3 skipped, 2 pending |
 | NanoVMS | #128 | `codex/nanovms-podman-provider` | `27f20dfb908607720d9df1ceef726838e7d34b16` | 44 / 0 | ready; mergeable, **BLOCKED**; review required | 14 pass, 4 fail, 3 skipped, 3 pending |
-| PhenoCompose | #113 | `codex/phenocompose-pr112-workflow-fixes` | `fa7ad4ea8752d13fcab4a162140b3db21629558b` | 40 / 0 | draft; mergeable, **UNSTABLE** | 24 pass, 10 fail, 4 skipped, 2 pending |
-| phenotype-infra | #125 | `codex/phenotype-infra-pr115-docs-gates` | `cd2abe177b5a4f93e95b10e78d2de36e4a723e5d` | 35 / 0 | draft; mergeable, **BLOCKED**; review required | 28 pass, 5 fail, 8 skipped, 1 pending |
+| PhenoCompose | #113 | `codex/phenocompose-pr112-workflow-fixes` | `7d321deeff222ac1b91fd51f4660cf084ccc3a54` | 41 / 0 | draft; mergeable, **UNSTABLE** | 19 pass, 7 fail, 4 skipped, 10 pending |
+| phenotype-infra | #125 | `codex/phenotype-infra-pr115-docs-gates` | `d068787df87fc811b50c65b88c827f813260efc7` | 36 / 0 | draft; mergeable, **BLOCKED**; review required | 25 pass, 4 fail, 8 skipped, 3 pending |
 
 No repository has a green exact-head release surface. `gh pr checks
 --required` exposes no configured required-check subset for these PRs, so a
@@ -48,12 +49,12 @@ the hard release gates.
 | Pillar | Weight | Score | Evidence and missing proof |
 | --- | ---: | ---: | --- |
 | Exact ancestry and review surfaces | 10 | 10.0 | Four exact heads, open PRs, zero commits behind; review approval and green checks are still absent. |
-| CI and security convergence | 35 | 26.4 | Completed success ratios are BytePort 69.0%, NanoVMS 77.8%, PhenoCompose 70.6%, infra 84.8%; failures remain on all four. |
+| CI and security convergence | 35 | 26.8 | Completed success ratios are BytePort 69.0%, NanoVMS 77.8%, PhenoCompose 73.1%, infra 86.2%; failures remain on all four. |
 | Runtime probes and substrate adapters | 15 | 9.0 | Podman smoke and probe code exist; current-head lifecycle proof is not yet one reproducible receipt. Apple host is unreachable now. |
 | Provider-neutral reconciliation | 15 | 8.0 | Stable BytePort ID, same-process replay, and changed-digest conflict are present; cross-process uniqueness, generation, and execution reconciliation are open. |
 | Cross-component pilot | 15 | 3.0 | Component-level smokes exist; no authenticated current-head PhenoCompose -> BytePort -> NanoVMS transaction exists. |
 | Governance, ownership, and evidence | 10 | 9.0 | Ownership, correlation contract, forward DAG, and substrate probe are recorded; required-check policy and stale worktree maintenance remain. |
-| **Capability progress** | **100** | **65.4** | Heuristic only. **Hard release gate: 0/4 exact heads green; pilot: NOT RUN.** |
+| **Capability progress** | **100** | **65.8** | Heuristic only. **Hard release gate: 0/4 exact heads green; pilot: NOT RUN.** |
 
 The older June scorecard (3.3/9 aggregate and D+/D- component grades) is
 historical baseline data, not the current release score. The current score is
@@ -76,8 +77,9 @@ The remote histories show a coherent but incomplete dependency chain:
    still needed.
 3. **PhenoCompose** added deterministic rendering, immutable render digests,
    BytePort/NanoVMS handoff types, Podman/Apple/WSL backend modeling, and WSLC
-   resolution. It still lacks a tested authenticated transport bridge; the
-   bridge-contract agent is implementing that bounded slice separately.
+   resolution. Commit `7d321de` now adds a serializable deterministic bridge
+   DTO and fixture (44 serde tests plus doctests pass); authenticated transport
+   and live readback remain open.
 4. **phenotype-infra** added the governance spine, correlation contract,
    forward-DAG/receipt documents, and a read-only capability probe. Its
    remaining repository gate is service coverage plus Markdown/Trunk and
@@ -129,10 +131,10 @@ A1 CI/security         A2 contract lock
 | --- | --- | --- | --- | ---: |
 | A0 | infra governance | none | Exact SHAs, ancestry, check counts, and preserved worktree inventory recorded. | 100% |
 | A1 | four repository owners | A0 | Every source/config failure fixed or explicitly external; exact-head CI/security rerun. | 55% |
-| A2 | infra + BytePort + PhenoCompose + NanoVMS | A0 | One lowercase `sha256:<64 hex>` digest, stable workload ID + generation, immutable artifact reference, and correlation labels tested at each boundary. | 60% |
+| A2 | infra + BytePort + PhenoCompose + NanoVMS | A0 | One lowercase `sha256:<64 hex>` digest, stable workload ID + generation, immutable artifact reference, and correlation labels tested at each boundary. | 70% |
 | B1 | four repository owners | A1, A2 | Focused tests exit 0; full checks green; approvals and required-check policy present. | 35% |
 | C1 | NanoVMS + substrate lane | B1 | Podman-only disposable run proves readiness, deploy, inspect/readback, status, labels/digest, and cleanup. WSLC/Apple remain explicit capability states. | 50% |
-| C2 | PhenoCompose + BytePort + NanoVMS | A2, C1 | Authenticated, non-test-double transport returns render digest, workload ID, provider/backend, sandbox ID, and status. | 15% |
+| C2 | PhenoCompose + BytePort + NanoVMS | A2, C1 | Authenticated, non-test-double transport returns render digest, workload ID, provider/backend, sandbox ID, and status. | 20% |
 | D1 | integration owner | C2, B1 | Append-only current-head receipt plus replay, changed-digest conflict, failed-start, and rollback evidence. | 0% |
 | D2 | PhenoCompose + substrate owners | D1 | Apple Containers and WSLC each have a positive lifecycle proof or a probe-only signed exception. | 10% |
 | E1 | infra governance/release | D1, D2 | Signed/attested artifacts, SBOM, deployment/publish rehearsal, rollback drill, and all four exact heads green. | 0% |
@@ -149,9 +151,9 @@ A1 CI/security         A2 contract lock
 
 ## Immediate next actions (ordered)
 
-1. **Finish the PhenoCompose bridge contract** and verify its exact commit
-   against the live BytePort and NanoVMS schemas; do not call a fixture a
-   transport proof.
+1. **Verify the PhenoCompose bridge contract** at `7d321de` against the live
+   BytePort and NanoVMS schemas, then add the authenticated transport/readback;
+   do not call the fixture a transport proof.
 2. **Triage BytePort's 21 failures by class**: CodeQL/coverage/SBOM/frontend
    checks first, then Trunk/Go fmt and external Sonar/Mergify. Re-run at the
    current `aec8e356` head after each bounded fix.
