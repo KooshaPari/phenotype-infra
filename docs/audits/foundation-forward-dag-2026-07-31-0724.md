@@ -154,6 +154,28 @@ E1 Publish/release
 6. Refresh exact heads, checks, ancestry, required contexts, and receipts after
    each merge. A green old SHA is not evidence for a new SHA.
 
+## Non-negotiable preconditions discovered after the snapshot
+
+- **Real authentication before C2:** BytePort's production route currently
+  constructs `AuthMiddlewareWithFallback(nil)`. Its fallback accepts only
+  synthetic `test-*`/`mock-*` tokens, so an authenticated pilot cannot pass
+  until a configured WorkOS auth service is injected, fail-closed behavior is
+  tested, and a scoped non-test token is exercised.
+- **Podman is MVP, not yet a production sandbox:** NanoVMS must validate image
+  digests, rootless/user-namespace policy, mount allowlists, environment
+  redaction, network/resource limits, deterministic digest labels, and
+  cross-process replay before E1.
+- **Release verification is currently non-cryptographic:** BytePort's
+  attestation workflows pass literal shell syntax instead of a computed
+  digest, and its verifier does not run `gh attestation verify`. PhenoCompose
+  and NanoVMS likewise lack a fail-closed artifact/SBOM/attestation verifier.
+  E1 must require non-empty expected binaries, checksums, SBOM linkage,
+  verified attestations, and rollback evidence.
+- **Ownership policy is not independent:** CODEOWNERS is effectively
+  `@KooshaPari` across the foundation and active rulesets expose weak or
+  mismatched required contexts. Add subsystem owners or an explicit
+  second-person release/security/IaC approval before publish.
+
 ## Release rule
 
 No merge, publish, deployment, or “pilot complete” claim is valid until the
