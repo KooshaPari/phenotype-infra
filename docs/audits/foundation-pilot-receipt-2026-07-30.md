@@ -10,7 +10,7 @@ addresses are recorded.
 | Component | Review surface | Exact head | Evidence |
 | --- | --- | --- | --- |
 | phenotype-infra | PR #125 | `64d33ad` (receipt parent; this update is evidence-only) | 28 success / 5 failure / 0 pending / 8 skipped; markdown-lint, Lint & Format, and IAC service coverage (10.41% vs 60%) fail; Mergify/Summary are external. |
-| BytePort | PR #318 | `8c65c49` | 44 success / 27 failure / 2 pending / 3 skipped; CodeQL, coverage, lint, cargo-deny/audit, SBOM, a11y, frontend, Sonar, and external gates remain open. Stable mesh workload `id` is now exposed. |
+| BytePort | PR #318 | `097b8ae` | Fresh push checks observed 4 success / 2 failure / 56 pending / 1 skipped; the CI fan-out is still running. Stable mesh workload `id`, same-process replay, and changed-digest conflict handling are now present; external/security gates remain open. |
 | PhenoCompose | PR #113 | `fa7ad4e` | 24 success / 10 failure / 2 pending / 4 skipped; Cargo audit/check/deny/clippy, Trunk, and external gates remain open. |
 | NanoVMS | PR #128 | `3723b47` | 13 success / 5 failure / 3 pending / 3 skipped; Trunk/configuration, Kilo, and external gates remain open. Lifecycle labels, fail-closed readiness, and status/request-ID audit evidence are now present. |
 
@@ -30,10 +30,10 @@ therefore separate from the hard release gate:
 | Exact branch ancestry and review surfaces | 10 | 10 | All four PR heads are mergeable and 0 commits behind their protected main base. |
 | CI and security convergence | 35 | 25 | Current completed-check ratios are approximately 84.8%, 62.0%, 70.6%, and 72.2%; required failures remain. |
 | Runtime probes and substrate adapters | 15 | 9 | Podman smoke plus Apple/WSL host probes exist; current-head adapter wiring is incomplete. |
-| Provider-neutral reconciliation | 15 | 6 | BytePort validates desired intent and now exposes a stable persisted workload ID; idempotency, generation, and reconciliation transport remain unimplemented. |
+| Provider-neutral reconciliation | 15 | 8 | BytePort validates desired intent, exposes a stable persisted workload ID, and now tests same-process replay/conflict behavior; cross-process uniqueness, generation, and execution reconciliation remain unimplemented. |
 | Cross-component pilot | 15 | 3 | Separate component smokes exist; no authenticated three-hop transaction or complete receipt exists. |
 | Governance, ownership, and evidence | 10 | 9 | Ownership matrix, correlation contract, and this exact-head receipt are present; historical ADR/provider inventory debt remains. |
-| **Progress score** | **100** | **62** | Capability progress only; not a merge or release decision. |
+| **Progress score** | **100** | **64** | Capability progress only; not a merge or release decision. BytePort's new-head checks are still pending. |
 
 **Strict release gate: 0/4 exact heads green.** The score must not be read as
 publication readiness; all required checks, review approvals, and the live
