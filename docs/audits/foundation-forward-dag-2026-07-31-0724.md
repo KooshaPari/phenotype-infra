@@ -210,3 +210,43 @@ composition digest, artifact reference, BytePort intent ID, Nano correlation
 ID, provider/backend, status, and UTC timestamps. Provider expansion is an
 adapter matrix behind the same desired-state contract, not a reason to bypass
 the foundation gates.
+
+## Exact-head refresh: 2026-08-01 09:02-09:10 UTC
+
+This refresh supersedes the older snapshot rows above for triage, while
+preserving their history. The values below were read from the live pull
+requests and their completed check rollups; a failure count is not a release
+approval.
+
+| Repository / PR | Exact head | State | Completed rollup | Blocking evidence |
+| --- | --- | --- | --- | --- |
+| BytePort #318 | `e6e684babe257e311678572db746487ed42527fc` | draft, blocked, review required | 56 success / 17 failure / 3 skipped | SBOM x2, Rust/Go coverage, lint/trunk, a11y/snapshots, npm audit, semver, Sonar; CodeQL default setup was disabled because advanced CodeQL is the authoritative workflow. |
+| PhenoCompose #113 | `960a839c869bed7c9b248eb868871675ed7bb3e3` | draft, unstable | 26 success / 9 failure / 4 skipped | Root audit passes but the rust-ffi audit target has no lockfile; three unused serializers fail `-D warnings`; Android lane lacks `aarch64-linux-android-clang`; lint remains red. |
+| NanoVMS #128 | `808beac1ee6cdb47aa62f32697c1fbe9e9114af4` | ready, blocked, review required | 16 success / 3 failure / 3 skipped | Repository gates are otherwise green; SonarCloud and Mergify/Summary remain external/policy blockers. Canceled jobs are not treated as green. |
+| phenotype-infra #125 | `c4c6592bf1489837888b8b1af664187eb563439e` | draft, blocked, review required | 28 success / 5 failure / 8 skipped | Trunk/actionlint configuration, broad markdown baseline, and real IaC workspace coverage (10.41% vs 60%) remain red. |
+
+### Substrate probe evidence
+
+| Probe | Result | Interpretation |
+| --- | --- | --- |
+| NanoVMS `go test ./pkg/runtime ./pkg/orchestrate` | pass | Deterministic backend matrix, selection, digest handoff, and orchestration unit surface is locally healthy. |
+| NanoVMS `go run ./cmd/nanovms` on the Windows host | `Platform: windows \| VM Tier: wsl \| Sandbox: none` | Host auto-selection is observable; this is not a workload readiness receipt. |
+| Podman shim | present at `C:\Python313\podman.bat`, forwards to `podman-machine-default` | The command did not return within the bounded probe window; no Podman lifecycle claim is made. |
+| WSL service | `WslService` and `vmcompute` running | `wsl --list --verbose` timed out; distro/readiness remains unverified. |
+| Apple Containers | not reachable from this Windows host | Record as capability-gated/unproven until a macOS lane supplies a positive probe. |
+
+These observations leave C1/C2/D1/E1 open. They are an evidence refresh, not a
+merge, deployment, or pilot-complete claim.
+
+## Follow-up head refresh: 2026-08-01 09:13 UTC
+
+Two component PRs advanced after the preceding table. The authoritative heads
+are now:
+
+| Repository / PR | New exact head | Change since prior refresh | Current release implication |
+| --- | --- | --- | --- |
+| PhenoCompose #113 | `84510c24aa5f4b48c6ef7d0a8ec70656485a8dec` | Audit targets now use the committed root lockfile, Android setup exports the NDK clang toolchain, and serde-only serializer helpers are feature-gated. | CI is still settling; stable rustfmt diffs remain a separate gate. |
+| NanoVMS #128 | `b2845c4442b853f4a94b5a73a858e4becb498ca9` | Removed duplicated sandbox test fixture lines and replaced unavailable `blacksmith-2vcpu-ubuntu-2204` labels with hosted runners. | SonarCloud quality gate is now green; hosted CI, Mergify, and review are still open. |
+
+The earlier rows remain intentionally unchanged as an audit trail; no exact
+head is promoted until its own current checks and required approval are green.
