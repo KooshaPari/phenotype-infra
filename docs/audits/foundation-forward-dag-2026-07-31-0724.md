@@ -250,3 +250,20 @@ are now:
 
 The earlier rows remain intentionally unchanged as an audit trail; no exact
 head is promoted until its own current checks and required approval are green.
+
+## Current-head refresh: 2026-08-01 23:48 UTC
+
+This additive refresh records the heads after the focused remediation passes.
+Hosted checks were still queued at capture time; local evidence is explicitly
+separated from release evidence.
+
+| Repository / PR | Exact head | Local evidence at refresh | Hosted release state |
+| --- | --- | --- | --- |
+| BytePort #318 | `1159b8175be9542226237d4b471f46c9373b7bd8` | 48/48 Playwright snapshots and 12/12 axe cases pass against the production preview; npm audit is 0 high/moderate. | Fresh gate/golangci/links/Semgrep checks queued; Sonar CPD rerun queued after targeted fixture exclusion; draft/review required. |
+| PhenoCompose #113 | `04d226226f49e83e5908f429705188f3735f1dae` | Nightly fmt check, workspace clippy `-D warnings`, and locked workspace check pass locally. | Fresh hosted matrix queued; prior macOS/Linux checks are superseded and not counted. |
+| NanoVMS #128 | `b2845c4442b853f4a94b5a73a858e4becb498ca9` | Existing runtime/orchestration unit evidence remains passing. | Repository checks green except external Mergify/Summary policy; review remains required. |
+| phenotype-infra #125 | `c5fefbca66f5eecc112812639234b1c4a4491478` | Exact-head DAG and substrate probe record published. | Trunk/markdown/IaC coverage and policy gates remain open; draft/review required. |
+
+The new BytePort and PhenoCompose heads are not promoted by this table: a
+current green local run cannot substitute for exact-head hosted gates, policy,
+approval, or the still-unproven C1/C2/D1 pilot receipts.
