@@ -393,6 +393,13 @@ async fn imessage_send(body: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{Mutex, OnceLock};
+    use tokio::net::TcpListener;
+
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
 
     #[test]
     fn test_expand_tilde() {
@@ -501,5 +508,63 @@ mod tests {
             let hint = v.recovery_hint();
             assert!(!hint.is_empty(), "empty recovery hint for {v:?}");
         }
+    }
+
+    fn temp_path(name: &str) -> PathBuf {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("oci-post-main-{name}-{nonce}"))
+    }
+
+    #[tokio::test]
+    async fn read_instance_reads_valid_json_and_rejects_invalid_files() {
+        let path = temp_path("instance.json");
+        tokio::fs::write(
+            &path,
+            br#"{"instance_ocid":"ocid1.test","region":"us-test-1","ad":"AD-1","public_ip":"198.51.100.30","acquired_at":"2026-08-02T00:00:00Z"}"#,
+        )
+        .await
+        .unwrap();
+        let inst = read_instance(path.to_str().unwrap()).await.unwrap();
+        assert_eq!(inst.instance_ocid, "ocid1.test");
+        tokio::fs::write(&path, b"not-json").await.unwrap();
+        assert!(read_instance(path.to_str().unwrap()).await.is_err());
+        assert!(
+            read_instance(temp_path("missing.json").to_str().unwrap())
+                .await
+                .is_err()
+        );
+        let _ = tokio::fs::remove_file(path).await;
+    }
+
+    #[tokio::test]
+    async fn wait_for_ssh_succeeds_for_listener_and_times_out_for_closed_port() {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let task = tokio::spawn(async move {
+            let _ = listener.accept().await;
+        });
+        wait_for_ssh("127.0.0.1", port, 1).await.unwrap();
+        task.await.unwrap();
+
+        let err = wait_for_ssh("127.0.0.1", 0, 0).await.unwrap_err();
+        assert!(err.to_string().contains("SSH unreachable"));
+    }
+
+    #[tokio::test]
+    async fn imessage_send_reports_missing_cli() {
+        let _guard = env_lock();
+        let prior = std::env::var_os("PATH");
+        let isolated = temp_path("path");
+        tokio::fs::create_dir_all(&isolated).await.unwrap();
+        unsafe { std::env::set_var("PATH", &isolated) };
+        let err = imessage_send("coverage test").await.unwrap_err();
+        assert!(err.to_string().contains("agent-imessage"));
+        if let Some(value) = prior {
+            unsafe { std::env::set_var("PATH", value) };
+        }
+        let _ = tokio::fs::remove_dir_all(isolated).await;
     }
 }

@@ -50,16 +50,19 @@ pub async fn list_availability_domains(cfg: &Config, region: &str) -> Result<Vec
         ));
     }
     let v: Value = serde_json::from_slice(&out.stdout)?;
-    let names = v
-        .get("data")
+    let names = parse_ad_names(&v);
+    Ok(names)
+}
+
+fn parse_ad_names(v: &Value) -> Vec<String> {
+    v.get("data")
         .and_then(|d| d.as_array())
         .map(|arr| {
             arr.iter()
                 .filter_map(|e| e.get("name").and_then(|n| n.as_str().map(String::from)))
                 .collect::<Vec<_>>()
         })
-        .unwrap_or_default();
-    Ok(names)
+        .unwrap_or_default()
 }
 
 /// Attempt to launch an A1.Flex instance in the given region/AD.
@@ -132,10 +135,7 @@ pub async fn try_launch(cfg: &Config, region: &str, ad_name: &str) -> Result<Lau
 
     if out.status.success() {
         let v: Value = serde_json::from_str(&stdout).unwrap_or(Value::Null);
-        let ocid = v
-            .pointer("/data/id")
-            .and_then(|n| n.as_str())
-            .map(String::from);
+        let ocid = parse_instance_id(&v);
         return Ok(LaunchOutcome {
             success: ocid.is_some(),
             instance_ocid: ocid,
@@ -145,12 +145,7 @@ pub async fn try_launch(cfg: &Config, region: &str, ad_name: &str) -> Result<Lau
         });
     }
 
-    let lower = stderr.to_ascii_lowercase();
-    let out_of_capacity = lower.contains("out of host capacity")
-        || lower.contains("outofhostcapacity")
-        || lower.contains("internalerror")
-        || lower.contains("toomanyrequests")
-        || lower.contains("limitexceeded");
+    let out_of_capacity = is_out_of_capacity(stderr.as_str());
 
     Ok(LaunchOutcome {
         success: false,
@@ -193,9 +188,91 @@ pub async fn instance_public_ip(
         return Ok(None);
     }
     let v: Value = serde_json::from_slice(&out.stdout)?;
-    let ip = v
-        .pointer("/data/0/public-ip")
-        .and_then(|n| n.as_str())
-        .map(String::from);
+    let ip = parse_public_ip(&v);
     Ok(ip)
+}
+
+fn parse_instance_id(v: &Value) -> Option<String> {
+    v.pointer("/data/id")
+        .and_then(|n| n.as_str())
+        .map(String::from)
+}
+
+fn parse_public_ip(v: &Value) -> Option<String> {
+    v.pointer("/data/0/public-ip")
+        .and_then(|n| n.as_str())
+        .map(String::from)
+}
+
+fn is_out_of_capacity(stderr: &str) -> bool {
+    let lower = stderr.to_ascii_lowercase();
+    lower.contains("out of host capacity")
+        || lower.contains("outofhostcapacity")
+        || lower.contains("internalerror")
+        || lower.contains("toomanyrequests")
+        || lower.contains("limitexceeded")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_ad_names_keeps_named_entries_only() {
+        let v = serde_json::json!({
+            "data": [
+                {"name": "AD-1"},
+                {"id": "without-name"},
+                {"name": 7},
+                {"name": "AD-3"}
+            ]
+        });
+        assert_eq!(parse_ad_names(&v), vec!["AD-1", "AD-3"]);
+        assert!(parse_ad_names(&serde_json::json!({"data": null})).is_empty());
+        assert!(parse_ad_names(&serde_json::json!({})).is_empty());
+    }
+
+    #[test]
+    fn parse_instance_id_and_public_ip_require_expected_shapes() {
+        let v = serde_json::json!({
+            "data": {
+                "id": "ocid1.instance.test"
+            }
+        });
+        assert_eq!(
+            parse_instance_id(&v).as_deref(),
+            Some("ocid1.instance.test")
+        );
+        assert_eq!(parse_instance_id(&serde_json::json!({})), None);
+
+        let v = serde_json::json!({"data": [{"public-ip": "198.51.100.7"}]});
+        assert_eq!(parse_public_ip(&v).as_deref(), Some("198.51.100.7"));
+        assert_eq!(parse_public_ip(&serde_json::json!({"data": []})), None);
+    }
+
+    #[test]
+    fn capacity_error_classifier_matches_known_cli_errors() {
+        for message in [
+            "Out of Host Capacity",
+            "OutOfHostCapacity",
+            "InternalError while launching",
+            "TooManyRequests",
+            "LimitExceeded",
+        ] {
+            assert!(is_out_of_capacity(message), "not classified: {message}");
+        }
+        assert!(!is_out_of_capacity("invalid image OCID"));
+    }
+
+    #[tokio::test]
+    async fn required_launch_configuration_is_validated_before_cli() {
+        let cfg = Config::default();
+        assert!(list_availability_domains(&cfg, "us-test-1").await.is_err());
+        assert!(try_launch(&cfg, "us-test-1", "AD-1").await.is_err());
+        assert!(
+            instance_public_ip(&cfg, "us-test-1", "ocid1.test")
+                .await
+                .is_err()
+        );
+    }
 }

@@ -94,3 +94,75 @@ pub async fn enroll(inst: &InstanceFile) -> Result<()> {
     info!(host = %inst.public_ip, "tailscale up complete");
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
+
+    fn instance() -> InstanceFile {
+        InstanceFile {
+            instance_ocid: "ocid1.test".into(),
+            region: "us_test_1".into(),
+            ad: "AD-1".into(),
+            public_ip: "198.51.100.31".into(),
+            acquired_at: "2026-08-02T00:00:00Z".into(),
+        }
+    }
+
+    #[tokio::test]
+    async fn enroll_requires_api_key_and_tailnet_configuration() {
+        let _guard = env_lock();
+        let prior_key = std::env::var_os("TS_API_KEY");
+        let prior_tailnet = std::env::var_os("TS_TAILNET");
+        unsafe {
+            std::env::remove_var("TS_API_KEY");
+            std::env::remove_var("TS_TAILNET");
+        }
+        let err = enroll(&instance()).await.unwrap_err();
+        assert!(err.to_string().contains("TS_API_KEY"));
+
+        unsafe { std::env::set_var("TS_API_KEY", "test-key") };
+        let err = enroll(&instance()).await.unwrap_err();
+        assert!(err.to_string().contains("TS_TAILNET"));
+
+        if let Some(value) = prior_key {
+            unsafe { std::env::set_var("TS_API_KEY", value) };
+        }
+        if let Some(value) = prior_tailnet {
+            unsafe { std::env::set_var("TS_TAILNET", value) };
+        }
+    }
+
+    #[test]
+    fn request_shape_is_ephemeral_and_pre_authorized() {
+        let body = CreateKeyReq {
+            capabilities: Caps {
+                devices: Devices {
+                    create: DeviceCreate {
+                        reusable: false,
+                        ephemeral: true,
+                        preauthorized: true,
+                        tags: &["tag:oci", "tag:phenotype-mesh"],
+                    },
+                },
+            },
+            expiry_seconds: 600,
+        };
+        let value = serde_json::to_value(body).unwrap();
+        assert_eq!(value["expirySeconds"], 600);
+        assert_eq!(
+            value["capabilities"]["devices"]["create"]["ephemeral"],
+            true
+        );
+        assert_eq!(
+            value["capabilities"]["devices"]["create"]["tags"][1],
+            "tag:phenotype-mesh"
+        );
+    }
+}

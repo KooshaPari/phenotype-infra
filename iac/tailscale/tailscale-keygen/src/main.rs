@@ -131,6 +131,10 @@ async fn main() -> Result<()> {
             .init();
     }
 
+    run(cli).await
+}
+
+async fn run(cli: Cli) -> Result<()> {
     if cli.api_key.is_empty() {
         bail!("TS_API_KEY is empty (set env or pass --api-key)");
     }
@@ -195,4 +199,99 @@ async fn main() -> Result<()> {
     //   AUTH_KEY=$(tailscale-keygen --tag tag:oci)
     println!("{}", parsed.key);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+
+    fn cli(base: String) -> Cli {
+        Cli {
+            api_key: "tskey-api-test".into(),
+            tailnet: "example.test".into(),
+            tags: vec!["tag:oci".into(), "tag:phenotype-mesh".into()],
+            ttl: 600,
+            api_base: base,
+            format: "text".into(),
+        }
+    }
+
+    async fn serve(status: &'static str, body: &'static str) -> String {
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request = [0u8; 8192];
+            let read = stream.read(&mut request).await.unwrap();
+            let request = String::from_utf8_lossy(&request[..read]);
+            assert!(request.starts_with("POST /api/v2/tailnet/example.test/keys"));
+            let response = format!(
+                "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).await.unwrap();
+        });
+        base
+    }
+
+    #[test]
+    fn output_format_is_case_insensitive_and_rejects_unknown_values() {
+        assert_eq!("AUTO".parse::<OutputFormat>().unwrap(), OutputFormat::Auto);
+        assert_eq!("text".parse::<OutputFormat>().unwrap(), OutputFormat::Text);
+        assert_eq!("json".parse::<OutputFormat>().unwrap(), OutputFormat::Json);
+        assert!("yaml".parse::<OutputFormat>().is_err());
+    }
+
+    #[tokio::test]
+    async fn run_mints_key_from_successful_api_response() {
+        let base = serve("200 OK", r#"{"key":"tskey-auth-test"}"#).await;
+        run(cli(base)).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn run_reports_api_and_empty_key_errors() {
+        let failure = serve("403 Forbidden", r#"{"message":"denied"}"#).await;
+        let err = run(cli(failure)).await.unwrap_err();
+        assert!(err.to_string().contains("403"));
+
+        let empty = serve("200 OK", r#"{"key":""}"#).await;
+        let err = run(cli(empty)).await.unwrap_err();
+        assert!(err.to_string().contains("empty key"));
+    }
+
+    #[tokio::test]
+    async fn run_validates_required_arguments_before_network() {
+        let mut empty_key = cli("http://127.0.0.1:1".into());
+        empty_key.api_key.clear();
+        assert!(
+            run(empty_key)
+                .await
+                .unwrap_err()
+                .to_string()
+                .contains("TS_API_KEY")
+        );
+
+        let mut empty_tailnet = cli("http://127.0.0.1:1".into());
+        empty_tailnet.tailnet.clear();
+        assert!(
+            run(empty_tailnet)
+                .await
+                .unwrap_err()
+                .to_string()
+                .contains("TS_TAILNET")
+        );
+
+        let mut empty_tags = cli("http://127.0.0.1:1".into());
+        empty_tags.tags.clear();
+        assert!(
+            run(empty_tags)
+                .await
+                .unwrap_err()
+                .to_string()
+                .contains("at least one")
+        );
+    }
 }

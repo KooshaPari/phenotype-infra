@@ -201,3 +201,133 @@ mod which {
         Err(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use std::sync::{Mutex, OnceLock};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
+
+    fn temp_dir(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("oci-lottery-hooks-{name}-{nonce}"))
+    }
+
+    fn instance() -> AcquiredInstance {
+        AcquiredInstance {
+            instance_ocid: "ocid1.test".into(),
+            region: "us-test-1".into(),
+            ad: 1,
+            public_ip: Some("198.51.100.8".into()),
+            acquired_at: Utc::now(),
+        }
+    }
+
+    #[tokio::test]
+    async fn fire_all_is_failsoft_when_optional_integrations_are_absent() {
+        let _guard = env_lock();
+        let key = "OCI_LOTTERY_WEBHOOK_URL";
+        let prior = std::env::var_os(key);
+        let prior_path = std::env::var_os("PATH");
+        let isolated_path = temp_dir("path");
+        tokio::fs::create_dir_all(&isolated_path).await.unwrap();
+        // The test only exercises the documented no-webhook/no-repo/no-hook path.
+        unsafe { std::env::remove_var(key) };
+        unsafe { std::env::set_var("PATH", &isolated_path) };
+        fire_all(&instance(), None).await;
+        if let Some(value) = prior {
+            unsafe { std::env::set_var(key, value) };
+        }
+        if let Some(value) = prior_path {
+            unsafe { std::env::set_var("PATH", value) };
+        }
+        let _ = tokio::fs::remove_dir_all(isolated_path).await;
+    }
+
+    #[tokio::test]
+    async fn mesh_state_update_creates_and_commits_document() {
+        let repo = temp_dir("mesh");
+        tokio::fs::create_dir_all(&repo).await.unwrap();
+        let status = Command::new("git")
+            .args(["init", "-q"])
+            .arg(&repo)
+            .status()
+            .await
+            .unwrap();
+        assert!(status.success());
+        for (key, value) in [
+            ("user.name", "coverage-test"),
+            ("user.email", "coverage@test.invalid"),
+        ] {
+            assert!(
+                Command::new("git")
+                    .args(["-C", repo.to_str().unwrap(), "config", key, value])
+                    .status()
+                    .await
+                    .unwrap()
+                    .success()
+            );
+        }
+        update_compute_mesh_state(&repo, &instance()).await.unwrap();
+        let doc = tokio::fs::read_to_string(repo.join("docs/governance/compute-mesh-state.md"))
+            .await
+            .unwrap();
+        assert!(doc.contains("Status: ACQUIRED"));
+        assert!(doc.contains("ocid1.test"));
+        let log = Command::new("git")
+            .args(["-C", repo.to_str().unwrap(), "log", "-1", "--pretty=%s"])
+            .output()
+            .await
+            .unwrap();
+        assert!(String::from_utf8_lossy(&log.stdout).contains("OCI A1.Flex acquired"));
+        let _ = tokio::fs::remove_dir_all(repo).await;
+    }
+
+    #[tokio::test]
+    async fn post_acquire_hook_is_a_noop_when_not_installed() {
+        let _guard = env_lock();
+        let prior = std::env::var_os("HOME");
+        let prior_path = std::env::var_os("PATH");
+        let home = temp_dir("home");
+        let isolated_path = temp_dir("path");
+        tokio::fs::create_dir_all(&home).await.unwrap();
+        tokio::fs::create_dir_all(&isolated_path).await.unwrap();
+        unsafe { std::env::set_var("HOME", &home) };
+        unsafe { std::env::set_var("PATH", &isolated_path) };
+        run_post_acquire_hook(&instance()).await.unwrap();
+        if let Some(value) = prior {
+            unsafe { std::env::set_var("HOME", value) };
+        }
+        if let Some(value) = prior_path {
+            unsafe { std::env::set_var("PATH", value) };
+        }
+        let _ = tokio::fs::remove_dir_all(home).await;
+        let _ = tokio::fs::remove_dir_all(isolated_path).await;
+    }
+
+    #[test]
+    fn which_finds_files_on_path_and_rejects_missing_names() {
+        let _guard = env_lock();
+        let dir = temp_dir("which");
+        std::fs::create_dir_all(&dir).unwrap();
+        let tool = dir.join("tool");
+        std::fs::write(&tool, b"stub").unwrap();
+        let prior = std::env::var_os("PATH");
+        unsafe { std::env::set_var("PATH", &dir) };
+        assert_eq!(which::which("tool").unwrap(), tool);
+        assert!(which::which("missing").is_err());
+        if let Some(value) = prior {
+            unsafe { std::env::set_var("PATH", value) };
+        }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+}
