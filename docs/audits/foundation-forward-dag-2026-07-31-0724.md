@@ -310,3 +310,19 @@ hosted evidence. Queued is intentionally recorded as pending, not green.
 These runs are evidence collection only. C1/C2/D1/E1 remain open until the
 exact heads have completed required checks and the authenticated pilot and
 substrate receipts exist.
+
+### Read-only substrate capability refresh (2026-08-02 01:28 UTC)
+
+The exact-head capability probe was run on `fafc993` with credentials and
+runtime state untouched. It distinguishes command presence from lifecycle
+readiness.
+
+| Substrate | Status | Evidence |
+| --- | --- | --- |
+| Podman | installed_unavailable | `C:\Python313\podman.bat` is present; the read-only probe skipped shim invocation. A separate bounded machine-start probe still hits WSL `0x800705b4`. |
+| First-party WSL Containers | available | `C:\Program Files\WSL\container.exe`, `wslc 2.9.3.0`. |
+| WSL host | available | `C:\Program Files\WSL\wsl.exe`; FedoraLinux-44 default WSL 2 distribution. |
+| Apple Containers | not probed on this Windows host | Requires the currently unreachable macOS lane. |
+
+This is positive adapter evidence for WSL Containers, not a Podman workload
+readiness or C1/C2 pilot receipt.
