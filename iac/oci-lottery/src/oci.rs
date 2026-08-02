@@ -8,6 +8,11 @@ use tokio::process::Command;
 
 use crate::config::Config;
 
+fn oci_cli() -> Command {
+    let program = std::env::var_os("OCI_CLI_BIN").unwrap_or_else(|| "oci".into());
+    Command::new(program)
+}
+
 #[derive(Debug)]
 pub struct LaunchOutcome {
     /// True when capacity was granted (instance OCID returned).
@@ -27,7 +32,7 @@ pub async fn list_availability_domains(cfg: &Config, region: &str) -> Result<Vec
         .as_deref()
         .ok_or_else(|| anyhow!("compartment_ocid not set"))?;
 
-    let out = Command::new("oci")
+    let out = oci_cli()
         .args([
             "iam",
             "availability-domain",
@@ -96,7 +101,7 @@ pub async fn try_launch(cfg: &Config, region: &str, ad_name: &str) -> Result<Lau
         })?;
     let metadata = serde_json::json!({ "ssh_authorized_keys": ssh_key.trim() }).to_string();
 
-    let out = Command::new("oci")
+    let out = oci_cli()
         .args([
             "compute",
             "instance",
@@ -167,7 +172,7 @@ pub async fn instance_public_ip(
         .as_deref()
         .ok_or_else(|| anyhow!("compartment_ocid not set"))?;
 
-    let out = Command::new("oci")
+    let out = oci_cli()
         .args([
             "compute",
             "instance",
