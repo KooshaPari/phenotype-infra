@@ -525,3 +525,29 @@ The pilot still used disposable BytePort fallback auth and a static NanoVMS
 test token; production WorkOS credentials, deployed service identities,
 Tailscale transport, provider adapters, hosted gates, and rollback remain
 separate release requirements.
+
+### Native container capability-probe receipt (2026-08-02 03:52 UTC)
+
+NanoVMS PR #128 commit `b0722a7` corrects the provider-neutral runtime probe
+commands for the non-Podman substrate lanes. The probe remains read-only,
+bounded to two seconds, and does not enable a backend merely because its binary
+exists. Existing `Runner` embedders remain compatible; an argument-aware hook
+now permits exact command assertions.
+
+| Backend | Probe executable candidates | Probe arguments | Lifecycle state |
+| --- | --- | --- | --- |
+| Podman | `podman` | `--version` | enabled and separately lifecycle-tested |
+| Apple Containers | `container` | `system version --format json` | probe-only; positive Mac receipt pending |
+| WSL Containers | `container.exe`, `wslc.exe` | `version` | probe-only; positive WSLC receipt pending |
+
+| Verification | Result |
+| --- | --- |
+| `go test ./pkg/runtime -count=1 -v` at `b0722a7` | exit `0` |
+| `go vet ./pkg/runtime` at `b0722a7` | exit `0` |
+| `go test ./... -count=1` at `b0722a7` | exit `0` on Windows |
+
+The Apple command shape follows the upstream [`container system version` command
+reference](https://github.com/apple/container/blob/main/docs/command-reference.md),
+and the WSL command shape follows the first-party [`wslc version` tutorial](https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-containers).
+This closes command-discovery correctness while preserving fail-closed probe-only
+status until Mac and WSLC lifecycle tests are reachable.
