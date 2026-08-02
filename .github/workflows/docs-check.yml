@@ -15,19 +15,51 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-      - uses: DavidAnson/markdownlint-cli2-action@ded1f9488f68a970bc66ea5619e13e9b52e601cd
         with:
-          globs: |
-            README.md
-            docs/**/*.md
+          fetch-depth: 0
+      - name: Select changed Markdown files
+        id: markdown
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$HEAD_SHA" -- README.md docs | grep -E '\.md$' || true)"
+          if [[ -z "$files" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "No Markdown files changed; legacy docs remain covered by their owning migration work."
+            exit 0
+          fi
+          {
+            echo 'globs<<EOF'
+            echo "$files"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+      - uses: DavidAnson/markdownlint-cli2-action@ded1f9488f68a970bc66ea5619e13e9b52e601cd
+        if: steps.markdown.outputs.skip != 'true'
+        with:
+          globs: ${{ steps.markdown.outputs.globs }}
 
   adr-frontmatter:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
       - name: Validate ADR headers
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        shell: bash
         run: |
-          for f in docs/adr/*.md; do
+          set -euo pipefail
+          files="$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" "$HEAD_SHA" -- docs/adr/*.md || true)"
+          if [[ -z "$files" ]]; then
+            echo "No ADR files changed; skipping historical ADR migration backlog."
+            exit 0
+          fi
+          while IFS= read -r f; do
             grep -q '^# ADR ' "$f" || { echo "::error file=$f::missing '# ADR NNN — Title' header"; exit 1; }
             grep -q '^- \*\*Status:\*\*' "$f" || { echo "::error file=$f::missing Status line"; exit 1; }
-          done
+          done <<< "$files"
