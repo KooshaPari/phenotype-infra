@@ -46,5 +46,6 @@ Filter via `RUST_LOG=info,oci_lottery=debug`.
 `.github/workflows/observability-smoke.yml` runs `cargo test -p
 phenotype-infra-observability` on every push to the T22 branch and on PR.
 The smoke test does NOT spin up an OTel collector (no OtlpAdapter yet);
-once the substrate adds one, expand the workflow with a `docker run
-otel/opentelemetry-collector` step.
+once the substrate adds one, expand the workflow with a Podman-backed
+`podman run otel/opentelemetry-collector` step (or the selected native
+container adapter), never requiring a Docker daemon.
