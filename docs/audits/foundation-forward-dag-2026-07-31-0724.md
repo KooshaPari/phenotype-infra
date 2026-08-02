@@ -398,3 +398,20 @@ were discarded.
 
 These commits remove the GitHub conflict gate but do not waive required
 review, Mergify/Summary policy, or hosted CI completion.
+
+### Hosted-gate classification and workflow syntax receipt (2026-08-02 02:52 UTC)
+
+The latest published heads are mergeable but intentionally not release-ready:
+
+| Repository / PR | Exact head | Mergeability | Completed failures | Pending gate |
+| --- | --- | --- | --- | --- |
+| PhenoCompose #113 | `582929bb553e8f0e865f92e1a85700a3c8d8f82f` | mergeable / blocked | Mergify, Summary, SonarCloud | review plus 23 queued checks |
+| BytePort #318 | `0dc859366a2c98503976045e07a741bb8ea447f2` | mergeable / blocked | Mergify, Summary | review plus 50 queued and 2 in-progress checks |
+| NanoVMS #128 | `d5920941e2bd04178f4111dc0f9cce723fcff460` | mergeable / blocked | Mergify, Summary, SonarCloud | review plus 4 queued checks |
+| phenotype-infra #125 | `a853ffe218e6c1eea5179d50d314051146127eb1` | mergeable / blocked | Mergify, Summary, SonarCloud | review plus 18 queued checks |
+
+BytePort's follow-up CI correction (`0dc8593`) is actionlint-clean: the
+detector no longer reads its own step outputs during execution, all
+`GITHUB_OUTPUT` writes are safely quoted, and the aggregate gate references
+the actual `dep-review` job. NanoVMS' reconciled workflow is also actionlint-
+clean. These are syntax and configuration receipts, not hosted pass claims.
