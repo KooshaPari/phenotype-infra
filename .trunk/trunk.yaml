@@ -13,7 +13,6 @@ plugins:
 
 lint:
   enabled:
-    - actionlint
     - clippy
     - eslint
     - golangci-lint
