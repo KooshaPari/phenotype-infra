@@ -14,7 +14,7 @@
 param(
     [switch] $Json,
     [ValidateRange(1, 30)]
-    [int] $TimeoutSeconds = 5
+    [int] $TimeoutSeconds = 10
 )
 
 $ErrorActionPreference = "Stop"
@@ -183,9 +183,16 @@ $containerPath = if ($containerCommand) {
 }
 if ($containerCommand -and $onWindows -and ($containerPath -match "[\\/]WSL[\\/]container\.exe$")) {
     Add-SubstrateResult -Results $results -Name "wsl-containers" -CommandName "container" -ArgumentLine "--version" -TimeoutMs $timeoutMs
+    # Version output proves only that the CLI is installed. A separate
+    # read-only image-list probe distinguishes an initialized runtime from a
+    # CLI whose backend currently returns E_FAIL or another readiness error.
+    Add-SubstrateResult -Results $results -Name "wsl-containers-runtime" -CommandName "container" -ArgumentLine "image list" -TimeoutMs $timeoutMs
 }
 else {
     Add-SubstrateResult -Results $results -Name "apple-containers" -CommandName "container" -ArgumentLine "--version" -TimeoutMs $timeoutMs
+    if ($containerCommand -and -not $onWindows) {
+        Add-SubstrateResult -Results $results -Name "apple-containers-runtime" -CommandName "container" -ArgumentLine "list" -TimeoutMs $timeoutMs
+    }
 }
 
 if ($onWindows) {
