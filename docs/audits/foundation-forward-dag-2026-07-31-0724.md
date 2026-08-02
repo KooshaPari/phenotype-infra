@@ -570,3 +570,22 @@ run family `307317392xx`; no hosted green claim is made here. Mergify/Summary
 remain externally blocked by invalid legacy rules on `main` (invalid bot-login,
 `age>=30d`, `post_merge`, and `github_accounts` schema), and review approval is
 still required.
+
+### Dependency-alert remediation slice (2026-08-02 04:16 UTC)
+
+The authenticated Dependabot inventory for the phenotype-infra default branch
+reported 64 open alerts: 28 critical, 16 high, 19 moderate, and 1 low. The
+critical set is repeated `golang.org/x/crypto` findings across four vendored
+BytePort/NanoVMS module trees; the web lockfiles also carried vulnerable
+PostCSS and brace-expansion entries.
+
+Commit `01eb722` stages the first remediation slice on this PR: all four Go
+module trees now require `golang.org/x/crypto v0.52.0` (with tidy-derived sums),
+and both npm/yarn lockfiles now resolve PostCSS `8.5.12` and
+brace-expansion `2.1.3`. BytePort backend tests pass; `go mod tidy` completes
+for all four modules; production `npm audit` reports zero vulnerabilities and
+the lockfile parses as valid JSON. The full NanoVMS/Demonstrator/Provisioner
+test path is still blocked by the pre-existing Spin SDK export-comment failure
+under Go 1.25, so no broad release-green claim is made. Dependabot will remain
+non-zero until this PR is reviewed and merged and GitHub rescans the default
+branch.
