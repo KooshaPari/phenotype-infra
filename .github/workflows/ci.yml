@@ -99,7 +99,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo-deny check
-        uses: EmbarkStudios/cargo-deny-action@v1
+        uses: EmbarkStudios/cargo-deny-action@v2
         with:
           arguments: --all-features
 
@@ -318,8 +318,10 @@ jobs:
             echo "Trunk not configured (no trunk.yaml + .trunk/) — skipping"
             exit 0
           fi
-      - uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1
+      - uses: trunk-io/trunk-action@22e948f7bb9f870bc6c42625585f1ef27e9c5afc # v1.0.4
         if: hashFiles('trunk.yaml', '.trunk/trunk.yaml') != ''
+        with:
+          cache: false
 
   # ===========================================================================
   # STAGE 5: Aggregation gate for branch protection
