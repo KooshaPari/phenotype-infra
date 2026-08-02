@@ -415,3 +415,21 @@ detector no longer reads its own step outputs during execution, all
 `GITHUB_OUTPUT` writes are safely quoted, and the aggregate gate references
 the actual `dep-review` job. NanoVMS' reconciled workflow is also actionlint-
 clean. These are syntax and configuration receipts, not hosted pass claims.
+
+### Podman command-deadline hardening receipt (2026-08-02 03:05 UTC)
+
+NanoVMS PR #128 now includes `a99f9b7`, which bounds Podman readiness and
+lifecycle commands at ten seconds while honoring shorter caller deadlines. A
+portable subprocess regression test proves a stalled command fails closed with
+a deterministic timeout error.
+
+| Verification lane | Result |
+| --- | --- |
+| Windows host, `go test ./...` at `a99f9b7` | exit `0` |
+| FedoraLinux-44 WSL, `go test ./...` at `a99f9b7` | exit `1`; four pre-existing `pkg/orchestrate` environment tests fail around CUDA/WSL toolkit and Harbor lock expectations |
+| FedoraLinux-44 WSL, `go test ./internal/adapters/podman` | exit `0`, including timeout regression |
+| Native Podman readiness probe | `podman --version` succeeds; `podman info` can still time out, now bounded by the adapter |
+
+The WSL failures are recorded as environment evidence, not attributed to the
+timeout patch. A live authenticated C1/C2 transaction remains unclaimed until
+the runtime readiness probe and service receipts both succeed.
