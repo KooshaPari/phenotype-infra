@@ -306,6 +306,9 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has_trunk == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -322,6 +325,7 @@ jobs:
         if: hashFiles('trunk.yaml', '.trunk/trunk.yaml') != ''
         with:
           cache: false
+          setup-deps: true
 
   # ===========================================================================
   # STAGE 5: Aggregation gate for branch protection
