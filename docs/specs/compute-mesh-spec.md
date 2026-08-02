@@ -22,7 +22,7 @@ Full topology of the 7-node Phenotype compute mesh. Authoritative source for nod
 
 ## Network segmentation
 
-```
+```text
                      ┌─────────────────────┐
                      │  Cloudflare Edge    │ (cf-edge)
                      │  tunnel + workers   │

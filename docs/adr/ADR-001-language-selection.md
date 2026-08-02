@@ -28,12 +28,15 @@ The project currently uses Go, but we need to evaluate if a language switch or m
 ### Option A: Go (Current)
 
 **Pros**:
+
 - Industry standard for containers (runc, containerd, Docker)
 - Large ecosystem for orchestration and cloud-native tools
 - Easy deployment and cross-compilation
 - Strong async runtime (goroutines)
 
+
 **Cons**:
+
 - GC pauses affect latency-sensitive operations
 - 2x slower container creation than Rust youki
 - Higher memory overhead than Rust/Zig
@@ -41,13 +44,16 @@ The project currently uses Go, but we need to evaluate if a language switch or m
 ### Option B: Rust
 
 **Pros**:
+
 - Dominates VMM space (Firecracker, Cloud Hypervisor, crosvm)
 - Leading WASM runtime (Wasmtime)
 - Memory safety without GC (critical for security)
 - 2x faster than Go for container operations
 - rust-vmm project provides shared components
 
+
 **Cons**:
+
 - Steeper learning curve
 - Longer compile times
 - Smaller talent pool than Go
@@ -55,16 +61,19 @@ The project currently uses Go, but we need to evaluate if a language switch or m
 ### Option C: Zig (Preferred for Low-Level)
 
 **Pros**:
+
 - **No hidden control flow** — explicit error handling, no hidden allocations
-- ** comptime** — compile-time code execution for zero-cost abstractions
-- ** comptime generics** — pattern matching at compile time
+- **comptime** — compile-time code execution for zero-cost abstractions
+- **comptime generics** — pattern matching at compile time
 - **Better C interop** — drop-in replacement for C, easy syscall access
 - **Simpler than Rust** — easier learning curve, no borrow checker
 - **Debuggable binaries** — no LLVM overhead in debug builds
 - **Minimal runtime** — perfect for embedded/kernel-level work
 - **Explicit memory** — you know exactly when/where allocations happen
 
+
 **Cons**:
+
 - Ecosystem younger than Rust (but growing rapidly)
 - Smaller standard library — needs more external dependencies
 - Less production VMM adoption (but that means opportunity)
