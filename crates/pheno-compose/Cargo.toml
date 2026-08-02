@@ -21,8 +21,8 @@ serde_json = { workspace = true }
 
 [features]
 default = ["nvms"]
-nvms = []  # Enable NVMS backend (nvms-ffi is always a dep for error types)
-mock = []  # Use mock backend for testing
+nvms = []          # Enable NVMS backend (nvms-ffi is always a dep for error types)
+mock = []          # Use mock backend for testing
 
 [lib]
 name = "pheno_compose_driver"
