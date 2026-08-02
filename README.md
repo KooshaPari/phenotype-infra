@@ -1,3 +1,5 @@
+# phenotype-infra — Compute/Infra Consolidation Monorepo
+
 <!-- AI-DD-META:START -->
 <!-- This repository is planned, maintained, and managed by AI Agents only. -->
 <!-- Slop issues are expected and intentionally present as part of an HITL-less -->
@@ -10,9 +12,6 @@
 
 > **Work state:** SCAFFOLD · **Progress:** `█████░░░░░ 50%`
 > Compute/Infra consolidation monorepo (nanovms + PhenoCompose + BytePort). IaC validates, crates compile, but human-apply-only gate. · updated 2026-06-24
-
-# phenotype-infra — Compute/Infra Consolidation Monorepo
-
 > **Consolidation target** for nanovms (Go, 3-tier isolation) + PhenoCompose (Rust FFI + driver) + BytePort (Svelte tooling).
 
 This monorepo is created as part of the **L1-Alpha** wave of the Master DAG
@@ -28,7 +27,7 @@ separate repositories into a single polyglot workspace:
 
 ## Architecture
 
-```
+```text
 phenotype-infra/
 ├── crates/
 │   ├── nanovms-core/       # Go source → libnvms_core.a (via CGo)

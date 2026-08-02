@@ -3,7 +3,7 @@
 // Compiles Go source into a C static archive for Rust FFI linkage.
 
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
@@ -24,8 +24,6 @@ fn main() {
     let target = env::var("TARGET").unwrap_or_default();
     let go_arch = if target.contains("aarch64") || target.contains("arm64") {
         "arm64"
-    } else if target.contains("x86_64") || target.contains("amd64") {
-        "amd64"
     } else {
         "amd64"
     };
@@ -64,7 +62,7 @@ fn main() {
     println!("cargo:rerun-if-changed={}", go_src.display());
 }
 
-fn generate_stub_archive(out_dir: &PathBuf) {
+fn generate_stub_archive(out_dir: &Path) {
     // Generate an empty stub .a file so linking doesn't fail
     let stub_path = out_dir.join("libnvms_core_stub.a");
     // On Windows we need a minimal .lib stub; on Unix a .a

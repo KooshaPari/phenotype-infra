@@ -12,5 +12,4 @@ out = ["Html", "Xml", "Json"]
 output-dir = "target/tarpaulin-report"
 
 [run]
-timeout = 180
-features = "all"
+timeout = "180s"

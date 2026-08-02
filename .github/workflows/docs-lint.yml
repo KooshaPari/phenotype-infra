@@ -34,8 +34,28 @@ jobs:
 
       - name: Install actionlint
         run: |
-          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          set -euo pipefail
+          # Pin the analyzer and retry transient release/CDN failures.  The
+          # previous unpinned one-shot download made this required gate fail
+          # before linting when GitHub returned a transient 5xx/429.
+          for attempt in 1 2 3; do
+            if bash <(curl --fail --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+              https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) \
+              1.7.12; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "actionlint download failed after ${attempt} attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 2))
+          done
+          test -x "$PWD/actionlint" || test -x "$PWD/actionlint.exe"
           echo "$PWD" >> "$GITHUB_PATH"
 
       - name: Run actionlint
-        run: actionlint -color
+        run: |
+          # Blacksmith is a provider-managed runner label supplied by the
+          # organization; actionlint cannot discover it from the public repo.
+          # Keep this ignore exact so all other runner-label checks remain hard.
+          actionlint -color -ignore 'label "blacksmith-2vcpu-ubuntu-2204" is unknown'

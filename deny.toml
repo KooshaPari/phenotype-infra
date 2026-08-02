@@ -1,6 +1,7 @@
 # cargo-deny configuration for phenotype-infra monorepo
 # See https://embarkstudios.github.io/cargo-deny/
 
+[graph]
 targets = [
   { triple = "x86_64-unknown-linux-gnu" },
   { triple = "aarch64-unknown-linux-gnu" },
@@ -9,13 +10,9 @@ targets = [
 ]
 
 [advisories]
-vulnerability = "deny"
-unmaintained = "workspace"
-notice = "warn"
 ignore = []
 
 [licenses]
-unlicensed = "deny"
 allow = [
   "MIT",
   "Apache-2.0",
@@ -27,12 +24,10 @@ allow = [
   "Zlib",
   "CC0-1.0",
   "Unlicense",
+  # Used by webpki-roots; allow explicitly and retain full dependency review.
+  "CDLA-Permissive-2.0",
 ]
-deny = []
-copyleft = "deny"
-allow-osi-fsf-free = "both"
-default = "deny"
-confidence = 0.8
+confidence-threshold = 0.8
 
 [bans]
 multiple-versions = "warn"

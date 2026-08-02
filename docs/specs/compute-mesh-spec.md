@@ -22,7 +22,7 @@ Full topology of the 7-node Phenotype compute mesh. Authoritative source for nod
 
 ## Network segmentation
 
-```
+```text
                      ┌─────────────────────┐
                      │  Cloudflare Edge    │ (cf-edge)
                      │  tunnel + workers   │
@@ -80,3 +80,58 @@ Rough JSON sketch (finalize in `iac/terraform/tailscale.tf`):
 ## Rollback reference
 
 See `docs/specs/rollback-kill-switch-spec.md` for per-node disable procedures. Global kill-switch: revert all repos' `.woodpecker.yml` → `.github/workflows/` (GitHub Actions) via Git revert of the migration commit.
+
+## Provider-neutral reconciliation contract
+
+BytePort, PhenoCompose, and NanoVMS exchange a desired-state intent and
+evidence-bearing receipts. Provider adapters may change; the intent and receipt
+shape must not.
+
+### Intent invariants
+
+Every apply or reconcile request MUST include:
+
+| Field | Contract |
+|---|---|
+| `intent_id` | Stable caller-generated identifier for the requested operation. |
+| `desired_state_digest` | SHA-256 of the canonical provider-neutral desired state. |
+| `composition_digest` | SHA-256 of the immutable PhenoCompose render, when composition is involved. |
+| `correlation_id` | Trace identifier propagated unchanged across all three hops. |
+| `owner` | Owning component or tenant identity; never inferred from provider credentials. |
+| `provider` | Adapter name only; credentials and mutable provider handles are excluded. |
+| `requested_at` | UTC timestamp recorded by the initiating component. |
+
+The same `intent_id` with the same `desired_state_digest` is idempotent and
+MUST return the original outcome. Reusing an `intent_id` with a different
+digest MUST fail closed as an intent conflict. A stale observed generation MUST
+not overwrite a newer desired state.
+
+### Reconciliation phases and receipt
+
+Adapters MUST expose the phases `plan`, `apply`, `observe`, and `rollback`.
+`plan` is non-mutating. `apply` may mutate only resources owned by the adapter.
+`observe` records provider status without changing desired state. `rollback`
+is compensating action for resources created by the same intent and MUST retain
+the original receipt.
+
+Every terminal response MUST include:
+
+```yaml
+intent_id: <stable id>
+correlation_id: <trace id>
+desired_state_digest: sha256:<digest>
+composition_digest: sha256:<digest-or-null>
+provider: <adapter id>
+backend: <execution backend-or-null>
+phase: plan | apply | observe | rollback
+status: planned | applied | observed | rolled_back | failed | conflict
+started_at: <UTC>
+finished_at: <UTC>
+resource_refs: [<opaque provider references>]
+rollback_ref: <receipt id-or-null>
+error_code: <machine code-or-null>
+```
+
+Receipts are evidence, not a second state store. Provider credentials,
+secrets, and mutable resource snapshots MUST NOT appear in intents,
+composition manifests, runtime metadata, or this specification.

@@ -4,8 +4,8 @@
 //! errors and warn at the end.
 
 use crate::InstanceFile;
-use oci_helpers::expand_home;
 use anyhow::{Result, anyhow};
+use oci_helpers::expand_home;
 use tokio::process::Command;
 use tracing::{info, warn};
 
@@ -54,5 +54,73 @@ pub async fn run_dropins(dir: &str, inst: &InstanceFile) -> Result<()> {
         Ok(())
     } else {
         Err(anyhow!("{} hook(s) failed: {:?}", errors.len(), errors))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_dir(name: &str) -> std::path::PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("oci-dropins-{name}-{nonce}"))
+    }
+
+    fn instance() -> InstanceFile {
+        InstanceFile {
+            instance_ocid: "ocid1.test".into(),
+            region: "us-test-1".into(),
+            ad: "AD-1".into(),
+            public_ip: "198.51.100.20".into(),
+            acquired_at: "2026-08-02T00:00:00Z".into(),
+        }
+    }
+
+    #[tokio::test]
+    async fn missing_and_empty_hook_directories_are_noops() {
+        let missing = temp_dir("missing");
+        run_dropins(missing.to_str().unwrap(), &instance())
+            .await
+            .unwrap();
+        let empty = temp_dir("empty");
+        tokio::fs::create_dir_all(&empty).await.unwrap();
+        run_dropins(empty.to_str().unwrap(), &instance())
+            .await
+            .unwrap();
+        let _ = tokio::fs::remove_dir_all(empty).await;
+    }
+
+    #[tokio::test]
+    async fn dropins_continue_after_spawn_failure_and_report_error() {
+        let dir = temp_dir("failure");
+        tokio::fs::create_dir_all(&dir).await.unwrap();
+        // A regular text file is deliberately not executable on Unix and is
+        // not a runnable image on Windows, exercising the fail-soft branch.
+        tokio::fs::write(dir.join("01-not-runnable"), b"not a program")
+            .await
+            .unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let hook = dir.join("02-ok.sh");
+            tokio::fs::write(&hook, b"#!/bin/sh\nexit 0\n")
+                .await
+                .unwrap();
+            std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        #[cfg(windows)]
+        tokio::fs::write(dir.join("02-ok.cmd"), b"@exit /b 0\r\n")
+            .await
+            .unwrap();
+
+        let err = run_dropins(dir.to_str().unwrap(), &instance())
+            .await
+            .unwrap_err();
+        assert!(err.to_string().contains("hook(s) failed"));
+        let _ = tokio::fs::remove_dir_all(dir).await;
     }
 }
