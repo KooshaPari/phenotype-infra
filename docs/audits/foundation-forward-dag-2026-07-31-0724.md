@@ -344,3 +344,25 @@ pending on the new SHA.
 The shared Mergify base-policy repairs are published as PhenoCompose #114,
 BytePort #320, phenotype-infra #129, and NanoVMS #129; their Mergify and
 Summary checks are still in progress and require review before merge.
+
+### Native WSL Podman runtime receipt (2026-08-02 02:38 UTC)
+
+The Windows Podman Desktop machine remains unavailable, but the already-running
+`FedoraLinux-44` WSL 2 distribution has a healthy native Podman lane. The
+unrelated Fedora workload was preserved.
+
+| Receipt field | Value |
+| --- | --- |
+| Host | `FedoraLinux-44` WSL 2 |
+| Podman | `5.8.4`; `podman info` returned Linux host data successfully |
+| Image | `quay.io/podman/hello:latest` |
+| Image digest | `sha256:43de9874507eaa8ffd88eac885b672b1dfc57cc583d9ad920850f97f19809f8f` |
+| Container ID | `674a015eec4a8374afb158d49caa12d9c8fb936e4f1434ebef09578cd1b7d49a` |
+| Result | `exited`, exit code `0` |
+| Correlation labels | `phenocompose.name=phenotype-lab`, `phenocompose.sha256=69b4f35ff771775f0a8f4c32d2bcfa68b778e79da4be1aa636caed1c3a2c899e`, `nvms.backend=podman` |
+| Cleanup | Container removed after inspection |
+
+This is a real substrate receipt and a valid artifact/correlation handoff
+candidate. It is not yet an authenticated BytePort acceptance or NanoVMS
+deployment receipt; C1/C2 remains open until those two service-side receipts
+are collected against the same composition and artifact digests.
