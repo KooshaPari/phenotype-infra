@@ -1,9 +1,9 @@
 //! Mesh-state commit — flips OCI to ✅ in compute-mesh-state.md and commits.
 
 use crate::InstanceFile;
-use oci_helpers::expand_home;
 use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
+use oci_helpers::expand_home;
 use tokio::process::Command;
 use tracing::info;
 
@@ -56,4 +56,33 @@ pub async fn commit_state(repo: &str, inst: &InstanceFile) -> Result<()> {
     .await?;
     info!("mesh-state commit landed");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::commit_state;
+    use crate::InstanceFile;
+
+    #[tokio::test]
+    async fn missing_mesh_state_document_fails_before_git() {
+        let repo = std::env::temp_dir().join(format!(
+            "oci-post-acquire-missing-mesh-{}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&repo);
+        std::fs::create_dir_all(&repo).unwrap();
+        let inst = InstanceFile {
+            instance_ocid: "ocid".into(),
+            region: "region".into(),
+            ad: "ad".into(),
+            public_ip: "127.0.0.1".into(),
+            acquired_at: "now".into(),
+        };
+
+        let err = commit_state(repo.to_str().unwrap(), &inst)
+            .await
+            .expect_err("missing mesh state should fail before git");
+        assert!(err.to_string().contains("read"));
+        std::fs::remove_dir_all(repo).unwrap();
+    }
 }

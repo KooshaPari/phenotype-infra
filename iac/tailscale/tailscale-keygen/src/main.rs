@@ -196,3 +196,18 @@ async fn main() -> Result<()> {
     println!("{}", parsed.key);
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::OutputFormat;
+    use std::str::FromStr;
+
+    #[test]
+    fn parses_supported_output_formats() {
+        assert_eq!(OutputFormat::from_str("auto").unwrap(), OutputFormat::Auto);
+        assert_eq!(OutputFormat::from_str("TEXT").unwrap(), OutputFormat::Text);
+        assert_eq!(OutputFormat::from_str("json").unwrap(), OutputFormat::Json);
+        let err = OutputFormat::from_str("yaml").expect_err("unknown format should fail");
+        assert!(err.contains("expected auto, text, or json"));
+    }
+}
