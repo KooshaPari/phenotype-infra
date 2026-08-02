@@ -433,3 +433,25 @@ a deterministic timeout error.
 The WSL failures are recorded as environment evidence, not attributed to the
 timeout patch. A live authenticated C1/C2 transaction remains unclaimed until
 the runtime readiness probe and service receipts both succeed.
+
+### Authenticated NanoVMS-to-Podman pilot receipt (2026-08-02 03:18 UTC)
+
+An opt-in disposable HTTP pilot ran inside `FedoraLinux-44` WSL 2 against the
+NanoVMS feature tree that became `c77bf84`. It used the real bearer-token
+middleware, the real Podman adapter, and a real container; no fake port or
+runtime was substituted.
+
+| Pilot step | Receipt |
+| --- | --- |
+| Unauthenticated `GET /v1/models` | HTTP `401` |
+| Authenticated `POST /v1/deploy` | HTTP `201`; sandbox entered `running` |
+| Image | `docker.io/library/alpine:latest`, command `sleep 20` |
+| Correlation labels | `phenocompose.name=phenotype-lab`; `phenocompose.sha256=69b4f35ff771775f0a8f4c32d2bcfa68b778e79da4be1aa636caed1c3a2c899e`; `nvms.backend=podman` |
+| Authenticated `DELETE /v1/sandboxes/{id}` | HTTP `200` |
+| Test result | `TestRealPodmanAuthenticatedPilot` passed, exit `0`, 41.59s |
+| Post-cleanup | No `phenotype-c1-*` containers remained |
+
+This closes the NanoVMS authenticated API plus real Podman lifecycle portion
+of the pilot. BytePort authenticated desired-state acceptance and the
+cross-service receipt correlation are still required before calling C1/C2
+complete.
