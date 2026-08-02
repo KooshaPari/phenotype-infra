@@ -283,3 +283,13 @@ tests and hosted checks remain separate evidence; no row is a release claim.
 The foundation still lacks an authenticated, non-test-double PhenoCompose to
 BytePort to NanoVMS C1/C2 transaction and real Podman/WSL/Apple substrate
 receipts; these remain the next release gates.
+
+### Local substrate probe (2026-08-02 00:18 UTC)
+
+On the Windows host, the native Podman client is installed (`5.8.3`) and the
+`podman-machine-default` WSL machine is present but stopped. A bounded
+`podman machine start podman-machine-default` attempt failed after the WSL
+bootstrap timeout (`Wsl/Service/CreateInstance/0x800705b4`); `podman info`
+therefore cannot reach the Linux socket. The host also has an unrelated,
+long-running Fedora WSL inference process, which was preserved. This is an
+unverified substrate blocker, not a release or pilot receipt.
