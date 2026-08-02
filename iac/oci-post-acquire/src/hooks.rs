@@ -56,3 +56,44 @@ pub async fn run_dropins(dir: &str, inst: &InstanceFile) -> Result<()> {
         Err(anyhow!("{} hook(s) failed: {:?}", errors.len(), errors))
     }
 }
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::run_dropins;
+    use crate::InstanceFile;
+
+    #[tokio::test]
+    async fn runs_successful_hooks_and_reports_failures() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir =
+            std::env::temp_dir().join(format!("oci-post-acquire-hooks-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        for (name, body) in [
+            ("10-ok.sh", "#!/bin/sh\nexit 0\n"),
+            ("20-bad.sh", "#!/bin/sh\nexit 7\n"),
+        ] {
+            let path = dir.join(name);
+            std::fs::write(&path, body).unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        let inst = InstanceFile {
+            instance_ocid: "ocid".into(),
+            region: "region".into(),
+            ad: "ad".into(),
+            public_ip: "127.0.0.1".into(),
+            acquired_at: "now".into(),
+        };
+
+        let err = run_dropins(dir.to_str().unwrap(), &inst)
+            .await
+            .expect_err("a failing hook should be reported");
+        assert!(err.to_string().contains("1 hook(s) failed"));
+        std::fs::remove_file(dir.join("20-bad.sh")).unwrap();
+        run_dropins(dir.to_str().unwrap(), &inst)
+            .await
+            .expect("successful hooks should complete");
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
