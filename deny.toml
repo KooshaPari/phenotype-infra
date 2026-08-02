@@ -32,7 +32,6 @@ deny = []
 copyleft = "deny"
 allow-osi-fsf-free = "both"
 default = "deny"
-confidence = 0.8
 
 [bans]
 multiple-versions = "warn"

@@ -1,0 +1,6 @@
+# The Infisical workflow runs on Blacksmith's organization-provided runner.
+# Keep this label explicit so actionlint validates the intended custom runner
+# instead of treating it as a typo.
+self-hosted-runner:
+  labels:
+    - blacksmith-2vcpu-ubuntu-2204
