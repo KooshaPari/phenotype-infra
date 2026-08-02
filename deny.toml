@@ -10,7 +10,7 @@ targets = [
 
 [advisories]
 vulnerability = "deny"
-unmaintained = "workspace"
+unmaintained = "warn"
 notice = "warn"
 ignore = []
 
@@ -27,12 +27,13 @@ allow = [
   "Zlib",
   "CC0-1.0",
   "Unlicense",
+  # Used by webpki-roots; allow explicitly and retain full dependency review.
+  "CDLA-Permissive-2.0",
 ]
 deny = []
 copyleft = "deny"
 allow-osi-fsf-free = "both"
 default = "deny"
-confidence = 0.8
 
 [bans]
 multiple-versions = "warn"
