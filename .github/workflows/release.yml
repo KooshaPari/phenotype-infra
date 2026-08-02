@@ -9,6 +9,8 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write
+  attestations: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,12 +22,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
         with:
           go-version: "1.24"
           cache: true
@@ -33,33 +35,77 @@ jobs:
       - name: Build Go static lib (libnvms_core.a)
         working-directory: crates/nanovms-core/bindings/go-c-export
         run: |
-          go build -buildmode=c-archive -o ${{ github.workspace }}/target/libnvms_core.a .
+          go build -mod=readonly -buildmode=c-archive -o ${{ github.workspace }}/target/libnvms_core.a .
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
         with:
           toolchain: stable
 
       - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae
         with:
           cache-on-failure: true
 
       - name: Build all Rust crates
-        run: cargo build --release --workspace
+        run: cargo build --locked --release --workspace
 
       - name: Run Go tests
         working-directory: crates/nanovms-core
-        run: go test -v ./...
+        run: go test -mod=readonly -v ./...
 
       - name: Run Rust tests
-        run: cargo test --workspace
+        run: cargo test --locked --workspace
+
+      - name: Create release checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(target/libnvms_core.a)
+          for pattern in \
+            target/release/libpheno_compose_driver.* \
+            target/release/libnvms_ffi.* \
+            target/release/libpheno_config.*; do
+            mapfile -t matches < <(compgen -G "$pattern" || true)
+            ((${#matches[@]} > 0)) || { echo "missing release subject: $pattern" >&2; exit 1; }
+            files+=( "${matches[@]}" )
+          done
+          for file in "${files[@]}"; do
+            test -f "$file" || { echo "missing release subject: $file" >&2; exit 1; }
+          done
+          sha256sum "${files[@]}" > target/checksums.txt
+
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          path: .
+          format: spdx-json
+          output-file: target/phenotype-infra.sbom.spdx.json
+          syft-version: v1.50.0
+          upload-release-assets: false
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: phenotype-infra-binaries
           path: |
+            target/checksums.txt
+            target/phenotype-infra.sbom.spdx.json
+            target/libnvms_core.a
             target/release/libpheno_compose_driver.*
             target/release/libnvms_ffi.*
             target/release/libpheno_config.*
+          if-no-files-found: error
+
+      - name: Attest release provenance
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d
+        with:
+          subject-checksums: target/checksums.txt
+
+      - name: Attest SPDX SBOM
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d
+        with:
+          subject-checksums: target/checksums.txt
+          sbom-path: target/phenotype-infra.sbom.spdx.json
+          predicate-type: https://spdx.dev/Document/v2.3
