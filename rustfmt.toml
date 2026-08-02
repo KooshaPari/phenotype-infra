@@ -1,0 +1,3 @@
+# Trunk's rustfmt plugin invokes `rustfmt ${target}` directly. Keep the
+# invocation edition-aware for the IAC workspace's Rust 2024 sources.
+edition = "2024"
