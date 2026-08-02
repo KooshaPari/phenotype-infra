@@ -498,3 +498,30 @@ immutable handoff.
 This closes the schema-level governance edge for the BytePort control plane.
 The deployed cross-service transaction, provider adapter matrix, hosted CI
 release gates, review approval, and rollback evidence remain open.
+
+### Networked PhenoCompose -> BytePort -> NanoVMS pilot receipt (2026-08-02 03:48 UTC)
+
+The exact BytePort PR #318 head `77b0cc14` and NanoVMS PR #128 head
+`c77bf849` were exercised as separate HTTP services. BytePort ran its real Gin
+server with SQLite-backed deployment persistence on the Windows host. NanoVMS
+ran its real HTTP router and Podman adapter in `FedoraLinux-44` WSL, exposed
+through the localhost forwarding path, with `NVMS_PODMAN_BINARY=/usr/bin/podman`.
+The request carried the PhenoCompose digest
+`sha256:69b4f35ff771775f0a8f4c32d2bcfa68b778e79da4be1aa636caed1c3a2c899e`.
+
+| Hop / assertion | Receipt |
+| --- | --- |
+| BytePort unauthenticated POST | HTTP `401` |
+| BytePort authenticated POST | HTTP `202`; `verified=true`, stable UUID returned |
+| BytePort replay | HTTP `202`; identical UUID returned |
+| NanoVMS authenticated POST | HTTP `201`; real Podman sandbox entered `running` |
+| Cross-service correlation | NanoVMS labels preserved BytePort UUID, composition digest, source, and evidence |
+| NanoVMS authenticated DELETE | HTTP `200` |
+| Post-cleanup inventory | no `phenotype-three-hop-*` containers; `podman ps --all` exit `0` |
+| Test result | `TestLivePhenoComposeBytePortNanoVMSPodmanPilot` passed, exit `0`, 37.871s |
+
+This closes the local networked C1/C2 transaction and its correlation receipt.
+The pilot still used disposable BytePort fallback auth and a static NanoVMS
+test token; production WorkOS credentials, deployed service identities,
+Tailscale transport, provider adapters, hosted gates, and rollback remain
+separate release requirements.
