@@ -366,3 +366,20 @@ This is a real substrate receipt and a valid artifact/correlation handoff
 candidate. It is not yet an authenticated BytePort acceptance or NanoVMS
 deployment receipt; C1/C2 remains open until those two service-side receipts
 are collected against the same composition and artifact digests.
+
+### Exact-head full-suite receipts (2026-08-02 02:43 UTC)
+
+The published feature heads were checked in disposable worktrees from the
+exact SHAs below. These are local reproducibility receipts; hosted checks,
+review, and deployment evidence remain separate gates.
+
+| Repository / PR | Exact head | Command | Result |
+| --- | --- | --- | --- |
+| BytePort #318 | `a3a5f5b4f3367c16cbfcdd886a5a0d553934ce26` | `go test ./...` from `backend/` | exit `0`; every Go package passed, including `mesh`, `meshworkload`, `container`, HTTP handlers, persistence, auth, secrets, and cloud adapters |
+| NanoVMS #128 | `b2845c4442b853f4a94b5a73a858e4becb498ca9` | `go test ./...` | exit `0`; all adapters, API/config/domain, orchestration, runtime, resilience, and tier packages passed |
+
+The BytePort receipt verifies the authenticated desired-state route and its
+container wiring compile and pass together. The NanoVMS receipt verifies the
+execution-side composition handoff and backend matrix against the same
+published feature head. Neither receipt claims a live network transaction;
+the authenticated BytePort-to-NanoVMS C1/C2 pilot remains open.
