@@ -2,6 +2,7 @@
 name = "phenotype-infra-tests"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 description = "Cross-crate integration tests for phenotype-infra monorepo"
 publish = false
 
@@ -10,7 +11,7 @@ name = "integration"
 path = "integration_test.rs"
 
 [dependencies]
-nvms-ffi = { path = "../crates/nvms-ffi" }
-pheno-compose-driver = { path = "../crates/pheno-compose" }
-pheno-config = { path = "../crates/pheno-config" }
+nvms-ffi = { path = "../crates/nvms-ffi", version = "0.1.0" }
+pheno-compose-driver = { path = "../crates/pheno-compose", version = "0.1.0" }
+pheno-config = { path = "../crates/pheno-config", version = "0.1.0" }
 serde_json = { workspace = true }

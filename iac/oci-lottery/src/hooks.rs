@@ -255,6 +255,7 @@ mod tests {
 
     #[tokio::test]
     async fn mesh_state_update_creates_and_commits_document() {
+        let _guard = env_lock();
         let repo = temp_dir("mesh");
         tokio::fs::create_dir_all(&repo).await.unwrap();
         let status = Command::new("git")

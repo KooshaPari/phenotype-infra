@@ -29,12 +29,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4.2.2
       - name: Trunk Check
-        uses: trunk-io/trunk-action@22e948f7bb9f870bc6c42625585f1ef27e9c5afc # v1.0.4
+        uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1.3.1
         with:
           cache: false
       - name: Trunk Upgrade (on schedule only)
         if: github.event_name == 'schedule'
-        uses: trunk-io/trunk-action@22e948f7bb9f870bc6c42625585f1ef27e9c5afc # v1.0.4
+        uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1.3.1
         with:
           cache: false
           trunk-args: --upgrade
