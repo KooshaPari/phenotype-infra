@@ -225,7 +225,11 @@ async fn main() -> Result<()> {
     info!(public_ip = %inst.public_ip, region = %inst.region, "instance file loaded");
 
     // Step 2: wait for SSH.
-    wait_for_ssh(&inst.public_ip, 22, 90)
+    let ssh_port = std::env::var("OCI_SSH_PORT")
+        .ok()
+        .and_then(|value| value.parse::<u16>().ok())
+        .unwrap_or(22);
+    wait_for_ssh(&inst.public_ip, ssh_port, 90)
         .await
         .context("step 2: wait for SSH")?;
 
@@ -325,7 +329,9 @@ async fn run_ansible(repo: &str, playbook: &str, host: &str) -> Result<()> {
         "running ansible-playbook (repo={})",
         repo_path.display()
     );
-    let status = Command::new("ansible-playbook")
+    let ansible_bin =
+        std::env::var_os("ANSIBLE_PLAYBOOK_BIN").unwrap_or_else(|| "ansible-playbook".into());
+    let status = Command::new(ansible_bin)
         .arg("-i")
         .arg(&inventory)
         .arg("-u")

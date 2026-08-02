@@ -13,4 +13,3 @@ output-dir = "target/tarpaulin-report"
 
 [run]
 timeout = "180s"
-features = "all"

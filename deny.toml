@@ -10,7 +10,6 @@ targets = [
 ]
 
 [advisories]
-unmaintained = "workspace"
 ignore = []
 
 [licenses]
