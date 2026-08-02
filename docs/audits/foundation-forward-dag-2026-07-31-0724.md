@@ -267,3 +267,19 @@ separated from release evidence.
 The new BytePort and PhenoCompose heads are not promoted by this table: a
 current green local run cannot substitute for exact-head hosted gates, policy,
 approval, or the still-unproven C1/C2/D1 pilot receipts.
+
+## Current-head refresh: 2026-08-02 00:12 UTC
+
+This additive refresh records the latest published remediation heads. Local
+tests and hosted checks remain separate evidence; no row is a release claim.
+
+| Repository / PR | Exact head | Latest evidence | Hosted release state |
+| --- | --- | --- | --- |
+| BytePort #318 | `a3a5f5b4f3367c16cbfcdd886a5a0d553934ce26` | Backend focused and full Go tests plus `golangci-lint run ./...` pass locally; SonarCloud is green after fixture deduplication. | Gate, golangci, links, and review/policy checks are still queued. |
+| PhenoCompose #113 | `04d226226f49e83e5908f429705188f3735f1dae` | Nightly fmt, workspace clippy `-D warnings`, and locked workspace check pass locally. | Hosted matrix remains queued; no promotion. |
+| NanoVMS #128 | `b2845c4442b853f4a94b5a73a858e4becb498ca9` | Existing runtime/orchestration and cross-target checks remain green. | Repository gates are green except external Mergify/Summary policy. |
+| phenotype-infra #125 | `64193b316f1fb2846ecda78746b4e135e2662eca` | Sonar blockers fixed: trunk action pinned to a full SHA and probe timeout catch now reports failure context. | Fresh Sonar/links/Semgrep checks are settling; review and coverage policy remain open. |
+
+The foundation still lacks an authenticated, non-test-double PhenoCompose to
+BytePort to NanoVMS C1/C2 transaction and real Podman/WSL/Apple substrate
+receipts; these remain the next release gates.
