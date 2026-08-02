@@ -326,3 +326,21 @@ readiness.
 
 This is positive adapter evidence for WSL Containers, not a Podman workload
 readiness or C1/C2 pilot receipt.
+
+### Exact-head refresh (2026-08-02 01:43 UTC)
+
+PhenoCompose advanced after its standalone CLI lockfile was refreshed. The
+strict crate gate passed locally (`cargo test --manifest-path
+crates/phenocompose-cli/Cargo.toml --locked`, 12 tests). Fresh hosted runs are
+pending on the new SHA.
+
+| Repository / PR | Exact head | Current evidence |
+| --- | --- | --- |
+| PhenoCompose #113 | `9e70c7252db40e5869e040f8b0ca3ede53d29748` | CLI locked test passed; CI [30727554873](https://github.com/KooshaPari/PhenoCompose/actions/runs/30727554873) and Rust CI [30727555722](https://github.com/KooshaPari/PhenoCompose/actions/runs/30727555722) pending. |
+| BytePort #318 | `a3a5f5b4f3367c16cbfcdd886a5a0d553934ce26` | Local Go tests/lint and Sonar remain green; hosted gates pending. |
+| NanoVMS #128 | `b2845c4442b853f4a94b5a73a858e4becb498ca9` | Full local Go package suite clean; repository security gates previously green. |
+| phenotype-infra #125 | `5c983eb8163dde8b81721af62975685d33ff2c95` | Governance and substrate probes pass; CI [30727152075](https://github.com/KooshaPari/phenotype-infra/actions/runs/30727152075) is superseded by this refresh if the SHA changes again. |
+
+The shared Mergify base-policy repairs are published as PhenoCompose #114,
+BytePort #320, phenotype-infra #129, and NanoVMS #129; their Mergify and
+Summary checks are still in progress and require review before merge.
