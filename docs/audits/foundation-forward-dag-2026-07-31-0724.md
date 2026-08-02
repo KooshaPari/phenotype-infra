@@ -589,3 +589,15 @@ test path is still blocked by the pre-existing Spin SDK export-comment failure
 under Go 1.25, so no broad release-green claim is made. Dependabot will remain
 non-zero until this PR is reviewed and merged and GitHub rescans the default
 branch.
+
+### phenotype-infra CI security hardening receipt (2026-08-02 04:20 UTC)
+
+The same Sonar hotspot pattern was present in phenotype-infra's generic
+`.github/workflows/ci.yml`: floating Trivy plus unlocked Cargo/Python/Node
+install paths. Commit `40601b4` applies the reviewed hardening pattern from
+PhenoCompose: Trivy is pinned to the verified `v0.36.0` commit, Cargo uses
+`--locked`, Python installs are exact-pinned or hash-gated, package installs
+disable lifecycle scripts and use lockfiles, and Biome uses `npx --no-install`.
+Local `actionlint` and `git diff --check` pass. Hosted checks for PR #125 have
+been retriggered and remain pending; Sonar/Mergify/Summary are not claimed
+green until the new head reports.
