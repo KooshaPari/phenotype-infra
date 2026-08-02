@@ -93,7 +93,11 @@ function Invoke-VersionProbe {
         $stderrTask = $process.StandardError.ReadToEndAsync()
 
         if (-not $process.WaitForExit($TimeoutMs)) {
-            try { $process.Kill($true) } catch { try { $process.Kill() } catch {} }
+            try { $process.Kill($true) } catch {
+                try { $process.Kill() } catch {
+                    Write-Verbose "Unable to terminate timed-out probe process: $($_.Exception.Message)"
+                }
+            }
             return [pscustomobject]@{
                 status = "timeout"
                 exit_code = $null
