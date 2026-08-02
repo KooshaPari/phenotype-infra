@@ -1,18 +1,20 @@
- Downloading crates ...
-error: failed to download `indexmap v2.14.0`
+[1m[93mwarning[0m: nanovms-core@0.1.0: Go build failed:
+[1m[93mwarning[0m: nanovms-core@0.1.0: Falling back — nanovms-core static lib not available
+[1m[92m Documenting[0m nanovms-core v0.1.0 (C:\Users\koosh\phenotype-infra\crates\nanovms-core)
+[1m[93mwarning[0m: nvms-ffi@0.1.0: Go build failed: # github.com/kooshapari/nanovms/bindings/go-c-export
+[1m[93mwarning[0m: nvms-ffi@0.1.0: Falling back to Rust shim (stub) implementation
+[1m[92m Documenting[0m nvms-ffi v0.1.0 (C:\Users\koosh\phenotype-infra\crates\nvms-ffi)
+[1m[92m Documenting[0m pheno-config v0.1.0 (C:\Users\koosh\phenotype-infra\crates\pheno-config)
+[1m[92m Documenting[0m pheno-compose-driver v0.1.0 (C:\Users\koosh\phenotype-infra\crates\pheno-compose)
+[1m[93mwarning[0m[1m[97m: unresolved link to `SandboxID`[0m
+   [1m[96m--> [0mcrates\pheno-config\src\lib.rs:146:44
+    [1m[96m|[0m
+[1m[96m146[0m [1m[96m|[0m         /// Maximum allowed length for a [`SandboxID`].
+    [1m[96m|[0m                                            [1m[93m^^^^^^^^^[0m [1m[93mno item named `SandboxID` in scope[0m
+    [1m[96m|[0m
+    [1m[96m= [0m[1m[97mhelp[0m: to escape `[` and `]` characters, add '\' before them like `\[` or `\]`
+    [1m[96m= [0m[1m[97mnote[0m: `#[warn(rustdoc::broken_intra_doc_links)]` on by default
 
-Caused by:
-  unable to get packages from source
-
-Caused by:
-  failed to download replaced source registry `crates-io`
-
-Caused by:
-  failed to parse manifest at `/home/kooshapari/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.14.0/Cargo.toml`
-
-Caused by:
-  feature `edition2024` is required
-
-  The package requires the Cargo feature called `edition2024`, but that feature is not stabilized in this version of Cargo (1.75.0).
-  Consider trying a more recent nightly release.
-  See https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#edition-2024 for more information about the status of this feature.
+[1m[93mwarning[0m: `pheno-config` (lib doc) generated 1 warning
+[1m[92m    Finished[0m ]8;;https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles\`dev` profile [unoptimized + debuginfo]]8;;\ target(s) in 14.27s
+[1m[92m   Generated[0m ]8;;file:///C:/temp/wt-proto-mcp-target/doc/nanovms_core/index.html\C:\temp\wt-proto-mcp-target\doc\nanovms_core\index.html]8;;\ and 3 other files

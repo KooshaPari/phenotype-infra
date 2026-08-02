@@ -65,4 +65,4 @@ cd tools/byteport && npm install && npm run dev
 
 ## License
 
-Apache-2.0
+Apache-2.0 OR MIT (dual-license). See `LICENSE` and `LICENSE-MIT`.

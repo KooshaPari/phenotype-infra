@@ -239,6 +239,8 @@ pub enum NvmsError {
     CudaInitFailed,
     #[error("ROCm init failed")]
     RocmInitFailed,
+    #[error("null pointer encountered at FFI boundary")]
+    NullPointer,
 }
 
 pub struct Instance {

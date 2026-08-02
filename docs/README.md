@@ -12,7 +12,7 @@ This index is the entry point for all documentation under `docs/`. Subdirectorie
 
 ### Governance & Policy
 
-- [`docs/governance/`](governance/) — 10 docs
+- [`docs/governance/`](governance/) — 12 docs
 
 ### Operations & Runbooks
 
@@ -35,4 +35,4 @@ This index is the entry point for all documentation under `docs/`. Subdirectorie
 
 - New top-level sections: edit this `README.md` to add them under the right group.
 - Subdirectory indexes: each subdir should have its own `README.md` linking to the files within.
-- Last refreshed: 2026-06-08 (auto-generated from `docs/` tree).
+- Last refreshed: 2026-07-14 (auto-generated from `docs/` tree).
