@@ -610,3 +610,14 @@ Commit `ee3f4e1` extracts `createArgs`, centralizes the format flag, and keeps
 the existing validation and runtime behavior intact. Focused `go test
 ./internal/adapters/podman` and `go vet ./internal/adapters/podman` both pass;
 the hosted Sonar rerun is pending, so the PR is not yet release-green.
+
+### NanoVMS hosted-workflow hardening receipt (2026-08-02 04:25 UTC)
+
+NanoVMS PR #128 still had Sonar hotspots in the generic workflow after the
+Podman source refactor. Commit `980e787` pins Trivy and Trunk actions, locks
+Cargo, removes unlocked Python dependency paths, disables package lifecycle
+scripts, and makes local-only Biome execution explicit. `actionlint
+.github/workflows/ci.yml` passes; repository-wide actionlint still reports
+pre-existing findings in `cargo-deny.yml` and `scorecard.yml`. The hosted
+Sonar rerun and Android/Trunk checks remain pending, so the release gate stays
+closed.
