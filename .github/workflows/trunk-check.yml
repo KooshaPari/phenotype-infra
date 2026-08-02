@@ -28,6 +28,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
+      - name: Install taplo for Trunk
+        run: |
+          npm install --global --no-audit --no-fund @taplo/cli@0.7.0
+          echo "$(npm prefix --global)/bin" >> "$GITHUB_PATH"
+          command -v taplo
+          taplo --version
+
       - name: Trunk Check
         uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3  # v1.3.1
         with:
