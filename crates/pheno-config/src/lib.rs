@@ -27,8 +27,8 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
-use figment::providers::{Env, Format, Serialized, Toml};
 use figment::Figment;
+use figment::providers::{Env, Format, Serialized, Toml};
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
