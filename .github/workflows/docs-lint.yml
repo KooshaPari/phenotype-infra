@@ -38,4 +38,8 @@ jobs:
           echo "$PWD" >> "$GITHUB_PATH"
 
       - name: Run actionlint
-        run: actionlint -color
+        # Blacksmith is an organization-managed self-hosted label; retain all
+        # other runner checks.
+        run: >-
+          actionlint -color
+          -ignore 'label "blacksmith-2vcpu-ubuntu-2204" is unknown'
