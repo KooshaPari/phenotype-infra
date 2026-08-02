@@ -1,9 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
+    "oci-helpers",
     "oci-lottery",
     "observability",
     "oci-post-acquire",
+    "phenotype-logging-stub",
     "tailscale/tailscale-keygen",
 ]
 # `landing-bootstrap` declares its own `[workspace]` table (intentionally
