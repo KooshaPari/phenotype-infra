@@ -476,3 +476,25 @@ Together with the NanoVMS receipt above, this proves both service boundaries
 against the same composition identity and artifact intent. The remaining C1/C2
 gap is production WorkOS-authenticated transport between the deployed BytePort
 service and NanoVMS, rather than local in-process acceptance.
+
+### BytePort handoff traceability contract receipt (2026-08-02 03:37 UTC)
+
+BytePort #318 now carries the governance-required trace fields through both
+mesh intent paths in commit `77b0cc14`: `source`, `verified`, and `evidence`.
+The authenticated owner remains server-derived; it is never accepted from the
+request body. The fields are persisted with composition metadata and returned
+from the owner-scoped list endpoint. A same-name replay with a changed digest
+or evidence locator fails with `409 CONFLICT` instead of replacing the
+immutable handoff.
+
+| Verification | Result |
+| --- | --- |
+| BytePort backend `go test ./... -count=1` at `77b0cc14` | exit `0` |
+| BytePort backend `go vet ./...` at `77b0cc14` | exit `0` |
+| Traceability persistence test | source/evidence/verified round-trip passed |
+| Changed evidence replay test | deterministic conflict passed |
+| Production WorkOS transport | not claimed; fallback auth remains development-only |
+
+This closes the schema-level governance edge for the BytePort control plane.
+The deployed cross-service transaction, provider adapter matrix, hosted CI
+release gates, review approval, and rollback evidence remain open.
