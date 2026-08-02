@@ -54,4 +54,8 @@ jobs:
           echo "$PWD" >> "$GITHUB_PATH"
 
       - name: Run actionlint
-        run: actionlint -color
+        run: |
+          # Blacksmith is a provider-managed runner label supplied by the
+          # organization; actionlint cannot discover it from the public repo.
+          # Keep this ignore exact so all other runner-label checks remain hard.
+          actionlint -color -ignore 'label "blacksmith-2vcpu-ubuntu-2204" is unknown'
