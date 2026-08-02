@@ -551,3 +551,22 @@ reference](https://github.com/apple/container/blob/main/docs/command-reference.m
 and the WSL command shape follows the first-party [`wslc version` tutorial](https://learn.microsoft.com/en-us/windows/wsl/tutorials/wsl-containers).
 This closes command-discovery correctness while preserving fail-closed probe-only
 status until Mac and WSLC lifecycle tests are reachable.
+
+### PhenoCompose hosted-gate hardening receipt (2026-08-02 04:05 UTC)
+
+PhenoCompose PR #113 was advanced through three narrowly-scoped CI/security
+fixes, each pushed only after exact-head verification: `0f08322` removes the
+MSRV-safe `clippy/unnecessary_map_or` finding, `c44cde5` pins Trivy to the
+verified `v0.36.0` commit, and `58cd04e` makes the generic workflow lockfile-
+only for Cargo/JavaScript, exact-pinned for Python tools, and fail-closed for
+unlocked Python dependency manifests. `actionlint` and `git diff --check`
+pass at the final head.
+
+The repository CodeQL default setup was explicitly changed from `configured`
+to `not-configured` through the authenticated GitHub API, removing the
+advanced-configuration upload conflict. The resulting CodeQL, Trunk, Rust,
+dependency, and secret-scan runs are still settling for head `58cd04e` under
+run family `307317392xx`; no hosted green claim is made here. Mergify/Summary
+remain externally blocked by invalid legacy rules on `main` (invalid bot-login,
+`age>=30d`, `post_merge`, and `github_accounts` schema), and review approval is
+still required.
