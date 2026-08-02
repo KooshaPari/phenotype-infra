@@ -30,16 +30,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v4.2.2
       - name: Install taplo for Trunk
-        run: npm install --global --no-audit --no-fund @taplo/cli@0.7.0
+        run: |
+          npm install --global --no-audit --no-fund @taplo/cli@0.7.0
+          echo "$(npm prefix --global)/bin" >> "$GITHUB_PATH"
+          command -v taplo
+          taplo --version
       - name: Trunk Check
         uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1.3.1
         with:
           cache: false
           setup-deps: true
+          save-annotations: false
+          post-annotations: false
       - name: Trunk Upgrade (on schedule only)
         if: github.event_name == 'schedule'
         uses: trunk-io/trunk-action@04ba50e7658c81db7356da96657e6e77f220bfa3 # v1.3.1
         with:
           cache: false
           setup-deps: true
+          save-annotations: false
+          post-annotations: false
           trunk-args: --upgrade
