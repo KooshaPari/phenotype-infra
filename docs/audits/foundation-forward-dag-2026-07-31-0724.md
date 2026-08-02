@@ -293,3 +293,20 @@ bootstrap timeout (`Wsl/Service/CreateInstance/0x800705b4`); `podman info`
 therefore cannot reach the Linux socket. The host also has an unrelated,
 long-running Fedora WSL inference process, which was preserved. This is an
 unverified substrate blocker, not a release or pilot receipt.
+
+### Current-head and hosted-run refresh (2026-08-02 01:09 UTC)
+
+Manual CI was dispatched against each current component head to obtain fresh
+hosted evidence. Queued is intentionally recorded as pending, not green.
+
+| Repository / PR | Exact head | Manual hosted run | State at capture |
+| --- | --- | --- | --- |
+| PhenoCompose #113 / CI | `cea81b78f30ec679d711cdd00cb4c3d24aed03c3` | [30726541057](https://github.com/KooshaPari/PhenoCompose/actions/runs/30726541057) | queued |
+| PhenoCompose #113 / Rust CI | `cea81b78f30ec679d711cdd00cb4c3d24aed03c3` | [30726541818](https://github.com/KooshaPari/PhenoCompose/actions/runs/30726541818) | queued |
+| BytePort #318 / CI | `a3a5f5b4f3367c16cbfcdd886a5a0d553934ce26` | [30726542678](https://github.com/KooshaPari/BytePort/actions/runs/30726542678) | queued |
+| phenotype-infra #125 / CI | `37655c6712f24325ba2a4dc4dc2b912b2122141a` | [30726543547](https://github.com/KooshaPari/phenotype-infra/actions/runs/30726543547) | queued |
+| NanoVMS #128 | `b2845c4442b853f4a94b5a73a858e4becb498ca9` | no manual dispatch required | repository gates green; external Mergify/Summary and review remain open |
+
+These runs are evidence collection only. C1/C2/D1/E1 remain open until the
+exact heads have completed required checks and the authenticated pilot and
+substrate receipts exist.
