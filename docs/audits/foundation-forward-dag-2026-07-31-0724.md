@@ -383,3 +383,18 @@ container wiring compile and pass together. The NanoVMS receipt verifies the
 execution-side composition handoff and backend matrix against the same
 published feature head. Neither receipt claims a live network transaction;
 the authenticated BytePort-to-NanoVMS C1/C2 pilot remains open.
+
+### Conflict reconciliation receipt (2026-08-02 02:47 UTC)
+
+BytePort and NanoVMS each had one content conflict against their current
+`main`, limited to `.github/workflows/ci.yml`. The conflicts were resolved in
+isolated worktrees and pushed as additive merge commits; no application files
+were discarded.
+
+| Repository / PR | Reconciliation head | Resolution | Mergeability after push |
+| --- | --- | --- | --- |
+| BytePort #318 | `5c0f63511fdb25845ed5d0aef517b471858cdea1` | Retained current `main`'s stable `ci / lint` and `ci / test` workflow gates; mesh implementation remains unchanged. | `MERGEABLE`; hosted checks queued, review required |
+| NanoVMS #128 | `d5920941e2bd04178f4111dc0f9cce723fcff460` | Retained the feature branch's hosted-runner change; conflict was runner-only plus newline. | `MERGEABLE`; hosted checks queued, review required |
+
+These commits remove the GitHub conflict gate but do not waive required
+review, Mergify/Summary policy, or hosted CI completion.
