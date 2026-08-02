@@ -455,3 +455,24 @@ This closes the NanoVMS authenticated API plus real Podman lifecycle portion
 of the pilot. BytePort authenticated desired-state acceptance and the
 cross-service receipt correlation are still required before calling C1/C2
 complete.
+
+### BytePort mesh control-plane pilot receipt (2026-08-02 03:23 UTC)
+
+The exact BytePort #318 tree (`0dc8593`) was exercised through its real Gin
+HTTP server, dependency container, PostgreSQL-shaped repository backed by an
+isolated SQLite database, and auth middleware fallback. The fallback token is
+explicitly development-only; WorkOS production credentials were not used.
+
+| Pilot step | Receipt |
+| --- | --- |
+| Unauthenticated `POST /api/v1/mesh/workloads` | HTTP `401` |
+| Authenticated acceptance | HTTP `202`; owner `auth`; composition digest `sha256:69b4f35ff771775f0a8f4c32d2bcfa68b778e79da4be1aa636caed1c3a2c899e` |
+| Stable control-plane identity | UUID returned and persisted |
+| Idempotent replay | HTTP `202`; same UUID returned |
+| Changed digest under same name | HTTP `409` with `CONFLICT` |
+| Test result | `TestRealMeshControlPlanePilot` passed, exit `0` |
+
+Together with the NanoVMS receipt above, this proves both service boundaries
+against the same composition identity and artifact intent. The remaining C1/C2
+gap is production WorkOS-authenticated transport between the deployed BytePort
+service and NanoVMS, rather than local in-process acceptance.
