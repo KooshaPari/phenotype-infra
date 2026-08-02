@@ -93,3 +93,25 @@ pub async fn upsert_a_record(zone_id: &str, token_file: &str, name: &str, ip: &s
     info!(name, ip, "cloudflare A record upserted");
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::upsert_a_record;
+
+    #[tokio::test]
+    async fn missing_token_file_fails_before_http() {
+        let token_file = std::env::temp_dir().join(format!(
+            "oci-post-acquire-missing-cf-token-{}",
+            std::process::id()
+        ));
+        let err = upsert_a_record(
+            "zone",
+            token_file.to_str().unwrap(),
+            "mesh.example",
+            "127.0.0.1",
+        )
+        .await
+        .expect_err("missing token should fail before making a request");
+        assert!(err.to_string().contains("read CF token"));
+    }
+}
