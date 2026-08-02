@@ -601,3 +601,12 @@ disable lifecycle scripts and use lockfiles, and Biome uses `npx --no-install`.
 Local `actionlint` and `git diff --check` pass. Hosted checks for PR #125 have
 been retriggered and remain pending; Sonar/Mergify/Summary are not claimed
 green until the new head reports.
+
+### NanoVMS Podman Sonar remediation receipt (2026-08-02 04:23 UTC)
+
+NanoVMS PR #128's prior Sonar failure contained two actionable Podman findings:
+repeated `--format` literals and cognitive complexity in `Adapter.Create`.
+Commit `ee3f4e1` extracts `createArgs`, centralizes the format flag, and keeps
+the existing validation and runtime behavior intact. Focused `go test
+./internal/adapters/podman` and `go vet ./internal/adapters/podman` both pass;
+the hosted Sonar rerun is pending, so the PR is not yet release-green.
