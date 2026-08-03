@@ -30,15 +30,18 @@ The rows below intentionally remain pending until each node has a current
 read-only receipt. `Source` points to the topology specification only; it does
 not prove that the node exists, is reachable, or is configured as described.
 
-| Node | Status | Owner | Source | Verified (UTC) | Evidence | Notes |
-|------|--------|-------|--------|----------------|----------|-------|
-| `oci-primary` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD | Forgejo/Vaultwarden/Woodpecker role is specification-only |
-| `oci-secondary` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD | agent/Prometheus/backup role is specification-only |
-| `gcp-e2` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD | runner/sentinel role is specification-only |
-| `aws-lambda` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD | webhook fan-out role is specification-only |
-| `cf-edge` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD | Workers/Tunnel/R2 role is specification-only |
-| `home-mac` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD | heavy-runner role is specification-only |
-| `hetzner-burst` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD | Phase-2 candidate; not active capacity |
+| Node | Status | Owner | Source | Verified | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| `oci-primary` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD |
+| `oci-secondary` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD |
+| `gcp-e2` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD |
+| `aws-lambda` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD |
+| `cf-edge` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD |
+| `home-mac` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD |
+| `hetzner-burst` | ⏳ | TBD | [mesh spec][mesh-spec] | TBD | TBD |
+
+The roles in the specification (Forgejo, runners, edge, webhook fan-out, and
+backup) are descriptive only. They are not health or deployment evidence.
 
 ## Candidate integrations
 
@@ -46,27 +49,34 @@ These entries preserve the wider provider surface without implying that an
 integration is deployed. They remain pending until an owning source and
 evidence receipt are recorded.
 
-| Provider | Status | Owner | Source | Verified (UTC) | Evidence | Notes |
-|----------|--------|-------|--------|----------------|----------|-------|
-| Hetzner CAX11 | ⏳ | TBD | TBD | TBD | TBD | burst candidate; do not infer health from the node specification |
-| Fly.io | ⏳ | TBD | TBD | TBD | TBD | not in the seven-node inventory |
-| Cloudflare Workers | ⏳ | TBD | TBD | TBD | TBD | represented by `cf-edge`; health is unverified |
-| Vercel | ⏳ | TBD | TBD | TBD | TBD | external integration candidate |
-| Supabase | ⏳ | TBD | TBD | TBD | TBD | external integration candidate |
-| OCI Always-Free | ⏳ | TBD | TBD | TBD | TBD | lottery/acquisition and node health are unverified |
+| Provider | Status | Owner | Source | Verified | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| Hetzner CAX11 | ⏳ | TBD | TBD | TBD | TBD |
+| Fly.io | ⏳ | TBD | TBD | TBD | TBD |
+| Cloudflare Workers | ⏳ | TBD | TBD | TBD | TBD |
+| Vercel | ⏳ | TBD | TBD | TBD | TBD |
+| Supabase | ⏳ | TBD | TBD | TBD | TBD |
+| OCI Always-Free | ⏳ | TBD | TBD | TBD | TBD |
+
+These candidates have no recorded owning source or receipt. `cf-edge` is the
+specification node for Cloudflare Workers; that mapping does not prove health.
 
 ## Execution substrate capability lanes
 
 Podman, Apple Containers, and the first-party WSL Containers extension are
 execution targets behind the NanoVMS/PhenoCompose boundary. They are not
 additional cloud providers and do not change BytePort's ownership. The adapter
-contract and required receipt fields are defined in [tool-sphere ownership][ownership].
+contract and required receipt fields are defined in
+[tool-sphere ownership][ownership].
 
-| Capability | Status | Owner | Source | Verified (UTC) | Evidence | Notes |
-|------------|--------|-------|--------|----------------|----------|-------|
-| Podman | ⏳ | NanoVMS/PhenoCompose (contract) | [ownership] | TBD | TBD | host probe and lifecycle receipt required |
-| Apple Containers extension | ⏳ | NanoVMS/PhenoCompose (contract) | [ownership] | TBD | TBD | live extension version/health receipt required |
-| First-party WSL Containers extension | ⏳ | NanoVMS/PhenoCompose (contract) | [ownership] | TBD | TBD | distro/extension identity and lifecycle receipt required |
+| Capability | Status | Owner | Source | Verified | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| Podman | ⏳ | contract only | [ownership] | TBD | TBD |
+| Apple Containers | ⏳ | contract only | [ownership] | TBD | TBD |
+| WSL Containers extension | ⏳ | contract only | [ownership] | TBD | TBD |
+
+The Apple and WSL rows describe first-party capability lanes. Each needs a
+host/extension identity, probe, image digest, and lifecycle receipt.
 
 ## Release-governance gaps
 

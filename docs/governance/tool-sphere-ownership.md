@@ -7,11 +7,20 @@ control plane.
 
 ## Ownership matrix
 
-| Tool sphere | Owns | Must not own | Handoff to | Evidence required |
-|-------------|------|--------------|------------|-------------------|
-| `substrate` | host and local substrate discovery, capability facts, and transport adapters | provider credentials, cloud resource state, composition semantics, or runtime lifecycle state | BytePort for cloud/IaC operations; NanoVMS for execution | capability snapshot, adapter version, probe timestamp, and source host |
-| `sharecli` | operator-facing cross-repository commands, authenticated request routing, and receipt formatting | provider CRUD, deployment truth, secret values, or renderer-specific policy | the owning API (BytePort, PhenoCompose, or NanoVMS) | command, target API, request/receipt identifier, exit status, and UTC timestamp |
-| `phenodag` | dependency graphs, task ordering, retries, and orchestration receipts | cloud state, credentials, image/build semantics, or process/VM lifecycle | BytePort for apply/status; PhenoCompose for render; NanoVMS for run/status | graph digest, node outcomes, retry history, and linked owner receipt |
+| Tool sphere | Field | Contract |
+| --- | --- | --- |
+| `substrate` | Owns | host discovery, capabilities, transport adapters |
+| `substrate` | Must not own | credentials/state, composition, lifecycle |
+| `substrate` | Handoff | BytePort for IaC; NanoVMS for execution |
+| `substrate` | Evidence | capability snapshot, adapter version, probe |
+| `sharecli` | Owns | cross-repository commands, auth routing, and receipts |
+| `sharecli` | Must not own | CRUD, deploy truth, secrets, renderer policy |
+| `sharecli` | Handoff | the owning BytePort, PhenoCompose, or NanoVMS API |
+| `sharecli` | Evidence | command, target, receipt ID, exit status, UTC time |
+| `phenodag` | Owns | graphs, ordering, retries, orchestration receipts |
+| `phenodag` | Must not own | cloud state, credentials, images, or lifecycle |
+| `phenodag` | Handoff | BytePort status; PhenoCompose render; NanoVMS run |
+| `phenodag` | Evidence | graph digest, outcomes, retries, and owner receipt |
 
 The owning component remains authoritative after a handoff:
 
@@ -27,11 +36,20 @@ The owning component remains authoritative after a handoff:
 These substrates are runtime targets behind the NanoVMS/PhenoCompose boundary.
 They are not additional cloud providers and do not change BytePort's scope.
 
-| Substrate | NanoVMS responsibility | PhenoCompose responsibility | BytePort boundary | Required evidence |
-|-----------|------------------------|-----------------------------|-------------------|-------------------|
-| Podman | detect the host engine, select capabilities, and own container lifecycle | render the unified composition into a Podman-compatible plan | must not persist Podman containers, images, or runtime state | Podman version, host capability probe, image digest, lifecycle receipt |
-| Apple Containers extension | provide the engine adapter and health/failure contract when available | render the composition target and preserve deterministic dependencies | must not become an Apple Containers state or credential owner | extension version, host/architecture, image digest, health receipt |
-| First-party WSL containers extension | provide the WSL host adapter, isolation tier, and lifecycle semantics | render the composition target for the WSL execution context | must not persist WSL distro/container state or own host credentials | WSL/extension version, distro identity, image digest, lifecycle receipt |
+| Substrate | Component | Contract |
+| --- | --- | --- |
+| Podman | NanoVMS | detect engine/capabilities and own container lifecycle |
+| Podman | PhenoCompose | render the deterministic Podman composition plan |
+| Podman | BytePort | never persist Podman state or credentials |
+| Podman | Evidence | version, probe, image digest, lifecycle receipt |
+| Apple Containers | NanoVMS | provide adapter and health/failure contract |
+| Apple Containers | PhenoCompose | render deterministic dependencies |
+| Apple Containers | BytePort | never own Apple state or credentials |
+| Apple Containers | Evidence | extension version, host, digest, health |
+| WSL Containers | NanoVMS | provide host adapter, isolation, and lifecycle |
+| WSL Containers | PhenoCompose | render the WSL execution-context plan |
+| WSL Containers | BytePort | never own distro/container state or credentials |
+| WSL Containers | Evidence | version, distro, digest, lifecycle receipt |
 
 The substrate rows describe an adapter contract, not a claim that every adapter
 is already production-ready. A new implementation must provide the evidence
