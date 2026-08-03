@@ -57,6 +57,9 @@ fields above before it is enabled by default. BytePort may carry an opaque
 execution request or receipt reference, but BytePort does not own substrate
 state.
 
+The direct Apple Containers and WSLc lifecycle gate is normative; see
+[ADR 0011][direct-runtime-gate].
+
 ## Evidence record
 
 Every tool-sphere change or operational run should leave a small, linkable
@@ -82,3 +85,5 @@ state snapshots, or mutable runtime records in this governance document.
 Review this map whenever a tool adds a provider adapter, a new renderer, or a
 new lifecycle operation. The review must identify the owning API and add a
 receipt/evidence field before the feature is enabled in production workflows.
+
+[direct-runtime-gate]: ../adr/0011-direct-runtime-lifecycle-gate.md
