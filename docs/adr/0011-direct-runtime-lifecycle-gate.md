@@ -65,7 +65,7 @@ These rows intentionally remain pending. `TBD` is not evidence of health.
 | Podman through NanoVMS | pending | contract only | NanoVMS | TBD |
 | Apple Containers direct lane | pending | disabled | NanoVMS (contract) | TBD |
 | WSLc direct lane | pending | disabled | NanoVMS (contract) | TBD |
-| BytePort execution integration | pending | opaque request/receipt | BytePort request; NanoVMS lifecycle | TBD |
+| BytePort | pending | opaque receipt | request / lifecycle | TBD |
 
 ## Consequences
 
