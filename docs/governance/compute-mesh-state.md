@@ -88,6 +88,24 @@ host/extension identity, probe, image digest, and lifecycle receipt.
   UTC verification time, and receipt. Follow-up issue: `TBD` (owner must link
   a tracked issue before enabling the row or marking it healthy).
 
+## Receipt integrity and historical supersession
+
+Lifecycle receipts are content-addressed evidence, not references to a mutable
+path. A receipt is valid only when all of the following hold:
+
+- `input_digest` is the SHA-256 digest of the exact manifest bytes consumed by
+  the run, and the receipt's `manifest_sha256` equals that digest.
+- The digest is recomputed from the preserved input (or an immutable artifact
+  addressed by that digest). Re-reading a path that has since been replaced is
+  not proof of the historical input.
+- Reuse of a run ID, state directory, or fixture path creates a new receipt ID
+  and records `supersedes`/`superseded_by` with UTC timestamps. The older
+  receipt remains retained and is not silently overwritten.
+
+If a stored receipt and the current input bytes disagree, classify the receipt
+as stale/unverifiable, retain the capability row as `⏳`, and record the
+superseding receipt before any health or deployment claim is made.
+
 [adr-0001]: ../adr/0001-hybrid-compute-mesh.md
 [mesh-spec]: ../specs/compute-mesh-spec.md
 [ownership]: tool-sphere-ownership.md
