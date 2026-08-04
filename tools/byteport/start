@@ -7,7 +7,7 @@ set -eu
 
 RUNTIME_DIR="${BYTEPORT_RUNTIME_DIR:-.byteport-run}"
 mkdir -p "$RUNTIME_DIR"
-RUNTIME_DIR="$(CDPATH= cd -- "$RUNTIME_DIR" && pwd)"
+RUNTIME_DIR="$(CDPATH='' cd -- "$RUNTIME_DIR" && pwd)"
 
 service_pid_file() {
     printf '%s/%s.pid' "$RUNTIME_DIR" "$1"
