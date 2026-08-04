@@ -1,19 +1,129 @@
 #!/bin/sh
 
-cleanup() {
-    echo "Cleaning up..."
-    pkill -P $$
-    exit 0
+# Keep cleanup scoped to the services this invocation started.  The previous
+# ancestry-based bulk cleanup could terminate unrelated children when the
+# script was hosted by another runner.
+set -eu
+
+RUNTIME_DIR="${BYTEPORT_RUNTIME_DIR:-.byteport-run}"
+mkdir -p "$RUNTIME_DIR"
+RUNTIME_DIR="$(CDPATH='' cd -- "$RUNTIME_DIR" && pwd)"
+
+service_pid_file() {
+    printf '%s/%s.pid' "$RUNTIME_DIR" "$1"
 }
-trap cleanup SIGINT EXIT
+
+record_service() {
+    service="$1"
+    pid="$2"
+    pid_file=$(service_pid_file "$service")
+    # Store the start time as an identity check against PID reuse.  The PID
+    # file is private to this invocation/runtime directory.
+    start_time=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//')
+    [ -n "$start_time" ] || {
+        echo "Unable to record $service PID $pid" >&2
+        return 1
+    }
+    {
+        printf '%s\n' "$pid"
+        printf '%s\n' "$start_time"
+    } > "$pid_file"
+}
+
+start_service() {
+    service="$1"
+    shift
+    pid_file=$(service_pid_file "$service")
+    if [ -s "$pid_file" ]; then
+        old_pid=$(sed -n '1p' "$pid_file")
+        old_start=$(sed -n '2p' "$pid_file")
+        current_start=$(ps -o lstart= -p "$old_pid" 2>/dev/null | sed 's/^ *//' || true)
+        if [ -n "$current_start" ] && [ "$current_start" = "$old_start" ]; then
+            echo "$service is already tracked at PID $old_pid; stop it explicitly first" >&2
+            return 1
+        fi
+        rm -f "$pid_file"
+    fi
+
+    # setsid gives each service its own process group.  We only ever record
+    # and stop the group created by this invocation, never a name globally.
+    if command -v setsid >/dev/null 2>&1; then
+        setsid "$@" &
+    else
+        "$@" &
+    fi
+    pid=$!
+    if ! record_service "$service" "$pid"; then
+        # Never leave an untracked service behind if PID recording fails.
+        process_group=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ' || true)
+        if [ "$process_group" = "$pid" ]; then
+            kill -TERM -- "-$pid" 2>/dev/null || true
+        else
+            kill -TERM "$pid" 2>/dev/null || true
+        fi
+        return 1
+    fi
+    echo "Started $service (PID $pid)"
+}
+
+stop_service() {
+    service="$1"
+    pid_file=$(service_pid_file "$service")
+    [ -s "$pid_file" ] || return 0
+
+    pid=$(sed -n '1p' "$pid_file")
+    expected_start=$(sed -n '2p' "$pid_file")
+    case "$pid" in
+        ''|*[!0-9]*)
+            echo "Refusing malformed PID record for $service" >&2
+            return 1
+            ;;
+    esac
+    current_start=$(ps -o lstart= -p "$pid" 2>/dev/null | sed 's/^ *//' || true)
+    if [ -z "$current_start" ]; then
+        rm -f "$pid_file"
+        return 0
+    fi
+    if [ "$current_start" != "$expected_start" ]; then
+        echo "Refusing to stop PID $pid for $service: PID was reused" >&2
+        return 1
+    fi
+
+    # Kill only the process group if this PID is its group leader.  Otherwise
+    # signal the exact tracked process and leave unrelated descendants alone.
+    process_group=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ' || true)
+    if [ "$process_group" = "$pid" ]; then
+        if ! kill -TERM -- "-$pid" 2>/dev/null; then
+            echo "Refusing to forget $service: unable to signal tracked process group $pid" >&2
+            return 1
+        fi
+    else
+        if ! kill -TERM "$pid" 2>/dev/null; then
+            echo "Refusing to forget $service: unable to signal tracked PID $pid" >&2
+            return 1
+        fi
+    fi
+    rm -f "$pid_file"
+    echo "Stopped $service (tracked PID $pid)"
+}
+
+cleanup() {
+    status=$?
+    trap - INT TERM EXIT
+    stop_service frontend || status=1
+    stop_service backend || status=1
+    exit "$status"
+}
+trap cleanup INT TERM EXIT
 
 if [ "$1" = "prod" ]; then
     echo "Starting in production mode..."
     cd frontend
     npm run build
-    npm run start &
+    start_service frontend npm run start
     cd ../backend/byteport
-    go run main.go
+    start_service backend go run main.go
+    wait
 elif [ "$1" = "dev" ]; then
     echo "Starting in development mode..."
 
