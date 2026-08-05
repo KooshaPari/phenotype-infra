@@ -179,7 +179,11 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
+      # gitleaks-action computes the PR range from the base commit; retain
+      # complete history so that base SHA remains available on merge refs.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -243,3 +247,4 @@ jobs:
         run: |
           # Test gate is currently combined with lint
           echo "✅ All test stages passed (gated via ci / lint)"
+
