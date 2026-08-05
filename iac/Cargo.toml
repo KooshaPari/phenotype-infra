@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "oci-lottery",
     "oci-post-acquire",
+    "observability",
     "tailscale/tailscale-keygen",
 ]
 # `landing-bootstrap` declares its own `[workspace]` table (intentionally
@@ -33,3 +34,4 @@ chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 glob = "0.3"
 rand = "0.10"
+phenotype-logging = { path = "phenotype-logging-stub" }
