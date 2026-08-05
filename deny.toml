@@ -46,4 +46,3 @@ deny = []
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-git = []
-
