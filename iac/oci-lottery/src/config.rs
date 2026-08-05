@@ -87,7 +87,10 @@ mod tests {
     #[tokio::test]
     async fn load_or_default_handles_missing_valid_and_invalid_files() {
         let missing = temp_path("missing");
-        assert_eq!(Config::load_or_default(&missing).await.unwrap().profile, "DEFAULT");
+        assert_eq!(
+            Config::load_or_default(&missing).await.unwrap().profile,
+            "DEFAULT"
+        );
 
         let valid = temp_path("valid");
         let config = Config {
@@ -98,7 +101,10 @@ mod tests {
         tokio::fs::write(&valid, serde_json::to_vec(&config).unwrap())
             .await
             .unwrap();
-        assert_eq!(Config::load_or_default(&valid).await.unwrap().regions, vec!["test-region"]);
+        assert_eq!(
+            Config::load_or_default(&valid).await.unwrap().regions,
+            vec!["test-region"]
+        );
 
         let invalid = temp_path("invalid");
         tokio::fs::write(&invalid, b"not-json").await.unwrap();

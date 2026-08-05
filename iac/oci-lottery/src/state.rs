@@ -89,9 +89,11 @@ mod tests {
         let acquired_path = state_path.parent().unwrap().join("acquired.json");
         write_acquired(&acquired_path, &acquired).await.unwrap();
         assert_eq!(
-            serde_json::from_slice::<AcquiredInstance>(&tokio::fs::read(acquired_path).await.unwrap())
-                .unwrap()
-                .instance_ocid,
+            serde_json::from_slice::<AcquiredInstance>(
+                &tokio::fs::read(acquired_path).await.unwrap()
+            )
+            .unwrap()
+            .instance_ocid,
             "ocid1.test"
         );
         let _ = tokio::fs::remove_dir_all(state_path.parent().unwrap()).await;
@@ -100,7 +102,9 @@ mod tests {
     #[tokio::test]
     async fn invalid_state_json_falls_back_to_default() {
         let path = temp_path("invalid");
-        tokio::fs::create_dir_all(path.parent().unwrap()).await.unwrap();
+        tokio::fs::create_dir_all(path.parent().unwrap())
+            .await
+            .unwrap();
         tokio::fs::write(&path, b"not-json").await.unwrap();
         let recovered = LotteryState::load(&path).await.unwrap();
         assert_eq!(recovered.attempts, 0);

@@ -78,7 +78,10 @@ mod tests {
             .status()
             .expect("spawn git init");
         assert!(init.success(), "git init failed: {init}");
-        for (key, value) in [("user.name", "coverage-test"), ("user.email", "coverage@example.test")] {
+        for (key, value) in [
+            ("user.name", "coverage-test"),
+            ("user.email", "coverage@example.test"),
+        ] {
             let configured = Command::new("git")
                 .args(["config", key, value])
                 .current_dir(&repo)
@@ -103,7 +106,9 @@ mod tests {
     async fn writes_and_replaces_auto_inserted_mesh_state() {
         let repo = temp_repo();
         let doc = repo.join("docs/governance/compute-mesh-state.md");
-        tokio::fs::write(&doc, "# Compute Mesh State\n").await.unwrap();
+        tokio::fs::write(&doc, "# Compute Mesh State\n")
+            .await
+            .unwrap();
 
         commit_state(repo.to_str().unwrap(), &fixture("us-test-1"))
             .await

@@ -1,5 +1,5 @@
 use std::io::{Read, Write};
-use std::net::{TcpListener, SocketAddr};
+use std::net::{SocketAddr, TcpListener};
 use std::process::Command;
 use std::thread::{self, JoinHandle};
 
