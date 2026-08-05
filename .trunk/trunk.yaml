@@ -46,6 +46,9 @@ lint:
           output: rewrite
           success_codes: [0]
           stdin: true
+          # A stdin formatter writes the rewritten stream to stdout; it must
+          # not also request Trunk's in-place file rewrite.
+          in_place: false
           formatter: true
 
 actions:
