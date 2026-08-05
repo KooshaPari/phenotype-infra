@@ -27,7 +27,9 @@
 use std::sync::Arc;
 
 use tracing::Level;
-use tracing_subscriber::{EnvFilter, fmt, prelude::*};
+use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt;
+use tracing_subscriber::prelude::*;
 
 use phenotype_logging::is_initialized;
 

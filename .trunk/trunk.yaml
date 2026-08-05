@@ -1,5 +1,6 @@
+---
 # Trunk Code Quality configuration.
-# See https://docs.trunk.io/code-quality/overview/cli/getting-started/configuration
+# See Trunk CLI configuration documentation for details.
 version: 0.1
 
 cli:
@@ -31,11 +32,14 @@ lint:
     - name: rustfmt
       files: [rust]
       commands:
-        - name: rustfmt
-          disable_upstream: true
-          run: rustfmt --edition 2024 --check ${target}
-          output: pass_fail
-          success_codes: [0, 1]
+        - name: format
+          run: rustfmt --edition 2024
+          output: rewrite
+          success_codes: [0]
+          stdin: true
+          in_place: false
+          batch: false
+          formatter: true
 
 actions:
   enabled:

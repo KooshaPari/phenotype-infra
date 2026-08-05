@@ -39,8 +39,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
+pub use tracing::Level;
 /// Re-export the `tracing` macros for ergonomic single-import.
-pub use tracing::{Level, debug, error, info, instrument, span, trace, warn};
+pub use tracing::{debug, error, info, instrument, span, trace, warn};
 
 /// Default `tracing_subscriber::EnvFilter` directive used when `RUST_LOG` is
 /// unset. Exposed as a public constant so daemons that need to install their
@@ -63,7 +64,9 @@ pub fn init(service_name: &'static str) {
 /// Installs an `env-filter`-driven `fmt` subscriber. Reads `RUST_LOG` from
 /// env (falls back to `level`). Idempotent: subsequent calls are a no-op.
 pub fn init_tracing(service_name: &'static str, level: Level) {
-    use tracing_subscriber::{EnvFilter, fmt, prelude::*};
+    use tracing_subscriber::EnvFilter;
+    use tracing_subscriber::fmt;
+    use tracing_subscriber::prelude::*;
     if INITIALIZED.swap(true, Ordering::SeqCst) {
         return;
     }
