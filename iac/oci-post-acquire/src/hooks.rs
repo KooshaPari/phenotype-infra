@@ -4,8 +4,8 @@
 //! errors and warn at the end.
 
 use crate::InstanceFile;
-use oci_helpers::expand_home;
 use anyhow::{Result, anyhow};
+use oci_helpers::expand_home;
 use tokio::process::Command;
 use tracing::{info, warn};
 
@@ -54,5 +54,83 @@ pub async fn run_dropins(dir: &str, inst: &InstanceFile) -> Result<()> {
         Ok(())
     } else {
         Err(anyhow!("{} hook(s) failed: {:?}", errors.len(), errors))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[cfg(unix)]
+    use std::path::PathBuf;
+    #[cfg(unix)]
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn fixture() -> InstanceFile {
+        InstanceFile {
+            instance_ocid: "ocid1.test".into(),
+            region: "us-test-1".into(),
+            ad: "AD-1".into(),
+            public_ip: "198.51.100.40".into(),
+            acquired_at: "2026-08-02T00:00:00Z".into(),
+        }
+    }
+
+    #[cfg(unix)]
+    fn temp_dir(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock before unix epoch")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("oci-post-hooks-{name}-{nonce}"));
+        std::fs::create_dir_all(&path).expect("create hook fixture directory");
+        path
+    }
+
+    #[tokio::test]
+    async fn missing_hooks_directory_is_a_noop() {
+        let path = std::env::temp_dir().join("oci-post-hooks-missing");
+        let _ = tokio::fs::remove_dir_all(&path).await;
+        assert!(
+            run_dropins(path.to_str().unwrap(), &fixture())
+                .await
+                .is_ok()
+        );
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn runs_sorted_hooks_and_reports_failures_without_aborting() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = temp_dir("ordered");
+        let marker = dir.join("marker");
+        let marker_literal = marker.to_string_lossy().replace('\'', "'\\''");
+        let ok = dir.join("01-ok");
+        std::fs::write(
+            &ok,
+            format!(
+                "#!/bin/sh\nprintf '%s|%s|%s|%s' \"$OCI_INSTANCE_OCID\" \"$OCI_REGION\" \"$OCI_AD\" \"$OCI_PUBLIC_IP\" > '{}'\n",
+                marker_literal
+            ),
+        )
+        .expect("write successful hook");
+        std::fs::set_permissions(&ok, std::fs::Permissions::from_mode(0o755))
+            .expect("make successful hook executable");
+
+        let fail = dir.join("02-fail");
+        std::fs::write(&fail, b"#!/bin/sh\nexit 7\n").expect("write failing hook");
+        std::fs::set_permissions(&fail, std::fs::Permissions::from_mode(0o755))
+            .expect("make failing hook executable");
+
+        let result = run_dropins(dir.to_str().unwrap(), &fixture()).await;
+        let error = result
+            .expect_err("failing hook should be reported")
+            .to_string();
+        assert!(error.contains("02-fail"), "unexpected error: {error}");
+        assert_eq!(
+            tokio::fs::read_to_string(&marker).await.unwrap(),
+            "ocid1.test|us-test-1|AD-1|198.51.100.40"
+        );
+        let _ = tokio::fs::remove_dir_all(dir).await;
     }
 }

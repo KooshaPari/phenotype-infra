@@ -34,48 +34,49 @@ jobs:
         run: |
           set +e
           # Initialize all outputs to false (critical: every output must be set)
-          echo "has_rust=false" >> $GITHUB_OUTPUT
-          echo "has_deny=false" >> $GITHUB_OUTPUT
-          echo "has_python=false" >> $GITHUB_OUTPUT
-          echo "has_go=false" >> $GITHUB_OUTPUT
-          echo "has_typescript=false" >> $GITHUB_OUTPUT
-          echo "has_security=false" >> $GITHUB_OUTPUT
-          echo "has_trunk=false" >> $GITHUB_OUTPUT
+          {
+            echo "has_rust=false"
+            echo "has_deny=false"
+            echo "has_python=false"
+            echo "has_go=false"
+            echo "has_typescript=false"
+            echo "has_security=false"
+            echo "has_trunk=false"
+          } >> "$GITHUB_OUTPUT"
 
           # Rust: needs Cargo.toml AND deny.toml
           if [ -f "Cargo.toml" ] || [ -f "**/Cargo.toml" ]; then
-            echo "has_rust=true" >> $GITHUB_OUTPUT
+            echo "has_rust=true" >> "$GITHUB_OUTPUT"
             if [ -f "deny.toml" ]; then
-              echo "has_deny=true" >> $GITHUB_OUTPUT
+              echo "has_deny=true" >> "$GITHUB_OUTPUT"
             fi
           fi
 
           # Python: needs pyproject.toml, setup.py, requirements.txt, or *.py
           if [ -f "pyproject.toml" ] || [ -f "setup.py" ] || [ -f "requirements.txt" ] || find . -maxdepth 3 -name "*.py" -type f 2>/dev/null | head -1 | grep -q .; then
-            echo "has_python=true" >> $GITHUB_OUTPUT
+            echo "has_python=true" >> "$GITHUB_OUTPUT"
           fi
 
           # Go: needs go.mod
           if [ -f "go.mod" ]; then
-            echo "has_go=true" >> $GITHUB_OUTPUT
+            echo "has_go=true" >> "$GITHUB_OUTPUT"
           fi
 
           # TypeScript / JS: needs package.json (with type=module or tsconfig or js files)
           if [ -f "package.json" ]; then
-            echo "has_typescript=true" >> $GITHUB_OUTPUT
+            echo "has_typescript=true" >> "$GITHUB_OUTPUT"
           fi
 
           # Security: always run (bandit/gitleaks/dependency-review)
-          echo "has_security=true" >> $GITHUB_OUTPUT
+          echo "has_security=true" >> "$GITHUB_OUTPUT"
 
           # Trunk: only if trunk.yaml exists
           if [ -f "trunk.yaml" ]; then
-            echo "has_trunk=true" >> $GITHUB_OUTPUT
+            echo "has_trunk=true" >> "$GITHUB_OUTPUT"
           fi
 
           echo ""
-          echo "=== Detected ==="
-          echo "rust=${{ steps.detect.outputs.has_rust }} deny=${{ steps.detect.outputs.has_deny }} python=${{ steps.detect.outputs.has_python }} go=${{ steps.detect.outputs.has_go }} typescript=${{ steps.detect.outputs.has_typescript }} security=${{ steps.detect.outputs.has_security }} trunk=${{ steps.detect.outputs.has_trunk }}"
+          echo "=== Detection complete ==="
 
   rust:
     name: Rust
@@ -107,7 +108,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: cargo-deny check
-        uses: EmbarkStudios/cargo-deny-action@v1
+        # Immutable official v2.1.1 commit (cargo-deny 0.20.2).
+        uses: >-
+          EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25
         with:
           arguments: --all-features
 
@@ -121,7 +124,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install ruff
         run: pip install ruff
       - name: ruff check
@@ -139,7 +142,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.22"
       - name: gofmt check
         run: gofmt -l . 2>&1 || echo "::warning::gofmt issues (advisory)"
       - name: go vet
@@ -157,8 +160,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
       - name: lint
         run: |
@@ -178,7 +181,11 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
+      # gitleaks-action computes the PR range from the base commit; retain
+      # complete history so that base SHA remains available on merge refs.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -198,7 +205,8 @@ jobs:
   lint:
     name: ci / lint
     if: always()
-    needs: [detect, rust, cargo-deny, python, go, typescript, security, dep-review]
+    needs:
+      [detect, rust, cargo-deny, python, go, typescript, security, dep-review]
     runs-on: ubuntu-latest
     steps:
       - name: Aggregate lint gate
@@ -211,7 +219,7 @@ jobs:
             "go:${{ needs.go.result }}" \
             "typescript:${{ needs.typescript.result }}" \
             "security:${{ needs.security.result }}" \
-            "dep-review:${{ needs.dependency-review.result }}" \
+            "dep-review:${{ needs.dep-review.result }}" \
             ; do
             name="${pair%%:*}"
             result="${pair#*:}"

@@ -14,10 +14,10 @@ use std::path::PathBuf;
 /// Resolve `~` prefix to `$HOME`. If the path does not start with `~/`,
 /// returns it unchanged.
 pub fn expand_home(p: &str) -> PathBuf {
-    if let Some(rest) = p.strip_prefix("~/") {
-        if let Some(home) = home_dir() {
-            return home.join(rest);
-        }
+    if let Some(rest) = p.strip_prefix("~/")
+        && let Some(home) = home_dir()
+    {
+        return home.join(rest);
     }
     PathBuf::from(p)
 }
@@ -87,10 +87,88 @@ pub async fn which_on_path(bin: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::{Deserialize, Serialize};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[derive(Debug, Deserialize, PartialEq, Serialize)]
+    struct Fixture {
+        value: String,
+    }
+
+    fn temp_path(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("oci-helpers-{name}-{nonce}"))
+    }
 
     #[test]
     fn test_home_or_fallback() {
         let h = home_or_fallback();
         assert!(h.is_absolute());
+    }
+
+    #[test]
+    fn expand_home_preserves_non_tilde_paths() {
+        assert_eq!(expand_home("relative/path"), PathBuf::from("relative/path"));
+        assert_eq!(
+            expand_home("/absolute/path"),
+            PathBuf::from("/absolute/path")
+        );
+    }
+
+    #[tokio::test]
+    async fn save_and_load_json_roundtrip_and_missing_default() {
+        let path = temp_path("nested/data.json");
+        let fixture = Fixture {
+            value: "covered".into(),
+        };
+
+        assert_eq!(
+            load_json_or(
+                &path,
+                Fixture {
+                    value: "default".into()
+                }
+            )
+            .await
+            .unwrap(),
+            Fixture {
+                value: "default".into()
+            }
+        );
+        save_json(&path, &fixture).await.unwrap();
+        assert_eq!(
+            load_json_or(
+                &path,
+                Fixture {
+                    value: "other".into()
+                }
+            )
+            .await
+            .unwrap(),
+            fixture
+        );
+        let _ = tokio::fs::remove_dir_all(path.parent().unwrap()).await;
+    }
+
+    #[tokio::test]
+    async fn load_json_reports_invalid_content_and_which_checks_path() {
+        let path = temp_path("invalid.json");
+        tokio::fs::write(&path, b"not-json").await.unwrap();
+        assert!(
+            load_json_or::<Fixture>(
+                &path,
+                Fixture {
+                    value: "default".into()
+                }
+            )
+            .await
+            .is_err()
+        );
+        assert!(which_on_path("sh").await);
+        assert!(!which_on_path("oci-helper-command-that-is-absent").await);
+        let _ = tokio::fs::remove_file(path).await;
     }
 }
