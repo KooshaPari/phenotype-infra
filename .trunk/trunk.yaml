@@ -60,4 +60,3 @@ actions:
     - trunk-fmt-pre-commit
   disabled:
     - trunk-upgrade-available
-
