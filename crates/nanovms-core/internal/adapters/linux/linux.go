@@ -205,8 +205,7 @@ func (a *Adapter) startMicroVM(ctx context.Context, id string) error {
 func (a *Adapter) Stop(ctx context.Context, id string) error {
 	switch a.sandboxType {
 	case Native:
-		// Kill the namespace process
-		return a.syscalls.Run(ctx, "pkill", []string{"-f", id}, nil, nil, nil)
+		return a.stopWithoutOwnedHandle("native", id)
 	case MicroVM:
 		return a.stopMicroVM(ctx, id)
 	case WASM:
@@ -216,8 +215,14 @@ func (a *Adapter) Stop(ctx context.Context, id string) error {
 }
 
 func (a *Adapter) stopMicroVM(ctx context.Context, id string) error {
-	// Send stop signal to VM
-	return a.syscalls.Run(ctx, "pkill", []string{"-f", id}, nil, nil, nil)
+	return a.stopWithoutOwnedHandle("microvm", id)
+}
+
+func (a *Adapter) stopWithoutOwnedHandle(kind, id string) error {
+	// This adapter does not retain a process handle for these placeholder
+	// backends.  Refuse to search by command-line pattern: doing so could
+	// terminate an unrelated agent or user process that happens to contain id.
+	return fmt.Errorf("%s sandbox %s has no runtime-owned process handle; refusing unscoped termination", kind, id)
 }
 
 // Delete deletes a sandbox.

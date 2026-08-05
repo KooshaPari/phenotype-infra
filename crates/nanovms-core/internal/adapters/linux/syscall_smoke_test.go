@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"reflect"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -201,6 +202,15 @@ func TestSyscallSmokeExecNativePropagatesEPERM(t *testing.T) {
 	err := adapter.execNative(ctx, "devenv-fail", []string{"echo", "fail"}, nil, &stdoutBuffer, &stderrBuffer)
 	if !errors.Is(err, syscall.EPERM) {
 		t.Fatalf("expected EPERM, got %v", err)
+	}
+}
+
+func TestStopFailsClosedWithoutOwnedProcessHandle(t *testing.T) {
+	adapter := New(Native, true)
+
+	err := adapter.Stop(context.Background(), "devenv-untracked")
+	if err == nil || !strings.Contains(err.Error(), "no runtime-owned process handle") {
+		t.Fatalf("expected an untracked-handle refusal, got %v", err)
 	}
 }
 
