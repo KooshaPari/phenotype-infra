@@ -1,5 +1,6 @@
+---
 # Trunk Code Quality configuration.
-# See https://docs.trunk.io/code-quality/overview/cli/getting-started/configuration
+# See the Trunk CLI configuration documentation for details.
 version: 0.1
 
 cli:
@@ -14,6 +15,12 @@ plugins:
 # Keep the complete repository lint surface enabled. Trunk supplies the
 # pinned commands and their default file/config detection for these tools.
 lint:
+  ignore:
+    - linters: [rustfmt]
+      # The root Cargo workspace is edition 2021; cargo fmt is its
+      # authoritative formatter. Trunk's iac stdin formatter uses edition 2024.
+      paths:
+        - crates/pheno-config/src/lib.rs
   enabled:
     - actionlint
     - black
