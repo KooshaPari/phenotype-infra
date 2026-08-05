@@ -161,6 +161,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $Root = '__PROJECTS_PATH__'
 $PidDirectory = Join-Path $Root '.byteport-pids'
+$ProtectedProcessPattern = '(?i)(^|[\\/ _-])(codex(?:\.exe)?|codex-code-mode-host(?:\.exe)?|cursor(?:\.exe)?|claude(?:\.exe)?|claude-code|agent-runner|agent-host)([\\/ _.-]|$)'
 
 $Services = @(
     [pscustomobject]@{
@@ -201,6 +202,20 @@ function Get-DescendantProcessIds {
     foreach ($child in $children) {
         [int]$child.ProcessId
         Get-DescendantProcessIds -ParentPid ([int]$child.ProcessId)
+    }
+}
+
+function Assert-TrackedTreeSafe {
+    param([Parameter(Mandatory)][int[]]$ProcessIds)
+
+    foreach ($candidatePid in $ProcessIds) {
+        $commandLine = Get-ProcessCommandLine -Pid $candidatePid
+        if ([string]::IsNullOrWhiteSpace($commandLine)) {
+            throw "Refusing to stop PID ${candidatePid}: unable to verify command identity"
+        }
+        if ($commandLine -match $ProtectedProcessPattern) {
+            throw "Refusing to stop protected agent/Codex PID $candidatePid"
+        }
     }
 }
 
@@ -280,9 +295,12 @@ function Stop-TrackedService {
     }
 
     # The identity check above is the safety boundary.  Descendants are
-    # collected by parent PID, so no global image-name kill is possible.
+    # collected by parent PID, so no global image-name kill is possible.  The
+    # second guard makes agent/Codex targeting fail closed even if a tracked
+    # service tree was tampered with after it started.
     $descendants = @(Get-DescendantProcessIds -ParentPid $tracked.Pid)
     [array]::Reverse($descendants)
+    Assert-TrackedTreeSafe -ProcessIds (@($tracked.Pid) + $descendants)
     foreach ($childPid in $descendants) {
         Stop-Process -Id $childPid -Force -ErrorAction SilentlyContinue
     }
