@@ -1,3 +1,5 @@
+#![cfg(unix)]
+
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -127,10 +129,8 @@ fn run_lottery(temp: &TempDir, mode: Option<&str>) -> std::process::Output {
     command.output().unwrap()
 }
 
-// The fake CLI is a POSIX shell script.  The hosted coverage gate runs on
-// Ubuntu; keep these black-box tests out of Windows runs rather than invoking
-// a real OCI CLI when `oci.cmd` is not resolved by `Command::new("oci")`.
-#[cfg(unix)]
+// The fake CLI is a POSIX shell script.  Keep these black-box tests scoped to
+// the hosted Linux coverage lane rather than invoking a real OCI CLI.
 #[test]
 fn cli_once_acquires_capacity_and_runs_failsoft_hooks() {
     let temp = TempDir::new("success");

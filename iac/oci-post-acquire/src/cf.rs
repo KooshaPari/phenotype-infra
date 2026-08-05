@@ -93,3 +93,28 @@ pub async fn upsert_a_record(zone_id: &str, token_file: &str, name: &str, ip: &s
     info!(name, ip, "cloudflare A record upserted");
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[tokio::test]
+    async fn reports_missing_token_before_network_access() {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock before unix epoch")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("oci-cf-token-{nonce}"));
+        let error = upsert_a_record(
+            "zone-test",
+            path.to_str().unwrap(),
+            "oci.example.test",
+            "198.51.100.40",
+        )
+        .await
+        .expect_err("missing token must fail before issuing a request")
+        .to_string();
+        assert!(error.contains("read CF token"), "unexpected error: {error}");
+    }
+}

@@ -70,3 +70,41 @@ impl Config {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_path(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("oci-lottery-config-{name}-{nonce}.json"))
+    }
+
+    #[tokio::test]
+    async fn load_or_default_handles_missing_valid_and_invalid_files() {
+        let missing = temp_path("missing");
+        assert_eq!(Config::load_or_default(&missing).await.unwrap().profile, "DEFAULT");
+
+        let valid = temp_path("valid");
+        let config = Config {
+            regions: vec!["test-region".into()],
+            profile: "TEST".into(),
+            ..Config::default()
+        };
+        tokio::fs::write(&valid, serde_json::to_vec(&config).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(Config::load_or_default(&valid).await.unwrap().regions, vec!["test-region"]);
+
+        let invalid = temp_path("invalid");
+        tokio::fs::write(&invalid, b"not-json").await.unwrap();
+        assert!(Config::load_or_default(&invalid).await.is_err());
+
+        let _ = tokio::fs::remove_file(valid).await;
+        let _ = tokio::fs::remove_file(invalid).await;
+    }
+}
