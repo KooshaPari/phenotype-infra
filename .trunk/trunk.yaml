@@ -13,7 +13,7 @@ plugins:
       # Keep the plugin catalog immutable and aligned with the pinned tool
       # versions below. The prior tag-based source left installs resolving
       # the environment sentinel `SYSTEM` as a tool version.
-      ref: f39f279b12a9f572e8af98d23d153524239928dc  # v1.10.2
+      ref: f39f279b12a9f572e8af98d23d153524239928dc # v1.10.2
 
 # Keep the complete repository lint surface enabled. Trunk supplies the
 # pinned commands and their default file/config detection for these tools.
@@ -49,6 +49,8 @@ lint:
           # A stdin formatter writes the rewritten stream to stdout; it must
           # not also request Trunk's in-place file rewrite.
           in_place: false
+          # rustfmt's stdin contract accepts exactly one source per action.
+          batch: false
           formatter: true
 
 actions:
