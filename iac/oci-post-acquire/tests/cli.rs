@@ -57,6 +57,7 @@ async fn dry_run_reads_instance_waits_for_ssh_and_runs_ansible() {
     std::fs::create_dir_all(&fake_dir).unwrap();
     let _ansible = fake_ansible(&fake_dir);
     let listener = TcpListener::bind(("127.0.0.1", 0)).await.unwrap();
+    let ssh_port = listener.local_addr().unwrap().port().to_string();
     let accept = tokio::spawn(async move {
         let (mut stream, _) = listener.accept().await.unwrap();
         let _ = stream.shutdown().await;
@@ -95,6 +96,8 @@ async fn dry_run_reads_instance_waits_for_ssh_and_runs_ansible() {
             repo.to_str().unwrap(),
             "--playbook",
             "coverage-playbook.yml",
+            "--ssh-port",
+            &ssh_port,
             "--hooks-dir",
             temp.path().join("hooks").to_str().unwrap(),
             "--format",

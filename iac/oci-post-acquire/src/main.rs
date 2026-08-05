@@ -64,6 +64,10 @@ struct Cli {
     #[arg(long, default_value = "iac/ansible/playbooks/oci-baseline.yml")]
     playbook: String,
 
+    /// SSH port exposed by the acquired instance (or a local test tunnel).
+    #[arg(long, env = "OCI_SSH_PORT", default_value_t = 22)]
+    ssh_port: u16,
+
     /// Hook drop-in directory.
     #[arg(
         long,
@@ -225,7 +229,7 @@ async fn main() -> Result<()> {
     info!(public_ip = %inst.public_ip, region = %inst.region, "instance file loaded");
 
     // Step 2: wait for SSH.
-    wait_for_ssh(&inst.public_ip, 22, 90)
+    wait_for_ssh(&inst.public_ip, cli.ssh_port, 90)
         .await
         .context("step 2: wait for SSH")?;
 
