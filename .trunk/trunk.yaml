@@ -31,11 +31,12 @@ lint:
     - name: rustfmt
       files: [rust]
       commands:
-        - name: rustfmt
-          disable_upstream: true
-          run: rustfmt --edition 2024 --check ${target}
-          output: pass_fail
-          success_codes: [0, 1]
+        - name: format
+          run: rustfmt --edition 2024
+          output: rewrite
+          success_codes: [0]
+          stdin: true
+          formatter: true
 
 actions:
   enabled:
