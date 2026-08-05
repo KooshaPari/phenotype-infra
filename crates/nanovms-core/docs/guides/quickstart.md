@@ -2,6 +2,13 @@
 
 Get NanoVMS running in under 5 minutes.
 
+> **Source of truth:** These instructions describe the NanoVMS component
+> inside [`phenotype-infra`](../../../..). Do not use the archived
+> `KooshaPari/nanovms` repository or its release assets as a current install
+> source. The nested Go module keeps the historical
+> `github.com/kooshapari/nanovms` path for compatibility; see the
+> [ownership note](../../../../docs/ownership/nanovms-source-of-truth.md).
+
 ## Prerequisites
 
 ### System Requirements
@@ -37,27 +44,16 @@ ls -la /dev/kvm
 
 ### Binary Installation
 
-```bash
-# Download latest release
-curl -L https://github.com/KooshaPari/nanovms/releases/latest/download/nanovms-linux-amd64.tar.gz \
-  -o nanovms.tar.gz
-
-# Extract
-tar -xzf nanovms.tar.gz
-
-# Install
-sudo mv nanovms /usr/local/bin/
-
-# Verify
-nanovms version
-```
+No canonical binary release URL is published for the absorbed NanoVMS
+component yet. Use **Build from Source** below, or consume a release artifact
+whose provenance explicitly names a `phenotype-infra` commit and CI run.
 
 ### Build from Source
 
 ```bash
-# Clone repository
-git clone https://github.com/KooshaPari/nanovms.git
-cd nanovms
+# Clone the canonical workspace and enter the nested Go module
+git clone https://github.com/KooshaPari/phenotype-infra.git
+cd phenotype-infra/crates/nanovms-core
 
 # Build
 make build
@@ -93,15 +89,18 @@ podman run -it --rm \
 ### Install the SDK
 
 ```bash
-# Add to your Cargo.toml
+# Add the canonical FFI crate to your Cargo.toml
 [dependencies]
-nvms-sdk = { git = "https://github.com/KooshaPari/nanovms", subdir = "sdk/rust" }
+nvms-ffi = { git = "https://github.com/KooshaPari/phenotype-infra", package = "nvms-ffi" }
 
-# Or clone and build locally
-git clone https://github.com/KooshaPari/nanovms.git
-cd nanovms/sdk/rust
-cargo build
+# Or build the workspace crate locally
+git clone https://github.com/KooshaPari/phenotype-infra.git
+cd phenotype-infra
+cargo build -p nvms-ffi
 ```
+
+The historical `nvms-sdk`/`sdk/rust` layout is retained only in migration
+notes; it is not a current dependency source.
 
 ### Basic SDK Usage
 
@@ -443,6 +442,6 @@ sudo iptables -L -n | grep nanovms
 
 ### Community
 
-- [GitHub Discussions](https://github.com/KooshaPari/nanovms/discussions)
+- [phenotype-infra Issues](https://github.com/KooshaPari/phenotype-infra/issues)
 - [Discord](https://discord.gg/nanovms)
 - [Matrix](https://matrix.to/#/#nanovms:matrix.org)

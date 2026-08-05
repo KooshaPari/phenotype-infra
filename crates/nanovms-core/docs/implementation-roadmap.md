@@ -39,7 +39,9 @@ Q1 2026          Q2 2026          Q3 2026          Q4 2026
 
 ```bash
 # Initialize Go module
-go mod init github.com/KooshaPari/nanovms
+# The canonical module already exists at crates/nanovms-core.
+# Its historical path is retained for compatibility; do not reinitialize it.
+# module github.com/kooshapari/nanovms
 
 # Create directory structure
 mkdir -p cmd/nanovms \

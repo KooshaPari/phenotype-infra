@@ -14,6 +14,7 @@ is maintained at [`docs/README.md`](README.md).
 ### Governance & Policy
 
 - [`docs/governance/`](governance/) — 10 docs
+- [`docs/ownership/nanovms-source-of-truth.md`](ownership/nanovms-source-of-truth.md) — NanoVMS ownership and compatibility
 
 ### Operations & Runbooks
 

@@ -13,6 +13,7 @@ This index is the entry point for all documentation under `docs/`. Subdirectorie
 ### Governance & Policy
 
 - [`docs/governance/`](governance/) — 10 docs
+- [`docs/ownership/nanovms-source-of-truth.md`](ownership/nanovms-source-of-truth.md) — NanoVMS ownership and compatibility
 
 ### Operations & Runbooks
 

@@ -2,6 +2,12 @@
 
 Lightweight, headless VM abstraction for agents — supports desktop, mobile simulators, and emerging form factors.
 
+> **Canonical workspace:** NanoVMS is maintained in
+> [`crates/nanovms-core`](../../../). The former
+> `KooshaPari/nanovms` checkout is historical provenance. The nested Go module
+> keeps its `github.com/kooshapari/nanovms` path for compatibility; that path
+> does not change the source-of-truth repository.
+
 ## Features
 
 - **Multi-Platform Support**: macOS, Windows, Linux + mobile simulators (iOS, Android, tvOS, watchOS, VisionOS)
@@ -13,9 +19,9 @@ Lightweight, headless VM abstraction for agents — supports desktop, mobile sim
 ## Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/KooshaPari/nanovms.git
-cd nanovms
+# Clone the canonical workspace
+git clone https://github.com/KooshaPari/phenotype-infra.git
+cd phenotype-infra/crates/nanovms-core
 
 # Build
 go build ./cmd/nanovms

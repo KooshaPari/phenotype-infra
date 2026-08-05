@@ -80,9 +80,9 @@ git --version
 ## Development Setup
 
 ```bash
-# 1. Clone
-git clone https://github.com/KooshaPari/nanovms.git
-cd nanovms
+# 1. Clone the canonical workspace
+git clone https://github.com/KooshaPari/phenotype-infra.git
+cd phenotype-infra/crates/nanovms-core
 
 # 2. Fetch Go deps
 go mod download
@@ -95,7 +95,17 @@ go build ./...
 
 # 5. Run a smoke test
 go test ./... -run TestSmoke
+
+# Return to the workspace root for Rust and cross-component commands.
+cd ../..
 ```
+
+The nested Go module retains the historical `github.com/kooshapari/nanovms`
+module path for import compatibility. It is maintained in
+`phenotype-infra/crates/nanovms-core`; do not clone or patch the archived
+`KooshaPari/nanovms` repository for new work. See
+[`docs/ownership/nanovms-source-of-truth.md`](docs/ownership/nanovms-source-of-truth.md)
+for the ownership map.
 
 ### Recommended shell aliases
 
