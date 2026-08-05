@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "oci-helpers",
     "oci-lottery",
     "oci-post-acquire",
     "tailscale/tailscale-keygen",
@@ -33,3 +34,4 @@ chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 glob = "0.3"
 rand = "0.10"
+oci-helpers = { path = "oci-helpers" }
