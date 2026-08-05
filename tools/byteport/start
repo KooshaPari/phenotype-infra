@@ -89,15 +89,56 @@ stop_service() {
         return 1
     fi
 
+    is_protected_command() {
+        case "$1" in
+            *codex*|*Codex*|*cursor*|*Cursor*|*claude*|*Claude*|*code-mode-host*|*agent-runner*|*agent-host*)
+                return 0
+                ;;
+            *)
+                return 1
+                ;;
+        esac
+    }
+
+    assert_process_safe() {
+        candidate_pid="$1"
+        command_line=$(ps -o args= -p "$candidate_pid" 2>/dev/null | sed 's/^ *//' || true)
+        if [ -z "$command_line" ]; then
+            echo "Refusing to stop PID $candidate_pid: unable to verify command identity" >&2
+            return 1
+        fi
+        if is_protected_command "$command_line"; then
+            echo "Refusing to stop protected agent/Codex PID $candidate_pid" >&2
+            return 1
+        fi
+    }
+
+    assert_process_group_safe() {
+        group_id="$1"
+        members=$(ps -eo pid=,pgid=,args= 2>/dev/null | awk -v group="$group_id" '$2 == group {print $1}')
+        if [ -z "$members" ]; then
+            echo "Refusing to stop process group $group_id: unable to enumerate members" >&2
+            return 1
+        fi
+        for member in $members; do
+            assert_process_safe "$member" || return 1
+        done
+    }
+
     # Kill only the process group if this PID is its group leader.  Otherwise
     # signal the exact tracked process and leave unrelated descendants alone.
+    # Every candidate command line is checked first; protected agent/Codex
+    # processes, unknown identities, and incomplete group enumeration fail
+    # closed before any signal is sent.
     process_group=$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ' || true)
     if [ "$process_group" = "$pid" ]; then
+        assert_process_group_safe "$process_group" || return 1
         if ! kill -TERM -- "-$pid" 2>/dev/null; then
             echo "Refusing to forget $service: unable to signal tracked process group $pid" >&2
             return 1
         fi
     else
+        assert_process_safe "$pid" || return 1
         if ! kill -TERM "$pid" 2>/dev/null; then
             echo "Refusing to forget $service: unable to signal tracked PID $pid" >&2
             return 1
