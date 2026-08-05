@@ -13,6 +13,8 @@ allow = [
   "ISC",
   "Zlib",
   "Unicode-3.0",
+  # webpki-roots bundles the Mozilla root store under this permissive license.
+  "CDLA-Permissive-2.0",
 ]
 
 [bans]
