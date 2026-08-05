@@ -68,10 +68,22 @@ version: <commit-or-release>
 operation: <discover | route | plan | render | apply | run | status>
 owner_component: byteport | phenocompose | nanovms | phenotype-infra
 source: <repository path or URL>
-input_digest: <manifest/graph/request digest, if applicable>
+input_digest: <sha256 hex of the preserved input bytes, if applicable>
+input_digest_kind: manifest_bytes_sha256
+manifest_sha256: <same preserved-byte SHA-256 hex, if applicable>
+composition_digest: <sha256:<64 hex> canonical composition digest, if applicable>
+composition_digest_kind: phenocompose_manifest_v0_canonical_json
 receipt: <owner receipt or CI/runbook link>
 verified_utc: <YYYY-MM-DDThh:mm:ssZ>
 ```
+
+`input_digest`/`manifest_sha256` and `composition_digest` are deliberately
+different bindings. The verifier hashes the exact preserved manifest bytes;
+PhenoCompose's `plan` hashes its canonicalized, compact manifest
+representation. Never substitute one for the other. A receipt that carries a
+composition digest must include its versioned `composition_digest_kind`; the
+verifier validates its shape and keeps the owning composer authoritative for
+the canonicalization algorithm.
 
 `TBD` is acceptable for a not-yet-captured evidence field only when the
 operator also links a follow-up issue. Do not store credentials, provider

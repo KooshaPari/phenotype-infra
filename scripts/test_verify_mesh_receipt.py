@@ -31,6 +31,7 @@ class MeshReceiptVerificationTests(unittest.TestCase):
         self.payload: dict[str, Any] = {
             "receipt_id": "receipt-001",
             "input_digest": digest,
+            "input_digest_kind": "manifest_bytes_sha256",
             "manifest_sha256": digest,
             "provider": "byteport",
             "execution_backend": "podman",
@@ -62,6 +63,44 @@ class MeshReceiptVerificationTests(unittest.TestCase):
 
         self.assertFalse(valid)
         self.assertIn("stale/unverifiable", reason)
+
+    def test_canonical_composition_digest_is_distinct_from_raw_manifest(self) -> None:
+        self.payload.update(
+            {
+                "composition_digest": (
+                    "sha256:7c553fb177f23eb76ffe4685eae07ccedb77aea3aab58418d4dd9643c03979fa"
+                ),
+                "composition_digest_kind": (
+                    "phenocompose_manifest_v0_canonical_json"
+                ),
+            }
+        )
+        self.write_receipt()
+
+        valid, reason = MODULE.verify_receipt(self.receipt, self.manifest)
+
+        self.assertTrue(valid)
+        self.assertEqual(reason, "valid")
+
+    def test_canonical_digest_cannot_replace_raw_input_digest(self) -> None:
+        self.payload["input_digest"] = (
+            "7c553fb177f23eb76ffe4685eae07ccedb77aea3aab58418d4dd9643c03979fa"
+        )
+        self.write_receipt()
+
+        valid, reason = MODULE.verify_receipt(self.receipt, self.manifest)
+
+        self.assertFalse(valid)
+        self.assertIn("stale/unverifiable", reason)
+
+    def test_digest_kind_rejects_ambiguous_input(self) -> None:
+        self.payload["input_digest_kind"] = "phenocompose_manifest_v0_canonical_json"
+        self.write_receipt()
+
+        valid, reason = MODULE.verify_receipt(self.receipt, self.manifest)
+
+        self.assertFalse(valid)
+        self.assertIn("ambiguous input_digest", reason)
 
     def test_missing_evidence_metadata_is_rejected(self) -> None:
         self.payload.pop("evidence")
