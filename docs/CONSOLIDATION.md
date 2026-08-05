@@ -1,5 +1,11 @@
 # PhenoCompose ↔ nanovms Consolidation
 
+> **Current ownership:** The implementation produced by this consolidation is
+> maintained in [`crates/nanovms-core/`](../crates/nanovms-core/) in
+> `KooshaPari/phenotype-infra`. `KooshaPari/nanovms` is a historical archive
+> used for provenance only; do not clone it as the source for new changes.
+> Historical Go import paths are preserved where compatibility requires them.
+
 ## What was removed (2026-06-08)
 
 The PhenoCompose Go tree was a 91% verbatim fork of
@@ -40,7 +46,8 @@ Removed in this commit:
 
 ## Recommended follow-up
 
-1. **Move `bindings/go-c-export/nvms_core.go` into nanovms** as
+1. **Move `bindings/go-c-export/nvms_core.go` into the canonical
+   `crates/nanovms-core` module** as
    `cmd/nanovms-cgo/main.go` and add a CGo build target in nanovms's
    `Makefile`/`Taskfile.yml` (e.g. `make nvms-c-archive` →
    `libnvms_core_$(GOOS)_$(GOARCH).a`).
