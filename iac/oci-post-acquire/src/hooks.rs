@@ -90,7 +90,11 @@ mod tests {
     async fn missing_hooks_directory_is_a_noop() {
         let path = std::env::temp_dir().join("oci-post-hooks-missing");
         let _ = tokio::fs::remove_dir_all(&path).await;
-        assert!(run_dropins(path.to_str().unwrap(), &fixture()).await.is_ok());
+        assert!(
+            run_dropins(path.to_str().unwrap(), &fixture())
+                .await
+                .is_ok()
+        );
     }
 
     #[cfg(unix)]
@@ -119,7 +123,9 @@ mod tests {
             .expect("make failing hook executable");
 
         let result = run_dropins(dir.to_str().unwrap(), &fixture()).await;
-        let error = result.expect_err("failing hook should be reported").to_string();
+        let error = result
+            .expect_err("failing hook should be reported")
+            .to_string();
         assert!(error.contains("02-fail"), "unexpected error: {error}");
         assert_eq!(
             tokio::fs::read_to_string(&marker).await.unwrap(),
