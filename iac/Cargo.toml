@@ -1,8 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
+    "oci-helpers",
     "oci-lottery",
     "oci-post-acquire",
+    "observability",
+    "phenotype-logging-stub",
     "tailscale/tailscale-keygen",
 ]
 # `landing-bootstrap` declares its own `[workspace]` table (intentionally
@@ -29,7 +32,9 @@ serde_json = "1.0"
 tokio = { version = "1.52", features = ["rt-multi-thread", "macros", "process", "signal", "time", "fs", "net", "io-util"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
+phenotype-logging = { path = "phenotype-logging-stub" }
 chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
 glob = "0.3"
 rand = "0.10"
+oci-helpers = { path = "oci-helpers" }

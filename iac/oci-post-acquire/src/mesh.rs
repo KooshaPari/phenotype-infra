@@ -1,9 +1,9 @@
 //! Mesh-state commit — flips OCI to ✅ in compute-mesh-state.md and commits.
 
 use crate::InstanceFile;
-use oci_helpers::expand_home;
 use anyhow::{Context, Result, anyhow};
 use chrono::Utc;
+use oci_helpers::expand_home;
 use tokio::process::Command;
 use tracing::info;
 
@@ -56,4 +56,76 @@ pub async fn commit_state(repo: &str, inst: &InstanceFile) -> Result<()> {
     .await?;
     info!("mesh-state commit landed");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_repo() -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock before unix epoch")
+            .as_nanos();
+        let repo = std::env::temp_dir().join(format!("oci-post-mesh-{nonce}"));
+        std::fs::create_dir_all(repo.join("docs/governance")).expect("create mesh fixture");
+        let init = Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(&repo)
+            .status()
+            .expect("spawn git init");
+        assert!(init.success(), "git init failed: {init}");
+        for (key, value) in [
+            ("user.name", "coverage-test"),
+            ("user.email", "coverage@example.test"),
+        ] {
+            let configured = Command::new("git")
+                .args(["config", key, value])
+                .current_dir(&repo)
+                .status()
+                .expect("spawn git config");
+            assert!(configured.success(), "git config failed: {configured}");
+        }
+        repo
+    }
+
+    fn fixture(region: &str) -> InstanceFile {
+        InstanceFile {
+            instance_ocid: "ocid1.test".into(),
+            region: region.into(),
+            ad: "AD-1".into(),
+            public_ip: "198.51.100.40".into(),
+            acquired_at: "2026-08-02T00:00:00Z".into(),
+        }
+    }
+
+    #[tokio::test]
+    async fn writes_and_replaces_auto_inserted_mesh_state() {
+        let repo = temp_repo();
+        let doc = repo.join("docs/governance/compute-mesh-state.md");
+        tokio::fs::write(&doc, "# Compute Mesh State\n")
+            .await
+            .unwrap();
+
+        commit_state(repo.to_str().unwrap(), &fixture("us-test-1"))
+            .await
+            .unwrap();
+        commit_state(repo.to_str().unwrap(), &fixture("us-test-2"))
+            .await
+            .unwrap();
+
+        let content = tokio::fs::read_to_string(&doc).await.unwrap();
+        assert_eq!(
+            content
+                .matches("<!-- oci-post-acquire: AUTO-INSERTED")
+                .count(),
+            1
+        );
+        assert!(content.contains("Region: `us-test-2`"));
+        assert!(!content.contains("Region: `us-test-1`"));
+        let _ = tokio::fs::remove_dir_all(repo).await;
+    }
 }
