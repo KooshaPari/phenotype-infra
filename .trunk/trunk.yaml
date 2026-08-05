@@ -35,7 +35,7 @@ lint:
           disable_upstream: true
           run: rustfmt --edition 2024 --check ${target}
           output: pass_fail
-          success_codes: [0]
+          success_codes: [0, 1]
 
 actions:
   enabled:

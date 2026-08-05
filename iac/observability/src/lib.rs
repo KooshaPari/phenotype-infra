@@ -23,9 +23,6 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 #![warn(clippy::all)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
-#![warn(clippy::all)]
 
 use std::sync::Arc;
 

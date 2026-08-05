@@ -71,7 +71,7 @@ fn main() {
         // Try to build it on-the-fly
         let go_src = manifest_dir.join("../../crates/nanovms-core/bindings/go-c-export");
         if go_src.exists() {
-            let lib_name = format!("libnvms_core");
+            let lib_name = "libnvms_core";
             let output_path = out_dir.join(format!("{}.a", lib_name));
 
             let status = Command::new("go")
