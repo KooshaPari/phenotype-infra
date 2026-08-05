@@ -46,6 +46,12 @@ class MeshReceiptVerificationTests(unittest.TestCase):
     def write_receipt(self) -> None:
         self.receipt.write_text(json.dumps(self.payload), encoding="utf-8")
 
+    def write_chain_target(self, receipt_id: str, **fields: str) -> None:
+        target = {"receipt_id": receipt_id, **fields}
+        (self.root / f"{receipt_id}.json").write_text(
+            json.dumps(target), encoding="utf-8"
+        )
+
     def test_valid_receipt_binds_preserved_manifest(self) -> None:
         self.write_receipt()
 
@@ -81,6 +87,40 @@ class MeshReceiptVerificationTests(unittest.TestCase):
         self.assertFalse(valid)
         self.assertIn("cannot supersede itself", reason)
 
+    def test_supersedes_requires_a_reciprocal_preserved_target(self) -> None:
+        self.payload["supersedes"] = "receipt-000"
+        self.write_receipt()
+        self.write_chain_target("receipt-000", superseded_by="receipt-001")
+
+        valid, reason = MODULE.verify_receipt(
+            self.receipt, self.manifest, self.root
+        )
+
+        self.assertTrue(valid)
+        self.assertEqual(reason, "valid")
+
+    def test_supersession_without_target_directory_fails_closed(self) -> None:
+        self.payload["supersedes"] = "receipt-000"
+        self.write_receipt()
+
+        valid, reason = MODULE.verify_receipt(self.receipt, self.manifest)
+
+        self.assertFalse(valid)
+        self.assertIn("chain target directory is required", reason)
+
+    def test_missing_or_nonreciprocal_chain_target_fails_closed(self) -> None:
+        self.payload["superseded_by"] = "receipt-002"
+        self.write_receipt()
+        self.write_chain_target("receipt-002", supersedes="other-receipt")
+
+        valid, reason = MODULE.verify_receipt(
+            self.receipt, self.manifest, self.root
+        )
+
+        self.assertFalse(valid)
+        self.assertIn("must point supersedes back", reason)
+
 
 if __name__ == "__main__":
     unittest.main()
+
