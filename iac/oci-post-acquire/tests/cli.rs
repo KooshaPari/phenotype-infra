@@ -1,3 +1,5 @@
+#![cfg(unix)]
+
 use serde_json::json;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -46,10 +48,8 @@ fn fake_ansible(dir: &Path) -> PathBuf {
     }
 }
 
-// The fake ansible command and loopback harness are POSIX-only.  The hosted
-// coverage gate runs on Ubuntu; avoid accidentally invoking a host ansible
-// binary during Windows test runs.
-#[cfg(unix)]
+// The fake ansible command and loopback harness are scoped to the hosted
+// Linux coverage lane; never invoke a host ansible binary on Windows.
 #[tokio::test]
 async fn dry_run_reads_instance_waits_for_ssh_and_runs_ansible() {
     let temp = TempDir::new("dry-run");
@@ -114,7 +114,6 @@ async fn dry_run_reads_instance_waits_for_ssh_and_runs_ansible() {
     );
 }
 
-#[cfg(unix)]
 #[test]
 fn invalid_instance_file_fails_at_step_one() {
     let temp = TempDir::new("invalid");
