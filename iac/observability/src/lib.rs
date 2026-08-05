@@ -22,7 +22,6 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 #![warn(clippy::all)]
-
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 #![warn(clippy::all)]
@@ -30,7 +29,7 @@
 use std::sync::Arc;
 
 use tracing::Level;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 use phenotype_logging::is_initialized;
 
@@ -63,7 +62,10 @@ pub fn init_tracing(service_name: &'static str) -> Arc<dyn std::any::Any + Send 
         phenotype_logging::init_tracing(service_name, DEFAULT_LEVEL);
     }
 
-    tracing::info!(service.name = service_name, "tracing initialised (phenotype-infra-observability 0.2.0)");
+    tracing::info!(
+        service.name = service_name,
+        "tracing initialised (phenotype-infra-observability 0.2.0)"
+    );
     Arc::new(())
 }
 

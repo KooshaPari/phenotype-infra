@@ -7,6 +7,10 @@
 
 name: Trunk Check
 
+permissions:
+  contents: read
+  checks: write
+
 on:
   pull_request:
   push:
