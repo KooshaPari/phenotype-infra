@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,7 @@ from typing import Any
 REQUIRED_FIELDS = (
     "receipt_id",
     "input_digest",
+    "input_digest_kind",
     "manifest_sha256",
     "provider",
     "execution_backend",
@@ -27,6 +29,13 @@ REQUIRED_FIELDS = (
     "verified_utc",
     "evidence",
 )
+
+# ``input_digest`` and ``manifest_sha256`` bind the preserved artifact bytes.
+# PhenoCompose's plan digest is a different value: it is computed from the
+# canonicalized manifest representation before the artifact is preserved.
+RAW_MANIFEST_DIGEST_KIND = "manifest_bytes_sha256"
+COMPOSITION_DIGEST_KIND = "phenocompose_manifest_v0_canonical_json"
+COMPOSITION_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 def _fail(message: str) -> tuple[bool, str]:
@@ -53,11 +62,31 @@ def verify_receipt(receipt_path: Path, manifest_path: Path) -> tuple[bool, str]:
     digest = hashlib.sha256(manifest_bytes).hexdigest()
     input_digest = receipt["input_digest"]
     manifest_digest = receipt["manifest_sha256"]
+    if receipt["input_digest_kind"] != RAW_MANIFEST_DIGEST_KIND:
+        return _fail(
+            "ambiguous input_digest: input_digest_kind must be "
+            f"{RAW_MANIFEST_DIGEST_KIND}"
+        )
     if input_digest != digest or manifest_digest != digest:
         return _fail(
             "stale/unverifiable: preserved manifest digest does not match "
             "input_digest and manifest_sha256"
         )
+
+    composition_digest = receipt.get("composition_digest")
+    composition_digest_kind = receipt.get("composition_digest_kind")
+    if composition_digest is not None or composition_digest_kind is not None:
+        if composition_digest_kind != COMPOSITION_DIGEST_KIND:
+            return _fail(
+                "ambiguous composition_digest: composition_digest_kind must be "
+                f"{COMPOSITION_DIGEST_KIND}"
+            )
+        if not isinstance(composition_digest, str) or not COMPOSITION_DIGEST_RE.fullmatch(
+            composition_digest
+        ):
+            return _fail(
+                "invalid composition_digest: expected sha256:<64 lowercase hex>"
+            )
     if receipt.get("receipt_id") == receipt.get("supersedes"):
         return _fail("receipt_id cannot supersede itself")
     if receipt.get("superseded_by") == receipt.get("receipt_id"):
