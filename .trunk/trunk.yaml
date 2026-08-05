@@ -27,6 +27,15 @@ lint:
     - shellcheck
     - taplo
     - yamllint
+  definitions:
+    - name: rustfmt
+      files: [rust]
+      commands:
+        - name: rustfmt
+          disable_upstream: true
+          run: rustfmt --edition 2024 --check ${target}
+          output: pass_fail
+          success_codes: [0]
 
 actions:
   enabled:
