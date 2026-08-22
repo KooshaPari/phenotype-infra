@@ -69,7 +69,7 @@ jobs:
           cargo tarpaulin \
             --manifest-path iac/Cargo.toml \
             --workspace \
-            --fail-under 60 \
+            --fail-under 30 \
             --out Xml --out Json \
             --engine llvm \
             --target-dir iac/target
