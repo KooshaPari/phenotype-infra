@@ -15,6 +15,8 @@
 
 > **Consolidation target** for nanovms (Go, 3-tier isolation) + PhenoCompose (Rust FFI + driver) + BytePort (Svelte tooling).
 
+[![AI slop inside](https://sladge.net/badge.svg)](https://sladge.net) [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/KooshaPari/phenotype-infra/total)](https://github.com/KooshaPari/phenotype-infra/releases)
+
 This monorepo is created as part of the **L1-Alpha** wave of the Master DAG
 (Compute/Infra + Observability Consolidation). It absorbs three previously
 separate repositories into a single polyglot workspace:
