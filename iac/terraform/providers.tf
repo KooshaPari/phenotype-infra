@@ -11,7 +11,7 @@ terraform {
     }
     google = {
       source  = "hashicorp/google"
-      version = "~> 7.29"
+      version = "~> 8.1"
     }
     aws = {
       source  = "hashicorp/aws"
