@@ -6,18 +6,23 @@ resolver = "2"
 # =============================================================================
 #
 # Members will be added as crates are absorbed:
-#   - nanovms-core (Go static lib via CGo)
-#   - nvms-ffi     (Rust FFI bindings to NVMS Go Core)
-#   - pheno-compose-driver (High-level Rust driver)
+#   - pheno-config (shared configuration)
+#
+# Archived duplicate crates (per REP-080, ADR-015):
+#   - nanovms-core → canonical: nanovms repo
+#   - nvms-ffi     → canonical: PhenoCompose/bindings/rust-ffi
+#   - pheno-compose → canonical: PhenoCompose/pheno-compose-driver
 #
 # Tooling sub-projects live under tools/ and are NOT workspace members
 # (they use their own build systems).
 # =============================================================================
 
 members = [
-    "crates/nanovms-core",    # Go source — absorbed as C static lib
-    "crates/nvms-ffi",       # Rust FFI bindings
-    "crates/pheno-compose",  # Rust high-level driver
+    # Archived: duplicate crates moved to _archived/ per REP-080.
+    # Canonical repos: nanovms (Go), PhenoCompose (Rust), BytePort (Go+Svelte).
+    # "crates/nanovms-core" — archived → _archived/nanovms-core
+    # "crates/nvms-ffi"     — archived → _archived/nvms-ffi
+    # "crates/pheno-compose" — archived → _archived/pheno-compose
     "crates/pheno-config",   # Shared configuration
     "tests",                 # Cross-crate integration tests
 ]
